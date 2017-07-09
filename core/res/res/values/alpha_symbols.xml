@@ -110,4 +110,7 @@
     <java-symbol type="color" name="alpha_color_secondary_accent_dark" />
     <java-symbol type="color" name="alpha_color_tertiary_accent_dark" />
 
+    <!-- Sensor block -->
+    <java-symbol type="array" name="config_blockPackagesSensorDrain" />
+
 </resources>
