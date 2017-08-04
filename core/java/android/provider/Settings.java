@@ -6908,6 +6908,13 @@ public final class Settings {
         public static final String QS_BT_SHOW_DIALOG = "qs_bt_show_dialog";
 
         /**
+         * Sensor block per-package
+         * @hide
+         */
+        @Readable
+        public static final String SENSOR_BLOCK = "sensor_block";
+
+        /**
          * Keys we no longer back up under the current schema, but want to continue to
          * process when restoring historical backup datasets.
          *
