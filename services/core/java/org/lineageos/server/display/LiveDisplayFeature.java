@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.cyanogenmod.platform.internal.display;
+package org.lineageos.server.display;
 
 import android.content.ContentResolver;
 import android.content.Context;
@@ -22,19 +22,19 @@ import android.os.Handler;
 import android.os.UserHandle;
 import android.util.Log;
 
-import org.cyanogenmod.platform.internal.common.UserContentObserver;
-import org.cyanogenmod.platform.internal.display.LiveDisplayService.State;
-import org.cyanogenmod.platform.internal.display.TwilightTracker.TwilightState;
+import org.lineageos.server.common.UserContentObserver;
+import org.lineageos.server.display.LiveDisplayService.State;
+import org.lineageos.server.display.TwilightTracker.TwilightState;
 
 import java.io.PrintWriter;
 import java.util.BitSet;
 
-import cyanogenmod.providers.CMSettings;
+import android.provider.Settings;
 
-import static org.cyanogenmod.platform.internal.display.LiveDisplayService.ALL_CHANGED;
-import static org.cyanogenmod.platform.internal.display.LiveDisplayService.DISPLAY_CHANGED;
-import static org.cyanogenmod.platform.internal.display.LiveDisplayService.MODE_CHANGED;
-import static org.cyanogenmod.platform.internal.display.LiveDisplayService.TWILIGHT_CHANGED;
+import static org.lineageos.server.display.LiveDisplayService.ALL_CHANGED;
+import static org.lineageos.server.display.LiveDisplayService.DISPLAY_CHANGED;
+import static org.lineageos.server.display.LiveDisplayService.MODE_CHANGED;
+import static org.lineageos.server.display.LiveDisplayService.TWILIGHT_CHANGED;
 
 public abstract class LiveDisplayFeature {
 
@@ -98,32 +98,32 @@ public abstract class LiveDisplayFeature {
     }
 
     protected final boolean getBoolean(String setting, boolean defaultValue) {
-        return CMSettings.System.getIntForUser(mContext.getContentResolver(),
+        return Settings.System.getIntForUser(mContext.getContentResolver(),
                 setting, (defaultValue ? 1 : 0), UserHandle.USER_CURRENT) == 1;
     }
 
     protected final void putBoolean(String setting, boolean value) {
-        CMSettings.System.putIntForUser(mContext.getContentResolver(),
+        Settings.System.putIntForUser(mContext.getContentResolver(),
                 setting, (value ? 1 : 0), UserHandle.USER_CURRENT);
     }
 
     protected final int getInt(String setting, int defaultValue) {
-        return CMSettings.System.getIntForUser(mContext.getContentResolver(),
+        return Settings.System.getIntForUser(mContext.getContentResolver(),
                 setting, defaultValue, UserHandle.USER_CURRENT);
     }
 
     protected final void putInt(String setting, int value) {
-        CMSettings.System.putIntForUser(mContext.getContentResolver(),
+        Settings.System.putIntForUser(mContext.getContentResolver(),
                 setting, value, UserHandle.USER_CURRENT);
     }
 
     protected final String getString(String setting) {
-        return CMSettings.System.getStringForUser(mContext.getContentResolver(),
+        return Settings.System.getStringForUser(mContext.getContentResolver(),
                 setting, UserHandle.USER_CURRENT);
     }
 
     protected final void putString(String setting, String value) {
-        CMSettings.System.putStringForUser(mContext.getContentResolver(),
+        Settings.System.putStringForUser(mContext.getContentResolver(),
                 setting, value, UserHandle.USER_CURRENT);
     }
 
