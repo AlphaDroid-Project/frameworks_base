@@ -125,7 +125,7 @@
         <item>org.lineageos.server.PerformanceManagerService</item>
         <item>org.lineageos.server.WeatherManagerServiceBroker</item>
         <item>org.lineageos.server.display.LiveDisplayService</item>
-        <item>org.lineageos.server.LineageAudioServiceBroker</item>
+        <item>org.lineageos.server.LineageAudioService</item>
     </string-array>
 
     <!-- The LineageSystemServer class that is invoked from Android's SystemServer -->
