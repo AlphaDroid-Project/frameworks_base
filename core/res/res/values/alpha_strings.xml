@@ -4,5 +4,6 @@
      SPDX-License-Identifier: Apache-2.0
 -->
 <resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
-
+    <!-- Upload crash log -->
+    <string name="url_copy_failed">An error occured while uploading the log</string>
 </resources>
