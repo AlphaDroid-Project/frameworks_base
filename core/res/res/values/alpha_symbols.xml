@@ -59,4 +59,9 @@
     <!-- Bootleg unneccesary gradient declaration | Just for our shishu bars -->
     <java-symbol type="color" name="bootleg_accent_gradient_end_color" />
 
+    <!-- Powermenu animations -->
+    <java-symbol type="style" name="GlobalActionsAnimation" />
+    <java-symbol type="style" name="GlobalActionsAnimationTop" />
+    <java-symbol type="style" name="GlobalActionsAnimationEnter" />
+
 </resources>
