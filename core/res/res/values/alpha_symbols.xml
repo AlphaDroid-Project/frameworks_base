@@ -59,6 +59,10 @@
     <!-- Bootleg unneccesary gradient declaration | Just for our shishu bars -->
     <java-symbol type="color" name="bootleg_accent_gradient_end_color" />
 
+    <!-- Settings Restart -->
+    <java-symbol type="string" name="settings_restart_title" />
+    <java-symbol type="string" name="settings_restart_message" />
+
     <!-- Powermenu animations -->
     <java-symbol type="style" name="GlobalActionsAnimation" />
     <java-symbol type="style" name="GlobalActionsAnimationTop" />
@@ -68,5 +72,6 @@
     <java-symbol type="style" name="GlobalActionsAnimationTranslucent" />
     <java-symbol type="style" name="GlobalActionsAnimationXylon" />
     <java-symbol type="style" name="GlobalActionsAnimationCard" />
+    <java-symbol type="style" name="GlobalActionsAnimationRotate" />
 
 </resources>
