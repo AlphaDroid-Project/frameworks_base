@@ -40,10 +40,6 @@ import android.util.Slog;
 import android.provider.Settings;
 import lineageos.util.ColorUtils;
 
-import org.lineageos.internal.notification.LedValues;
-import org.lineageos.internal.notification.LightsCapabilities;
-import org.lineageos.internal.notification.LineageNotification;
-
 import java.util.Map;
 
 public final class LineageNotificationLights {

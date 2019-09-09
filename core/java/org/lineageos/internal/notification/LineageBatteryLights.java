@@ -32,9 +32,6 @@ import android.util.Slog;
 
 import android.provider.Settings;
 
-import org.lineageos.internal.notification.LedValues;
-import org.lineageos.internal.notification.LightsCapabilities;
-
 public final class LineageBatteryLights {
     private final String TAG = "LineageBatteryLights";
     private final boolean DEBUG = false;
