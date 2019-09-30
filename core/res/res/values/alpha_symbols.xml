@@ -57,4 +57,7 @@
     <java-symbol type="string" name="ui_style_param_angle" />
 
     <java-symbol type="drawable" name="ic_ui_style" />
+
+    <!-- Whether device has physical tri state switch -->
+    <java-symbol type="bool" name="config_hasAlertSlider" />
 </resources>
