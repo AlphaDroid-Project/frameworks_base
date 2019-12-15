@@ -105,7 +105,6 @@
         <item>org.lineageos.server.LineageWeatherManagerService</item>
         <item>org.lineageos.server.display.LiveDisplayService</item>
         <item>org.lineageos.server.LineageAudioService</item>
-        <item>org.lineageos.server.StyleInterfaceService</item>
         <item>org.lineageos.server.TrustInterfaceService</item>
         <item>org.lineageos.server.LineageSettingsService</item>
     </string-array>
