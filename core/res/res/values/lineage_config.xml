@@ -102,7 +102,6 @@
         <item>org.lineageos.server.ProfileManagerService</item>
         <item>org.lineageos.server.LineageHardwareService</item>
         <item>org.lineageos.server.PerformanceManagerService</item>
-        <item>org.lineageos.server.LineageWeatherManagerService</item>
         <item>org.lineageos.server.display.LiveDisplayService</item>
         <item>org.lineageos.server.LineageAudioService</item>
         <item>org.lineageos.server.TrustInterfaceService</item>
