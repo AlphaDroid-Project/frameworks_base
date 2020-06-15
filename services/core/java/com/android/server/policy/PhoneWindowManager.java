@@ -268,7 +268,7 @@ import com.android.server.wm.WindowManagerInternal.AppTransitionListener;
 
 import dalvik.system.PathClassLoader;
 
-import lineageos.hardware.LineageHardwareManager;
+import com.android.internal.lineage.hardware.LineageHardwareManager;
 import lineageos.providers.LineageSettings;
 
 import org.lineageos.internal.buttons.LineageButtons;

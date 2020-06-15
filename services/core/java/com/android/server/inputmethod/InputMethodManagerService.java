@@ -194,7 +194,7 @@ import com.android.server.statusbar.StatusBarManagerInternal;
 import com.android.server.utils.PriorityDump;
 import com.android.server.wm.WindowManagerInternal;
 
-import lineageos.hardware.LineageHardwareManager;
+import com.android.internal.lineage.hardware.LineageHardwareManager;
 import lineageos.providers.LineageSettings;
 
 import java.io.FileDescriptor;
