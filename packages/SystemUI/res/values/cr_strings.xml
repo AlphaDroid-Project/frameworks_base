@@ -22,7 +22,7 @@
     <string name="status_bar_data_saver">Data saver</string>
     <string name="status_bar_call_strength">Call strength</string>
     <string name="status_bar_ims">VoLTE/VoWiFi</string>
-    
+
     <!-- Screen record delete action -->
     <!-- Label for notification action to delete a screen recording file [CHAR LIMIT=35] -->
     <string name="screenrecord_delete_label">Delete</string>
@@ -191,10 +191,13 @@
     <string name="quick_settings_locale_label">Language</string>
     <string name="quick_settings_locale_more_locales_toast">Configure multiple languages first</string>
 
+    <!-- Face unlock -->
+    <string name="face_unlock_recognizing">Recognizing face...</string>
+
     <!-- Island notification -->
     <string name="now_playing_on">Now Playing on %1$s</string>
     <string name="by_artist">%1$s by %2$s</string>
 
-    <!-- Face unlock -->
-    <string name="face_unlock_recognizing">Recognizing face...</string>
+    <!-- Sleep Mode -->
+    <string name="quick_settings_sleep_mode_label">Sleep Mode</string>
 </resources>
