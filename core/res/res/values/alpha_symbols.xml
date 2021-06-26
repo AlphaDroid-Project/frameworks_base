@@ -16,28 +16,43 @@
 -->
 <resources>
 
-      <!-- Settings Restart -->
-      <java-symbol type="string" name="settings_restart_title"/>
-      <java-symbol type="string" name="settings_restart_message"/>
-      <!-- Soft restart dialog -->
-      <java-symbol type="string" name="system_restart_title"/>
-      <java-symbol type="string" name="system_restart_message"/>
-      <!-- SystemUI restart dialog -->
-      <java-symbol type="string" name="systemui_restart_title"/>
-      <java-symbol type="string" name="systemui_restart_message"/>
-      <!-- Launcher restart dialog -->
-      <java-symbol type="string" name="launcher_restart_title"/>
-      <java-symbol type="string" name="launcher_restart_message"/>
+    <!-- Settings Restart -->
+    <java-symbol type="string" name="settings_restart_title"/>
+    <java-symbol type="string" name="settings_restart_message"/>
+    <!-- Soft restart dialog -->
+    <java-symbol type="string" name="system_restart_title"/>
+    <java-symbol type="string" name="system_restart_message"/>
+    <!-- SystemUI restart dialog -->
+    <java-symbol type="string" name="systemui_restart_title"/>
+    <java-symbol type="string" name="systemui_restart_message"/>
+    <!-- Launcher restart dialog -->
+    <java-symbol type="string" name="launcher_restart_title"/>
+    <java-symbol type="string" name="launcher_restart_message"/>
 
-     <!-- Whether to cancel fingerprint operation if not idle -->
-     <java-symbol type="bool" name="config_fpCancelIfNotIdle" />
+    <!-- Whether to cancel fingerprint operation if not idle -->
+    <java-symbol type="bool" name="config_fpCancelIfNotIdle" />
 
-     <!-- App lock -->
-     <java-symbol type="string" name="unlock_application" />
-     <java-symbol type="array" name="config_appLockAllowedSystemApps" />
+    <!-- App lock -->
+    <java-symbol type="string" name="unlock_application" />
+    <java-symbol type="array" name="config_appLockAllowedSystemApps" />
 
-     <!-- Light / Regular style fonts -->
-     <java-symbol type="string" name="config_lightFontFamily" />
-     <java-symbol type="string" name="config_regularFontFamily" />
+    <!-- Light / Regular style fonts -->
+    <java-symbol type="string" name="config_lightFontFamily" />
+    <java-symbol type="string" name="config_regularFontFamily" />
+
+    <!-- Whether device has dash charging support -->
+    <java-symbol type="bool" name="config_hasDashCharger" />
+    <!-- Whether device has warp charging support -->
+    <java-symbol type="bool" name="config_hasWarpCharger" />
+    <!-- Whether device has VOOC charging support -->
+    <java-symbol type="bool" name="config_hasVoocCharger" />
+    <!-- Whether device has turbo power charging support -->
+    <java-symbol type="bool" name="config_hasTurboPowerCharger" />
+    <!-- Path to fast charging status file to detect whether an oem fast charger is active -->
+    <java-symbol type="string" name="config_oemFastChargerStatusPath" />
+    <!-- Path to fast charging status file to detect whether an oem fast charger is active -->
+    <java-symbol type="string" name="config_oemFastChargerStatusPath2" />
+    <!-- Expected value from fast charging status file -->
+    <java-symbol type="string" name="config_oemFastChargerStatusValue" />
 
 </resources>
