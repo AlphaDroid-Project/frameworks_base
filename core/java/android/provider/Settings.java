@@ -7436,6 +7436,11 @@ public final class Settings {
          */
         public static final String STATUSBAR_NOTIF_COUNT = "statusbar_notif_count";
 
+         /**
+          * @hide
+          */
+         public static final String RECENTS_LOCKED_TASKS = "recents_locked_tasks";
+
         /**
          * Enable/disable Bluetooth Battery bar
          * @hide
