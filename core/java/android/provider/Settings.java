@@ -6340,6 +6340,11 @@ public final class Settings {
          */
          public static final String SETTINGS_HOMEPAGE_REVAMP = "settings_homepage_revamp";
 
+         /**
+          * @hide
+          */
+         public static final String RECENTS_LOCKED_TASKS = "recents_locked_tasks";
+
         /**
          * IMPORTANT: If you add a new public settings you also have to add it to
          * PUBLIC_SETTINGS below. If the new setting is hidden you have to add
