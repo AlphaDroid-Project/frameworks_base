@@ -81,6 +81,8 @@ public class MobileSignalController extends SignalController<MobileState, Mobile
             "system:" + Settings.System.DATA_DISABLED_ICON;
     private static final String VOLTE_ICON_STYLE =
             "system:" + Settings.System.VOLTE_ICON_STYLE;
+    private static final String VOWIFI_ICON_STYLE =
+            "system:" + Settings.System.VOWIFI_ICON_STYLE;
 
     private final TelephonyManager mPhone;
     private final CarrierConfigTracker mCarrierConfigTracker;
@@ -113,6 +115,8 @@ public class MobileSignalController extends SignalController<MobileState, Mobile
 
     // Volte Icon Style
     private int mVolteIconStyle = 1;
+    // VoWiFi Icon
+    private int mVoWifiIconStyle = 1;
 
     private final MobileStatusTracker.Callback mMobileCallback =
             new MobileStatusTracker.Callback() {
@@ -220,6 +224,7 @@ public class MobileSignalController extends SignalController<MobileState, Mobile
         Dependency.get(TunerService.class).addTunable(this, SHOW_FOURG_ICON);
         Dependency.get(TunerService.class).addTunable(this, DATA_DISABLED_ICON);
         Dependency.get(TunerService.class).addTunable(this, VOLTE_ICON_STYLE);
+        Dependency.get(TunerService.class).addTunable(this, VOWIFI_ICON_STYLE);
     }
 
     @Override
@@ -242,6 +247,11 @@ public class MobileSignalController extends SignalController<MobileState, Mobile
                 break;
             case VOLTE_ICON_STYLE:
                 mVolteIconStyle =
+                    TunerService.parseInteger(newValue, 1);
+                updateTelephony();
+                break;
+            case VOWIFI_ICON_STYLE:
+                mVoWifiIconStyle =
                     TunerService.parseInteger(newValue, 1);
                 updateTelephony();
                 break;
