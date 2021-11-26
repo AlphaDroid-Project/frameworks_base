@@ -101,7 +101,7 @@ constructor(
             initialValue = null,
             source =
                 selectedUserInteractor.selectedUser.map { selectedUserId ->
-                    SettingsActionViewModel(qsThemedContext, ::onSettingsButtonClicked).takeUnless {
+                    SettingsActionViewModel(qsThemedContext, ::onSettingsButtonClicked, ::onSettingsButtonLongClicked).takeUnless {
                         hsuQsChanges() && hsum.isHeadlessSystemUser(selectedUserId)
                     }
                 },
@@ -203,6 +203,10 @@ constructor(
 
     private fun onSettingsButtonClicked(expandable: Expandable) {
         falsingInteractor.runIfNotFalseTap { footerActionsInteractor.showSettings(expandable) }
+    }
+
+    private fun onSettingsButtonLongClicked(expandable: Expandable) {
+        falsingInteractor.runIfNotFalseTap { footerActionsInteractor.showCustomSettings(expandable) }
     }
 
     fun onSecurityButtonClicked(quickSettingsContext: Context, expandable: Expandable) {
