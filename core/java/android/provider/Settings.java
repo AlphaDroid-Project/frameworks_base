@@ -7140,6 +7140,13 @@ public final class Settings {
         };
 
         /**
+         * Arcane Idle Manager
+         * @hide
+         */
+        @Readable
+        public static final String ARCANE_IDLE_MANAGER = "arcane_idle_manager";
+
+        /**
          * These are all public system settings
          *
          * @hide
