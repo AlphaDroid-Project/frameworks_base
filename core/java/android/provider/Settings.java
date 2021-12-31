@@ -6774,6 +6774,13 @@ public final class Settings {
         public static final String MAX_CALL_VOLUME = "max_call_volume";
 
         /**
+         * Arcane Idle Manager
+         * @hide
+         */
+        @Readable
+        public static final String ARCANE_IDLE_MANAGER = "arcane_idle_manager";
+        
+        /**
          * Stores the default max volume for {@link android.media.AudioSystem.STREAM_VOICE_CALL}
          * see {@link com.android.server.audio.AudioService} for defaults in priority
          * Used as a fallback for the user settings
