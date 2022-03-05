@@ -435,13 +435,12 @@ public class NetworkTraffic extends TextView {
     private void updateSettings() {
         ContentResolver resolver = mContext.getContentResolver();
 
-        mMode = Settings.Secure.getIntForUser(resolver,
-                Settings.Secure.NETWORK_TRAFFIC_MODE, 0, UserHandle.USER_CURRENT);
-        mAutoHide = Settings.Secure.getIntForUser(resolver,
-                Settings.Secure.NETWORK_TRAFFIC_AUTOHIDE, 0, UserHandle.USER_CURRENT) == 1;
-        mUnits = Settings.Secure.getIntForUser(resolver,
-                Settings.Secure.NETWORK_TRAFFIC_UNITS, /* Mbps */ 1,
-                UserHandle.USER_CURRENT);
+        mMode = Settings.Secure.getInt(resolver,
+                Settings.Secure.NETWORK_TRAFFIC_MODE, 0);
+        mAutoHide = Settings.Secure.getInt(resolver,
+                Settings.Secure.NETWORK_TRAFFIC_AUTOHIDE, 0) == 1;
+        mUnits = Settings.Secure.getInt(resolver,
+                Settings.Secure.NETWORK_TRAFFIC_UNITS, /* Mbps */ 1);
 
         switch (mUnits) {
             case UNITS_KILOBITS:
@@ -461,9 +460,8 @@ public class NetworkTraffic extends TextView {
                 break;
         }
 
-        mShowUnits = Settings.Secure.getIntForUser(resolver,
-                Settings.Secure.NETWORK_TRAFFIC_SHOW_UNITS, 1,
-                UserHandle.USER_CURRENT) == 1;
+        mShowUnits = Settings.Secure.getInt(resolver,
+                Settings.Secure.NETWORK_TRAFFIC_SHOW_UNITS, 1) == 1;
 
         if (mMode != MODE_DISABLED) {
             updateTrafficDrawable();
