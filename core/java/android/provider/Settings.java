@@ -13553,6 +13553,13 @@ public final class Settings {
                 "contextual_screen_timeout_enabled";
 
         /**
+         * Control whether FLAG_SECURE is ignored for all windows.
+         * @hide
+         */
+        @Readable
+        public static final String WINDOW_IGNORE_SECURE = "window_ignore_secure";
+
+        /**
          * Whether lockscreen weather is enabled.
          *
          * @hide
