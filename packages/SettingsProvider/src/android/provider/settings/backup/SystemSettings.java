@@ -220,7 +220,8 @@ public class SystemSettings {
                 Settings.System.DISPLAY_PICTURE_ADJUSTMENT,
                 Settings.System.FORCE_SHOW_NAVBAR,
                 Settings.System.CLICK_PARTIAL_SCREENSHOT,
-                Settings.System.ENABLE_TASKBAR
+                Settings.System.ENABLE_TASKBAR,
+                Settings.System.MAX_VISIBLE_NOTIFICATION_ICONS
         ));
         if (Flags.backUpSmoothDisplayAndForcePeakRefreshRate()) {
             settings.add(Settings.System.PEAK_REFRESH_RATE);
