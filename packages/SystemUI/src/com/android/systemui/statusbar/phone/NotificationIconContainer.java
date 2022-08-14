@@ -19,13 +19,16 @@ import static com.android.systemui.Flags.physicalNotificationMovement;
 import static com.android.systemui.statusbar.phone.HeadsUpAppearanceController.CONTENT_FADE_DELAY;
 import static com.android.systemui.statusbar.phone.HeadsUpAppearanceController.CONTENT_FADE_DURATION;
 
+import android.content.ContentResolver;
 import android.content.Context;
 import android.content.res.Configuration;
+import android.database.ContentObserver;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Rect;
 import android.graphics.drawable.Icon;
+import android.os.Handler;
 import android.os.UserHandle;
 import android.provider.Settings;
 import android.util.AttributeSet;
@@ -168,6 +171,8 @@ public class NotificationIconContainer extends ViewGroup {
     @Nullable private Runnable mIsolatedIconAnimationEndRunnable;
     private boolean mUseIncreasedIconScale;
 
+    private SettingsObserver mSettingsObserver;
+
     public NotificationIconContainer(Context context, AttributeSet attrs) {
         super(context, attrs);
         initResources();
@@ -227,6 +232,42 @@ public class NotificationIconContainer extends ViewGroup {
         initResources();
     }
 
+    private class SettingsObserver extends ContentObserver {
+        SettingsObserver(Handler handler) {
+            super(handler);
+        }
+
+        void register() {
+            getContext().getContentResolver().registerContentObserver(
+                    Settings.System.getUriFor(Settings.System.MAX_VISIBLE_NOTIFICATION_ICONS),
+                    false, this, UserHandle.USER_ALL);
+        }
+
+        void unregister() {
+            getContext().getContentResolver().unregisterContentObserver(this);
+        }
+
+        @Override
+        public void onChange(boolean selfChange) {
+            updateState();
+        }
+    }
+
+    @Override
+    protected void onAttachedToWindow() {
+        super.onAttachedToWindow();
+        mSettingsObserver = new SettingsObserver(new Handler());
+        mSettingsObserver.register();
+    }
+
+    @Override
+    protected void onDetachedFromWindow() {
+        super.onDetachedFromWindow();
+        if (mSettingsObserver != null) {
+            mSettingsObserver.unregister();
+        }
+    }
+
     @Override
     public boolean hasOverlappingRendering() {
         // Does the same as "AlphaOptimizedFrameLayout".
@@ -236,7 +277,7 @@ public class NotificationIconContainer extends ViewGroup {
     @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
         final int childCount = getChildCount();
-        final int maxVisibleIcons = mMaxIcons;
+        final int maxVisibleIcons = getMaxVisibleIcons(childCount);
         final int width = MeasureSpec.getSize(widthMeasureSpec);
         final int childWidthSpec = MeasureSpec.makeMeasureSpec(width, MeasureSpec.UNSPECIFIED);
         int totalWidth = (int) (getActualPaddingStart() + getActualPaddingEnd());
@@ -478,7 +519,7 @@ public class NotificationIconContainer extends ViewGroup {
         mIsShowingOverflowDot = false;
         mWasOverflowForced = false;
         int childCount = getChildCount();
-        int maxVisibleIcons = mMaxIcons;
+        int maxVisibleIcons = getMaxVisibleIcons(childCount);
         float layoutRight = getRightBound();
         mVisualOverflowStart = 0;
         mFirstVisibleIconState = null;
@@ -609,6 +650,14 @@ public class NotificationIconContainer extends ViewGroup {
             return getPaddingStart();
         }
         return mActualPaddingStart;
+    }
+
+    private int getMaxVisibleIcons(int childCount) {
+        int maxStatusVisibleIcons =
+              Settings.System.getIntForUser(getContext().getContentResolver(),
+              Settings.System.MAX_VISIBLE_NOTIFICATION_ICONS,
+              mMaxIcons, UserHandle.USER_CURRENT);
+        return mIsStaticLayout ? maxStatusVisibleIcons : childCount;
     }
 
     /**
