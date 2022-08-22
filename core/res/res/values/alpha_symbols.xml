@@ -56,4 +56,7 @@
     <!-- Default UDFPS pressed icon -->
     <java-symbol type="integer" name="config_udfps_pressed_color" />
 
+    <!-- Bootleg unneccesary gradient declaration | Just for our shishu bars -->
+    <java-symbol type="color" name="bootleg_accent_gradient_end_color" />
+
 </resources>
