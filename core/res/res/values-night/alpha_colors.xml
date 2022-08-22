@@ -4,5 +4,6 @@
      SPDX-License-Identifier: Apache-2.0
 -->
 <resources>
-
+    <!-- UI styles -->
+    <color name="bootleg_accent_gradient_end_color">@color/system_accent3_100</color>
 </resources>
