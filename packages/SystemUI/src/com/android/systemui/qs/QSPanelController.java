@@ -59,7 +59,7 @@ import javax.inject.Provider;
  */
 @QSScope
 public class QSPanelController extends QSPanelControllerBase<QSPanel>
-        implements ConfigurationController.ConfigurationListener {
+        implements TunerService.Tunable, ConfigurationController.ConfigurationListener {
 
     private final TunerService mTunerService;
     private final QSCustomizerController mQsCustomizerController;
@@ -106,7 +106,7 @@ public class QSPanelController extends QSPanelControllerBase<QSPanel>
             MediaCarouselInteractor mediaCarouselInteractor) {
         super(view, qsHost, qsCustomizerController, usingMediaPlayer, mediaHost,
                 metricsLogger, uiEventLogger, qsLogger, dumpManager, splitShadeStateController,
-                longPRessEffectProvider);
+                longPRessEffectProvider, tunerService);
         mTunerService = tunerService;
         mQsCustomizerController = qsCustomizerController;
         mQsTileRevealControllerFactory = qsTileRevealControllerFactory;
@@ -150,6 +150,10 @@ public class QSPanelController extends QSPanelControllerBase<QSPanel>
         mTunerService.addTunable(mView, QSPanel.QS_SHOW_AUTO_BRIGHTNESS);
         mTunerService.addTunable(mView, QSPanel.QS_BRIGHTNESS_SLIDER_POSITION);
         mTunerService.addTunable(mView, QSPanel.QS_SHOW_BRIGHTNESS_PERCENTAGE);
+        mTunerService.addTunable(mView, QSPanel.QS_LAYOUT_COLUMNS);
+        mTunerService.addTunable(mView, QSPanel.QS_LAYOUT_COLUMNS_LANDSCAPE);
+        mTunerService.addTunable(mView, QSPanel.QS_LAYOUT_ROWS);
+        mTunerService.addTunable(mView, QSPanel.QS_LAYOUT_ROWS_LANDSCAPE);
 
         mView.setBrightnessRunnable(() -> {
             mView.updateResources();
@@ -331,4 +335,3 @@ public class QSPanelController extends QSPanelControllerBase<QSPanel>
         return mView.getBottom();
     }
 }
-
