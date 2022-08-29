@@ -69,7 +69,6 @@ import com.android.app.tracing.traceSection
 import com.android.settingslib.Utils
 import com.android.systemui.Dependency
 import com.android.systemui.Flags
-import com.android.systemui.FontSizeUtils
 import com.android.systemui.animation.Expandable
 import com.android.systemui.animation.LaunchableView
 import com.android.systemui.animation.LaunchableViewDelegate
@@ -234,6 +233,7 @@ constructor(
     private var vertical = false
     private var labelHide = false
     private var forceHideCheveron = false
+    private var labelSize = 14f
 
     /** Visuo-haptic long-press effects */
     private var longPressEffectAnimator: ValueAnimator? = null
@@ -262,6 +262,7 @@ constructor(
         vertical = TileUtils.getQSTileVerticalLayout(context)
         labelHide = TileUtils.getQSTileLabelHide(context)
         forceHideCheveron = vertical || labelHide
+        labelSize = TileUtils.getQSTileLabelSize(context)
         importantForAccessibility = IMPORTANT_FOR_ACCESSIBILITY_YES
         clipChildren = false
         clipToPadding = false
@@ -313,8 +314,8 @@ constructor(
     }
 
     fun updateResources() {
-        FontSizeUtils.updateFontSize(label, R.dimen.qs_tile_text_size)
-        FontSizeUtils.updateFontSize(secondaryLabel, R.dimen.qs_tile_text_size)
+        label.setTextSize(TypedValue.COMPLEX_UNIT_SP, labelSize)
+        secondaryLabel.setTextSize(TypedValue.COMPLEX_UNIT_SP, labelSize)
 
         val iconSize = context.resources.getDimensionPixelSize(R.dimen.qs_icon_size)
         icon.layoutParams.apply {
