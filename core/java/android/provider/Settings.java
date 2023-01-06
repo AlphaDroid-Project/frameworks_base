@@ -13644,6 +13644,12 @@ public final class Settings {
         public static final String SPOOF_STORAGE_ENCRYPTION_STATUS = "spoof_storage_encryption_status";
 
         /**
+         * Whether to trigger doze for new notifications
+         * @hide
+         */
+        public static final String DOZE_FOR_NOTIFICATIONS = "doze_for_notifications";
+
+        /**
          * Whether to show ambient instead of waking for the tap gesture
          * @hide
          */
