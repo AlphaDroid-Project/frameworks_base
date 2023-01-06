@@ -13037,6 +13037,12 @@ public final class Settings {
         public static final String STATUS_BAR_SHOW_LYRIC = "status_bar_show_lyric";
 
         /**
+         * Whether to trigger doze for new notifications
+         * @hide
+         */
+        public static final String DOZE_FOR_NOTIFICATIONS = "doze_for_notifications";
+
+        /**
          * Whether to show ambient instead of waking for the tap gesture
          * @hide
          */
