@@ -2702,7 +2702,9 @@ public final class NotificationPanelViewController implements ShadeSurface, Dump
                 && !mQsController.getFullyExpanded()) {
             alpha *= mClockPositionResult.clockAlpha;
         }
-        alpha = (alpha < 0.88f) ? 0f : 1f;
+        if (mQsController.isExpandImmediate() && !mQsController.getFullyExpanded()) {
+            alpha = 0f;
+        }
         mNotificationStackScrollLayoutController.setAlpha(alpha);
     }
 
