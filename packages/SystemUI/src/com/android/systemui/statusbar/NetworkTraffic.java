@@ -380,8 +380,12 @@ public class NetworkTraffic extends TextView implements TunerService.Tunable {
             tunerService.addTunable(this, NETWORK_TRAFFIC_REFRESH_INTERVAL);
             tunerService.addTunable(this, NETWORK_TRAFFIC_HIDEARROW);
 
-            mConnectivityManager.registerNetworkCallback(mRequest, mNetworkCallback);
-            mConnectivityManager.registerDefaultNetworkCallback(mDefaultNetworkCallback);
+            try {
+                mConnectivityManager.registerNetworkCallback(mRequest, mNetworkCallback);
+                mConnectivityManager.registerDefaultNetworkCallback(mDefaultNetworkCallback);
+            } catch (Exception e) {
+                // Do nothing
+            }
 
             mConnectionAvailable = mConnectivityManager.getActiveNetworkInfo() != null;
 
@@ -399,7 +403,11 @@ public class NetworkTraffic extends TextView implements TunerService.Tunable {
         if (mAttached) {
             clearHandlerCallbacks();
             mContext.unregisterReceiver(mIntentReceiver);
-            mConnectivityManager.unregisterNetworkCallback(mNetworkCallback);
+            try {
+                mConnectivityManager.unregisterNetworkCallback(mNetworkCallback);
+            } catch (Exception e) {
+                // Do nothing
+            }
             Dependency.get(TunerService.class).removeTunable(this);
             mAttached = false;
         }
