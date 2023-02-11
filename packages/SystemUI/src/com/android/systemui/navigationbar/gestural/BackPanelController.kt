@@ -20,6 +20,7 @@ import android.content.res.Configuration
 import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.Point
+import android.os.AsyncTask
 import android.os.Handler
 import android.os.SystemClock
 import android.util.Log
@@ -163,6 +164,11 @@ internal constructor(
     private val elapsedTimeSinceEntry
         get() = SystemClock.uptimeMillis() - gestureEntryTime
 
+    private var mEdgeHapticIntensity = 0
+    private var longSwipeThreshold = 0f
+    private var triggerLongSwipe = false
+    private var isLongSwipeEnabled = false
+
     private var pastThresholdWhileEntryOrInactiveTime = 0L
     private var entryToActiveDelay = 0F
     private val entryToActiveDelayCalculation = {
@@ -171,6 +177,16 @@ internal constructor(
             valueOnSlowVelocity = MAX_DURATION_ENTRY_BEFORE_ACTIVE_ANIMATION,
         )
     }
+
+    private val vibrationEffectsMap = mapOf(
+        1 to VibrationEffect.createPredefined(VibrationEffect.EFFECT_TEXTURE_TICK),
+        2 to VibrationEffect.createPredefined(VibrationEffect.EFFECT_TICK),
+        3 to VibrationEffect.createPredefined(VibrationEffect.EFFECT_CLICK),
+        4 to VibrationEffect.createPredefined(VibrationEffect.EFFECT_DOUBLE_CLICK),
+        5 to VibrationEffect.createPredefined(VibrationEffect.EFFECT_HEAVY_CLICK)
+    )
+
+    private val fallbackVibEffect = VibrationEffect.createPredefined(VibrationEffect.EFFECT_CLICK);
 
     // Whether the current gesture has moved a sufficiently large amount,
     // so that we can unambiguously start showing the ENTRY animation
@@ -181,13 +197,7 @@ internal constructor(
 
     private val failsafeRunnable = Runnable { onFailsafe() }
 
-    private var longSwipeThreshold = 0f
-    private var triggerLongSwipe = false
-    private var isLongSwipeEnabled = false
-
     private var backArrowVisibility = false
-
-    private var edgeHapticEnabled = false
 
     internal enum class GestureState {
         /* Arrow is off the screen and invisible */
@@ -693,17 +703,10 @@ internal constructor(
         backArrowVisibility = enabled
     }
 
-    override fun setEdgeHapticEnabled(enabled: Boolean) {
-        edgeHapticEnabled = enabled
-    }
-
     private fun setTriggerLongSwipe(enabled: Boolean) {
         if (triggerLongSwipe != enabled) {
             triggerLongSwipe = enabled
-            if (edgeHapticEnabled) vibratorHelper.performHapticFeedback(
-                    mView,
-                    HapticFeedbackConstants.GESTURE_THRESHOLD_ACTIVATE
-            )
+            triggerVibration()
             updateRestingArrowDimens()
             // Whenever the trigger back state changes
             // the existing translation animation should be cancelled
@@ -971,7 +974,16 @@ internal constructor(
             GestureState.ACTIVE -> {
                 previousXTranslationOnActiveOffset = previousXTranslation
                 updateRestingArrowDimens()
-                if (edgeHapticEnabled) performActivatedHapticFeedback()
+                if (featureFlags.isEnabled(ONE_WAY_HAPTICS_API_MIGRATION)) {
+                    if (mEdgeHapticIntensity > 0)
+                        vibratorHelper.performHapticFeedback(
+                            mView,
+                            HapticFeedbackConstants.GESTURE_THRESHOLD_ACTIVATE
+                        )
+                } else {
+                    vibratorHelper.cancel()
+                    triggerVibration()
+                }
                 val popVelocity =
                     if (previousState == GestureState.INACTIVE) {
                         POP_ON_INACTIVE_TO_ACTIVE_VELOCITY
@@ -992,24 +1004,26 @@ internal constructor(
 
                 mView.popOffEdge(POP_ON_INACTIVE_VELOCITY)
 
-                if (edgeHapticEnabled) performDeactivatedHapticFeedback()
+                if (featureFlags.isEnabled(ONE_WAY_HAPTICS_API_MIGRATION)) {
+                    if (mEdgeHapticIntensity > 0)
+                        vibratorHelper.performHapticFeedback(
+                            mView,
+                            HapticFeedbackConstants.GESTURE_THRESHOLD_DEACTIVATE
+                        )
+                } else {
+                    triggerVibration()
+                }
                 updateRestingArrowDimens()
             }
             GestureState.FLUNG -> {
-                // Typically a vibration is only played while transitioning to ACTIVE. However there
-                // are instances where a fling to trigger back occurs while not in that state.
-                // (e.g. A fling is detected before crossing the trigger threshold.)
-                if (edgeHapticEnabled && (previousState != GestureState.ACTIVE)) {
-                    performActivatedHapticFeedback()
-                }
                 mainHandler.postDelayed(POP_ON_FLING_DELAY) {
                     mView.popScale(POP_ON_FLING_VELOCITY)
                 }
+                updateRestingArrowDimens()
                 mainHandler.postDelayed(
                     onEndSetCommittedStateListener.runnable,
                     MIN_DURATION_FLING_ANIMATION
                 )
-                updateRestingArrowDimens()
             }
             GestureState.COMMITTED -> {
                 // In most cases, animating between states is handled via `updateRestingArrowDimens`
@@ -1042,18 +1056,19 @@ internal constructor(
         }
     }
 
-    private fun performDeactivatedHapticFeedback() {
-        vibratorHelper.performHapticFeedback(
-                mView,
-                HapticFeedbackConstants.GESTURE_THRESHOLD_DEACTIVATE
-        )
+    override fun setEdgeHapticIntensity(edgeHapticIntensity: Int) {
+        mEdgeHapticIntensity = edgeHapticIntensity
     }
 
-    private fun performActivatedHapticFeedback() {
-        vibratorHelper.performHapticFeedback(
-                mView,
-                HapticFeedbackConstants.GESTURE_THRESHOLD_ACTIVATE
-        )
+    private fun triggerVibration() {
+        if (vibratorHelper == null || mEdgeHapticIntensity == 0) {
+            return
+        }
+
+        val effect = vibrationEffectsMap[mEdgeHapticIntensity]
+            ?: fallbackVibEffect
+
+        AsyncTask.execute { vibratorHelper.vibrate(effect) }
     }
 
     private fun convertVelocityToAnimationFactor(
