@@ -103,4 +103,7 @@
     <!-- Default FOD pressed color -->
     <integer name="config_udfps_pressed_color">3</integer>
 
+    <!-- Boost Framework -->
+    <bool name="config_supportsBoostFramework">false</bool>
+
 </resources>
