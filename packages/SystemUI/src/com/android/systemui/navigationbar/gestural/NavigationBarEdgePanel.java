@@ -30,8 +30,10 @@ import android.graphics.Paint;
 import android.graphics.Path;
 import android.graphics.Point;
 import android.graphics.Rect;
+import android.os.AsyncTask;
 import android.os.Handler;
 import android.os.SystemClock;
+import android.os.Vibrator;
 import android.os.VibrationEffect;
 import android.util.Log;
 import android.util.MathUtils;
@@ -57,7 +59,6 @@ import com.android.systemui.R;
 import com.android.systemui.animation.Interpolators;
 import com.android.systemui.plugins.NavigationEdgeBackPlugin;
 import com.android.systemui.shared.navigationbar.RegionSamplingHelper;
-import com.android.systemui.statusbar.VibratorHelper;
 
 import java.io.PrintWriter;
 import java.util.concurrent.Executor;
@@ -136,7 +137,6 @@ public class NavigationBarEdgePanel extends View implements NavigationEdgeBackPl
             = new PathInterpolator(1.0f / RUBBER_BAND_AMOUNT_APPEAR, 1.0f, 1.0f, 1.0f);
 
     private final WindowManager mWindowManager;
-    private final VibratorHelper mVibratorHelper;
 
     /**
      * The paint the arrow is drawn with
@@ -235,6 +235,7 @@ public class NavigationBarEdgePanel extends View implements NavigationEdgeBackPl
     private boolean mIsLongSwipeEnabled;
     private boolean mBackArrowVisibility;
     private boolean mEdgeHapticEnabled;
+    private final Vibrator mVibrator;
 
     private DynamicAnimation.OnAnimationEndListener mSetGoneEndListener
             = new DynamicAnimation.OnAnimationEndListener() {
@@ -292,7 +293,6 @@ public class NavigationBarEdgePanel extends View implements NavigationEdgeBackPl
         super(context);
 
         mWindowManager = context.getSystemService(WindowManager.class);
-        mVibratorHelper = Dependency.get(VibratorHelper.class);
 
         mDensity = context.getResources().getDisplayMetrics().density;
 
@@ -386,6 +386,7 @@ public class NavigationBarEdgePanel extends View implements NavigationEdgeBackPl
         mRegionSamplingHelper.setWindowVisible(true);
         mShowProtection = !isPrimaryDisplay;
         mLatencyTracker = latencyTracker;
+        mVibrator = context.getSystemService(Vibrator.class);
     }
 
     @Override
@@ -672,7 +673,7 @@ public class NavigationBarEdgePanel extends View implements NavigationEdgeBackPl
         boolean isSlow = Math.abs(mVelocityTracker.getXVelocity()) < 500;
         if (mEdgeHapticEnabled && (isSlow
                 || SystemClock.uptimeMillis() - mVibrationTime >= GESTURE_DURATION_FOR_CLICK_MS)) {
-            mVibratorHelper.vibrate(VibrationEffect.EFFECT_CLICK);
+            vibrateClick();
         }
 
         // Let's also snap the angle a bit
@@ -770,10 +771,12 @@ public class NavigationBarEdgePanel extends View implements NavigationEdgeBackPl
         // Apply a haptic on drag slop passed
         if (!mDragSlopPassed && touchTranslation > mSwipeTriggerThreshold) {
             mDragSlopPassed = true;
-            if (mEdgeHapticEnabled) {
-                mVibratorHelper.vibrate(VibrationEffect.EFFECT_TICK);
+
+            // don't vibrate here
+            /*if (mEdgeHapticEnabled) {
+                vibrateClick();
                 mVibrationTime = SystemClock.uptimeMillis();
-            }
+            }*/
 
             // Let's show the arrow and animate it in!
             mDisappearAmount = 0.0f;
@@ -929,7 +932,7 @@ public class NavigationBarEdgePanel extends View implements NavigationEdgeBackPl
         if (mTriggerLongSwipe != triggerLongSwipe) {
             mTriggerLongSwipe = triggerLongSwipe;
             if (mEdgeHapticEnabled) {
-                mVibratorHelper.vibrate(VibrationEffect.EFFECT_DOUBLE_CLICK);
+                vibrateClick();
             }
             mAngleAnimation.cancel();
             updateAngle(animated);
@@ -938,6 +941,11 @@ public class NavigationBarEdgePanel extends View implements NavigationEdgeBackPl
             mTranslationAnimation.cancel();
             mBackCallback.setTriggerLongSwipe(mTriggerLongSwipe);
         }
+    }
+
+    private void vibrateClick() {
+        AsyncTask.execute(() ->
+                mVibrator.vibrate(VibrationEffect.get(VibrationEffect.EFFECT_CLICK)));
     }
 
     private void updateAngle(boolean animated) {
