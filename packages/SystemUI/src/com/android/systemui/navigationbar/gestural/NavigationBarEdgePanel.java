@@ -768,15 +768,8 @@ public class NavigationBarEdgePanel extends View implements NavigationEdgeBackPl
         mPreviousTouchTranslation = touchTranslation;
         boolean isLongSwipe = touchTranslation > mLongSwipeThreshold;
 
-        // Apply a haptic on drag slop passed
         if (!mDragSlopPassed && touchTranslation > mSwipeTriggerThreshold) {
             mDragSlopPassed = true;
-
-            // don't vibrate here
-            /*if (mEdgeHapticEnabled) {
-                vibrateClick();
-                mVibrationTime = SystemClock.uptimeMillis();
-            }*/
 
             // Let's show the arrow and animate it in!
             mDisappearAmount = 0.0f;
@@ -931,9 +924,6 @@ public class NavigationBarEdgePanel extends View implements NavigationEdgeBackPl
     private void setTriggerLongSwipe(boolean triggerLongSwipe, boolean animated) {
         if (mTriggerLongSwipe != triggerLongSwipe) {
             mTriggerLongSwipe = triggerLongSwipe;
-            if (mEdgeHapticEnabled) {
-                vibrateClick();
-            }
             mAngleAnimation.cancel();
             updateAngle(animated);
             // Whenever the trigger back state changes the existing translation animation should be
