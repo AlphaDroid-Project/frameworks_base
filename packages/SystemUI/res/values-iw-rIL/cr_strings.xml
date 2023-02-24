@@ -150,4 +150,7 @@
     <string name="kilobytespersecond_short">קילובייט/שניה</string>
     <string name="megabytespersecond_short">מגהבייט/שניה</string>
     <string name="gigabytespersecond_short">גיגהבייט/שניה</string>
+    <!-- Language toggle tile -->
+    <string name="quick_settings_locale_label">שפה</string>
+    <string name="quick_settings_locale_more_locales_toast">אנא, הגדירו ריבוי שפות</string>
 </resources>
