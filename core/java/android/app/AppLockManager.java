@@ -30,7 +30,6 @@ import java.util.List;
 /**
  * @hide
  */
-@SystemApi
 @SystemService(Context.APP_LOCK_SERVICE)
 public final class AppLockManager {
 
@@ -42,6 +41,9 @@ public final class AppLockManager {
 
     /** @hide */
     public static final boolean DEFAULT_REDACT_NOTIFICATION = false;
+
+    /** @hide */
+    public static final boolean DEFAULT_HIDE_IN_LAUNCHER = false;
 
     /**
      * Intent action for starting credential activity in SystemUI.
@@ -77,6 +79,7 @@ public final class AppLockManager {
      * Caller must hold {@link android.permission.MANAGE_APP_LOCK}.
      *
      * @param packageName the package name of the app to add.
+     * @hide
      */
     @UserHandleAware
     @RequiresPermission(Manifest.permission.MANAGE_APP_LOCK)
@@ -93,6 +96,7 @@ public final class AppLockManager {
      * Caller must hold {@link android.permission.MANAGE_APP_LOCK}.
      *
      * @param packageName the package name of the app to remove.
+     * @hide
      */
     @UserHandleAware
     @RequiresPermission(Manifest.permission.MANAGE_APP_LOCK)
@@ -110,6 +114,7 @@ public final class AppLockManager {
      * @param userId the user id given by the caller.
      * @return the timeout in milliseconds if configuration for
      *     current user exists, -1 otherwise.
+     * @hide
      */
     @UserHandleAware
     public long getTimeout() {
@@ -126,6 +131,7 @@ public final class AppLockManager {
      *
      * @param timeout the timeout in milliseconds. Must be >= 5.
      * @param userId the user id given by the caller.
+     * @hide
      */
     @UserHandleAware
     @RequiresPermission(Manifest.permission.MANAGE_APP_LOCK)
@@ -161,6 +167,7 @@ public final class AppLockManager {
      *
      * @param packageName the package name.
      * @param shouldRedactNotification true to hide notification content.
+     * @hide
      */
     @UserHandleAware
     @RequiresPermission(Manifest.permission.MANAGE_APP_LOCK)
@@ -177,6 +184,7 @@ public final class AppLockManager {
      * Caller must hold {@link android.permission.MANAGE_APP_LOCK}.
      *
      * @param biometricsAllowed whether to use biometrics.
+     * @hide
      */
     @UserHandleAware
     @RequiresPermission(Manifest.permission.MANAGE_APP_LOCK)
@@ -192,6 +200,7 @@ public final class AppLockManager {
      * Check whether biometrics is allowed for unlocking.
      *
      * @return true if biometrics will be used for unlocking, false otheriwse.
+     * @hide
      */
     @UserHandleAware
     public boolean isBiometricsAllowed() {
@@ -207,12 +216,49 @@ public final class AppLockManager {
      * Caller must hold {@link android.permission.MANAGE_APP_LOCK}.
      *
      * @param packageName the name of the package to unlock.
+     * @hide
      */
     @UserHandleAware
     @RequiresPermission(Manifest.permission.MANAGE_APP_LOCK)
     public void unlockPackage(@NonNull String packageName) {
         try {
             mService.unlockPackage(packageName, mContext.getUserId());
+        } catch (RemoteException e) {
+            throw e.rethrowFromSystemServer();
+        }
+    }
+
+    /**
+     * Hide or unhide an application from launcher.
+     * Caller must hold {@link android.permission.MANAGE_APP_LOCK}.
+     *
+     * @param packageName the name of the package to hide or unhide.
+     * @param hide whether to hide or not.
+     * @hide
+     */
+    @UserHandleAware
+    @RequiresPermission(Manifest.permission.MANAGE_APP_LOCK)
+    public void setPackageHidden(@NonNull String packageName, boolean hide) {
+        try {
+            mService.setPackageHidden(packageName, hide, mContext.getUserId());
+        } catch (RemoteException e) {
+            throw e.rethrowFromSystemServer();
+        }
+    }
+
+    /**
+     * Get the list of applications hidden from launcher.
+     * Caller must hold {@link android.permission.MANAGE_APP_LOCK}.
+     *
+     * @return list of package names of the hidden apps.
+     * @hide
+     */
+    @UserHandleAware
+    @RequiresPermission(Manifest.permission.MANAGE_APP_LOCK)
+    @NonNull
+    public List<String> getHiddenPackages() {
+        try {
+            return mService.getHiddenPackages(mContext.getUserId());
         } catch (RemoteException e) {
             throw e.rethrowFromSystemServer();
         }

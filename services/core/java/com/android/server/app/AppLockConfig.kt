@@ -18,6 +18,7 @@ package com.android.server.app
 
 import android.app.AppLockData
 import android.app.AppLockManager.DEFAULT_BIOMETRICS_ALLOWED
+import android.app.AppLockManager.DEFAULT_HIDE_IN_LAUNCHER
 import android.app.AppLockManager.DEFAULT_REDACT_NOTIFICATION
 import android.app.AppLockManager.DEFAULT_TIMEOUT
 import android.os.FileUtils
@@ -36,7 +37,7 @@ import org.json.JSONObject
 private const val APP_LOCK_DIR_NAME = "app_lock"
 private const val APP_LOCK_CONFIG_FILE = "app_lock_config.json"
 
-private const val CURRENT_VERSION = 1
+private const val CURRENT_VERSION = 2
 
 // Only in version 0
 private const val KEY_PACKAGES = "packages"
@@ -50,6 +51,9 @@ private const val KEY_APP_LOCK_DATA_LIST = "app_lock_data_list"
 private const val KEY_PACKAGE_NAME = "package_name"
 private const val KEY_REDACT_NOTIFICATION = "redact_notification"
 private const val KEY_BIOMETRICS_ALLOWED = "biometrics_allowed"
+
+// From version 2 and up.
+private const val KEY_HIDE_FROM_LAUNCHER = "hide_from_launcher"
 
 /**
  * Container for app lock configuration. Also handles logic of reading
@@ -84,7 +88,8 @@ internal class AppLockConfig(dataDir: File) {
             appLockDataMap[packageName] =
                 AppLockData(
                     packageName,
-                    DEFAULT_REDACT_NOTIFICATION
+                    DEFAULT_REDACT_NOTIFICATION,
+                    DEFAULT_HIDE_IN_LAUNCHER
                 )
             true
         } else {
@@ -134,6 +139,7 @@ internal class AppLockConfig(dataDir: File) {
                 appLockDataMap[packageName] = AppLockData(
                     it.packageName,
                     shouldRedactNotification,
+                    it.hideFromLauncher
                 )
                 true
             } else {
@@ -155,6 +161,31 @@ internal class AppLockConfig(dataDir: File) {
      */
     fun shouldRedactNotification(packageName: String): Boolean {
         return appLockDataMap[packageName]?.shouldRedactNotification == true
+    }
+
+    /**
+     * Mark an application as hidden from launcher in [appLockDataMap].
+     *
+     * @param packageName the package name of the application.
+     * @param hide the parameter value in [AppLockData].
+     * @return true if hidden state was changed, false otherwise.
+     */
+    fun hidePackage(packageName: String, hide: Boolean): Boolean {
+        return appLockDataMap[packageName]?.let {
+            if (it.hideFromLauncher != hide) {
+                appLockDataMap[packageName] = AppLockData(
+                    it.packageName,
+                    it.shouldRedactNotification,
+                    hide
+                )
+                true
+            } else {
+                false
+            }
+        } ?: run {
+            Slog.e(TAG, "Attempt to hide package that is not in list")
+            false
+        }
     }
 
     /**
@@ -183,7 +214,8 @@ internal class AppLockConfig(dataDir: File) {
                     val packageName = appLockData.getString(KEY_PACKAGE_NAME)
                     appLockDataMap[packageName] = AppLockData(
                         packageName,
-                        appLockData.getBoolean(KEY_REDACT_NOTIFICATION)
+                        appLockData.getBoolean(KEY_REDACT_NOTIFICATION),
+                        appLockData.getBoolean(KEY_HIDE_FROM_LAUNCHER)
                     )
                 }
             }
@@ -194,7 +226,8 @@ internal class AppLockConfig(dataDir: File) {
         }
         logD {
             "readConfig: data = $appLockDataMap, " +
-            "timeout = $appLockTimeout"
+            "timeout = $appLockTimeout, " +
+            "biometricsAllowed = $biometricsAllowed"
         }
     }
 
@@ -213,7 +246,7 @@ internal class AppLockConfig(dataDir: File) {
                     val appLockDataList = JSONArray()
                     packageObject.keys().forEach { pkg ->
                         val isSecure = packageObject.getJSONObject(pkg)
-                            .optBoolean(KEY_SECURE_NOTIFICATION, false)
+                            .optBoolean(KEY_SECURE_NOTIFICATION, DEFAULT_REDACT_NOTIFICATION)
                         appLockDataList.put(
                             JSONObject()
                                 .put(KEY_PACKAGE_NAME, pkg)
@@ -231,6 +264,7 @@ internal class AppLockConfig(dataDir: File) {
                         val backupList = mutableListOf<JSONObject>()
                         for (i in (size - 1)..0) {
                             val appData = appLockDataList.getJSONObject(i)
+                                .put(KEY_HIDE_FROM_LAUNCHER, DEFAULT_HIDE_IN_LAUNCHER)
                             backupList.add(appData)
                             appLockDataList.remove(i)
                         }
@@ -268,6 +302,7 @@ internal class AppLockConfig(dataDir: File) {
                         JSONObject().apply {
                             put(KEY_PACKAGE_NAME, it.packageName)
                             put(KEY_REDACT_NOTIFICATION, it.shouldRedactNotification)
+                            put(KEY_HIDE_FROM_LAUNCHER, it.hideFromLauncher)
                         }
                     }
                 )
