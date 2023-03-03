@@ -126,8 +126,6 @@ android_library {
         "lottie",
         "LowLightDreamLib",
         "vendor.lineage.powershare-V1.0-java",
-        "colorkt",
-        "themelib",
         "faceunlock_framework",
     ],
     manifest: "AndroidManifest.xml",
