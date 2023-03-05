@@ -222,6 +222,15 @@ public abstract class LogoImage extends ImageView {
             case 30:
                 drawable = mContext.getResources().getDrawable(R.drawable.ic_flash);
                 break;
+            case 31:
+                drawable = mContext.getResources().getDrawable(R.drawable.ic_tux_logo);
+                break;
+            case 32:
+                drawable = mContext.getResources().getDrawable(R.drawable.ic_ubuntu_logo);
+                break;
+            case 33:
+                drawable = mContext.getResources().getDrawable(R.drawable.ic_mint_logo);
+                break;
         }
 
         drawable.setTint(mTintColor);

@@ -109,4 +109,7 @@
 
      <!-- Base Multiplier for dp to px. -->
     <dimen name="amb_font_base_multiplier_dp">1dp</dimen>
+
+    <!-- Bluetooth dialog -->
+    <dimen name="bluetooth_dialog_active_device_bottom_margin">4dp</dimen>
 </resources>
