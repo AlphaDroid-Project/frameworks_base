@@ -951,6 +951,24 @@ package android.app {
     method public boolean isStatusBarExpansionDisabled();
   }
 
+  public final class StorageScope {
+    ctor public StorageScope(@NonNull String, int);
+    method @NonNull public static android.content.Intent createConfigActivityIntent(@NonNull String);
+    method @NonNull public static android.app.StorageScope[] deserializeArray(@NonNull android.content.pm.GosPackageState);
+    method public boolean isDirectory();
+    method public boolean isFile();
+    method public boolean isWritable();
+    method public static int maxArrayLength();
+    method @Nullable public static byte[] serializeArray(@NonNull android.app.StorageScope[]);
+    field public static final String EXTERNAL_STORAGE_PROVIDER_METHOD_CONVERT_DOC_ID_TO_PATH = "StorageScopes_convertDocIdToPath";
+    field public static final int FLAG_ALLOW_WRITES = 1; // 0x1
+    field public static final int FLAG_IS_DIR = 2; // 0x2
+    field public static final String MEDIA_PROVIDER_METHOD_INVALIDATE_MEDIA_PROVIDER_CACHE = "StorageScopes_invalidateCache";
+    field public static final String MEDIA_PROVIDER_METHOD_MEDIA_ID_TO_FILE_PATH = "StorageScopes_mediaIdToFilePath";
+    field public final int flags;
+    field @NonNull public final String path;
+  }
+
   public final class SystemServiceRegistry {
     method public static <TServiceClass> void registerContextAwareService(@NonNull String, @NonNull Class<TServiceClass>, @NonNull android.app.SystemServiceRegistry.ContextAwareServiceProducerWithBinder<TServiceClass>);
     method public static <TServiceClass> void registerContextAwareService(@NonNull String, @NonNull Class<TServiceClass>, @NonNull android.app.SystemServiceRegistry.ContextAwareServiceProducerWithoutBinder<TServiceClass>);
@@ -3191,6 +3209,53 @@ package android.content.pm {
     method @NonNull public final int getType();
   }
 
+  public final class GosPackageState implements android.os.Parcelable {
+    method public static boolean attachableToPackage(@NonNull String);
+    method public int describeContents();
+    method @NonNull public android.content.pm.GosPackageState.Editor edit();
+    method @NonNull public static android.content.pm.GosPackageState.Editor edit(@NonNull String);
+    method @Nullable public static android.content.pm.GosPackageState get(@NonNull String);
+    method @Nullable public static android.content.pm.GosPackageState getForSelf();
+    method public boolean hasDerivedFlag(int);
+    method public boolean hasDerivedFlags(int);
+    method public boolean hasFlag(int);
+    method public boolean hasFlags(int);
+    method public boolean shouldSkipRuntimePermissionRequest(@NonNull String);
+    method public boolean shouldSpoofRuntimePermissionCheck(@NonNull String);
+    method public void writeToParcel(@NonNull android.os.Parcel, int);
+    field @NonNull public static final android.os.Parcelable.Creator<android.content.pm.GosPackageState> CREATOR;
+    field public static final int DFLAGS_SET = 1; // 0x1
+    field public static final int DFLAG_EXPECTS_ACCESS_TO_MEDIA_FILES_ONLY = 4; // 0x4
+    field public static final int DFLAG_EXPECTS_ALL_FILES_ACCESS = 2; // 0x2
+    field public static final int DFLAG_EXPECTS_LEGACY_EXTERNAL_STORAGE = 4096; // 0x1000
+    field public static final int DFLAG_EXPECTS_STORAGE_WRITE_ACCESS = 8; // 0x8
+    field public static final int DFLAG_HAS_ACCESS_MEDIA_LOCATION_DECLARATION = 256; // 0x100
+    field public static final int DFLAG_HAS_MANAGE_EXTERNAL_STORAGE_DECLARATION = 64; // 0x40
+    field public static final int DFLAG_HAS_MANAGE_MEDIA_DECLARATION = 128; // 0x80
+    field public static final int DFLAG_HAS_READ_EXTERNAL_STORAGE_DECLARATION = 16; // 0x10
+    field public static final int DFLAG_HAS_READ_MEDIA_AUDIO_DECLARATION = 512; // 0x200
+    field public static final int DFLAG_HAS_READ_MEDIA_IMAGES_DECLARATION = 1024; // 0x400
+    field public static final int DFLAG_HAS_READ_MEDIA_VIDEO_DECLARATION = 2048; // 0x800
+    field public static final int DFLAG_HAS_WRITE_EXTERNAL_STORAGE_DECLARATION = 32; // 0x20
+    field public static final int FLAG_ALLOW_ACCESS_TO_OBB_DIRECTORY = 2; // 0x2
+    field public static final int FLAG_DISABLE_HARDENED_MALLOC = 4; // 0x4
+    field public static final int FLAG_ENABLE_COMPAT_VA_39_BIT = 8; // 0x8
+    field public static final int FLAG_STORAGE_SCOPES_ENABLED = 1; // 0x1
+    field public final int derivedFlags;
+    field public final int flags;
+    field @Nullable public final byte[] storageScopes;
+  }
+
+  public static class GosPackageState.Editor {
+    method @NonNull public android.content.pm.GosPackageState.Editor addFlags(int);
+    method @Nullable public android.content.pm.GosPackageState apply();
+    method @NonNull public android.content.pm.GosPackageState.Editor clearFlags(int);
+    method @NonNull public android.content.pm.GosPackageState.Editor killUidAfterApply();
+    method @NonNull public android.content.pm.GosPackageState.Editor setFlagsState(int, boolean);
+    method @NonNull public android.content.pm.GosPackageState.Editor setKillUidAfterApply(boolean);
+    method @NonNull public android.content.pm.GosPackageState.Editor setStorageScopes(@Nullable byte[]);
+  }
+
   public final class InstallationFile {
     method public long getLengthBytes();
     method public int getLocation();
@@ -3544,6 +3609,14 @@ package android.content.pm {
     method @NonNull public android.content.ComponentName getTargetComponent();
     method public void writeToParcel(@NonNull android.os.Parcel, int);
     field @NonNull public static final android.os.Parcelable.Creator<android.content.pm.ShortcutManager.ShareShortcutInfo> CREATOR;
+  }
+
+  public class SpecialRuntimePermAppUtils {
+    method public static boolean awareOfRuntimeInternetPermission();
+    method public static boolean isInternetCompatEnabled();
+    method public static boolean requestsInternetPermission();
+    field public static final int FLAG_AWARE_OF_RUNTIME_INTERNET_PERMISSION = 4; // 0x4
+    field public static final int FLAG_REQUESTS_INTERNET_PERMISSION = 2; // 0x2
   }
 
   public final class SuspendDialogInfo implements android.os.Parcelable {
@@ -16339,4 +16412,3 @@ package android.window {
   }
 
 }
-
