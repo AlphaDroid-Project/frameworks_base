@@ -610,6 +610,7 @@ public class InputManagerService extends IInputManager.Stub
 
         registerPointerSpeedSettingObserver();
         registerPreventPointerAccelerationSettingObserver();
+        registerForceMouseAsTouchSettingObserver();
         registerShowTouchesSettingObserver();
         registerAccessibilityLargePointerSettingObserver();
         registerLongPressTimeoutObserver();
@@ -622,6 +623,7 @@ public class InputManagerService extends IInputManager.Stub
             public void onReceive(Context context, Intent intent) {
                 updatePointerSpeedFromSettings();
                 updatePreventPointerAccelerationFromSettings();
+                updateForceMouseAsTouchFromSettings();
                 updateShowTouchesFromSettings();
                 updateAccessibilityLargePointerFromSettings();
                 updateDeepPressStatusFromSettings("user switched");
@@ -631,6 +633,7 @@ public class InputManagerService extends IInputManager.Stub
 
         updatePointerSpeedFromSettings();
         updatePreventPointerAccelerationFromSettings();
+        updateForceMouseAsTouchFromSettings();
         updateShowTouchesFromSettings();
         updateAccessibilityLargePointerFromSettings();
         updateDeepPressStatusFromSettings("just booted");
@@ -1981,6 +1984,15 @@ public class InputManagerService extends IInputManager.Stub
         mNative.setPreventPointerAcceleration(preventPointerAcceleration);
     }
 
+    private void updateForceMouseAsTouchFromSettings() {
+        boolean forceMouseAsTouch = getForceMouseAsTouchSetting();
+        setForceMouseAsTouchUnchecked(forceMouseAsTouch);
+    }
+
+    private void setForceMouseAsTouchUnchecked(boolean forceMouseAsTouch) {
+        mNative.setForceMouseAsTouch(forceMouseAsTouch);
+    }
+
     private void setPointerAcceleration(float acceleration, int displayId) {
         updateAdditionalDisplayInputProperties(displayId,
                 properties -> properties.pointerAcceleration = acceleration);
@@ -2031,6 +2043,27 @@ public class InputManagerService extends IInputManager.Stub
         } catch (SettingNotFoundException ignored) {
         }
         return preventPointerAcceleration;
+    }
+
+    private void registerForceMouseAsTouchSettingObserver() {
+        mContext.getContentResolver().registerContentObserver(
+                Settings.System.getUriFor(Settings.System.FORCE_MOUSE_AS_TOUCH), true,
+                new ContentObserver(mHandler) {
+                    @Override
+                    public void onChange(boolean selfChange) {
+                        updateForceMouseAsTouchFromSettings();
+                    }
+                }, UserHandle.USER_ALL);
+    }
+
+    private boolean getForceMouseAsTouchSetting() {
+        boolean forceMouseAsTouch = false;
+        try {
+            forceMouseAsTouch = Settings.System.getIntForUser(mContext.getContentResolver(),
+                    Settings.System.FORCE_MOUSE_AS_TOUCH, UserHandle.USER_CURRENT) > 0;
+        } catch (SettingNotFoundException ignored) {
+        }
+        return forceMouseAsTouch;
     }
 
     private void updateShowTouchesFromSettings() {
