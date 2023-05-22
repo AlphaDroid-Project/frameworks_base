@@ -45,6 +45,7 @@
     <string name="status_bar_vpn">VPN</string>
     <string name="status_bar_data_saver">חסכון בנתונים</string>
     <string name="status_bar_call_strength">עוצמת השיחה</string>
+    <string name="status_bar_firewall">Firewall</string>
     <string name="status_bar_ims">VoLTE/VoWiFi</string>
     <!-- Text to use when the number in a notification info is too large -->
     <!-- Indication on the keyguard that is shown when the device is charging with a dash charger. Should match keyguard_plugged_in_dash_charging [CHAR LIMIT=40]-->
@@ -128,10 +129,6 @@
     <!-- Smart Pixels QS Tile -->
     <string name="quick_settings_smart_pixels">פיקסלים חכמים</string>
     <string name="quick_settings_smart_pixels_on_power_save">פיקסלים חכמים מופעלים אוטומטית</string>
-    <!-- Weather Tile -->
-    <string name="omnijaws_service_error">שגיאה בטעינת נתוני מזג האויר</string>
-    <string name="omnijaws_service_unknown">אין נתוני מזג אוויר</string>
-    <string name="omnijaws_label_default">מזג־אוויר</string>
     <!-- Face Unlock -->
     <string name="face_unlock_recognizing">מזהה פנים...</string>
     <!-- Refresh Rate Tile -->
@@ -142,13 +139,6 @@
     <!-- SoundSearch Tile -->
     <string name="quick_settings_sound_search">חיפוש קולי</string>
     <string name="quick_settings_sound_search_no_app">למרבה הצער, לא ניתן להפעיל אפשרות זו ללא יישום חיפוש קולי.</string>
-    <!-- Status bar network traffic monitor strings -->
-    <string name="kilobitspersecond_short">קילוביט/שניה</string>
-    <string name="megabitspersecond_short">מגהביט/שניה</string>
-    <string name="gigabitspersecond_short">גיגהביט/שניה</string>
-    <string name="kilobytespersecond_short">קילובייט/שניה</string>
-    <string name="megabytespersecond_short">מגהבייט/שניה</string>
-    <string name="gigabytespersecond_short">גיגהבייט/שניה</string>
     <!-- Language toggle tile -->
     <string name="quick_settings_locale_label">שפה</string>
     <string name="quick_settings_locale_more_locales_toast">אנא, הגדירו ריבוי שפות</string>
