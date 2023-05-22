@@ -45,6 +45,7 @@
     <string name="status_bar_vpn">VPN</string>
     <string name="status_bar_data_saver">Экономия трафика</string>
     <string name="status_bar_call_strength">Уровень сигнала</string>
+    <string name="status_bar_firewall">Firewall</string>
     <string name="status_bar_ims">VoLTE/VoWiFi</string>
     <!-- Text to use when the number in a notification info is too large -->
     <!-- Indication on the keyguard that is shown when the device is charging with a dash charger. Should match keyguard_plugged_in_dash_charging [CHAR LIMIT=40]-->
@@ -128,10 +129,6 @@
     <!-- Smart Pixels QS Tile -->
     <string name="quick_settings_smart_pixels">Умные пиксели</string>
     <string name="quick_settings_smart_pixels_on_power_save">Автовключение «Умные пиксели»</string>
-    <!-- Weather Tile -->
-    <string name="omnijaws_service_error">Ошибка при загрузке данных о погоде</string>
-    <string name="omnijaws_service_unknown">Нет данных о погоде</string>
-    <string name="omnijaws_label_default">Погода</string>
     <!-- Face Unlock -->
     <string name="face_unlock_recognizing">Распознавание лица...</string>
     <!-- Refresh Rate Tile -->
@@ -142,13 +139,6 @@
     <!-- SoundSearch Tile -->
     <string name="quick_settings_sound_search">Поиск музыки</string>
     <string name="quick_settings_sound_search_no_app">Извините, это не работает без приложения для поиска музыки.</string>
-    <!-- Status bar network traffic monitor strings -->
-    <string name="kilobitspersecond_short">кбит/с</string>
-    <string name="megabitspersecond_short">Мбит/с</string>
-    <string name="gigabitspersecond_short">Гбит/с</string>
-    <string name="kilobytespersecond_short">кБ/с</string>
-    <string name="megabytespersecond_short">МБ/с</string>
-    <string name="gigabytespersecond_short">ГБ/с</string>
     <!-- Language toggle tile -->
     <string name="quick_settings_locale_label">Язык</string>
     <string name="quick_settings_locale_more_locales_toast">Пожалуйста, настройте несколько языков</string>
