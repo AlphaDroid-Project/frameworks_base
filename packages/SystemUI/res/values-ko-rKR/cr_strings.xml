@@ -34,7 +34,7 @@
     <string name="screenrecord_longer_timeout_switch_summary">15GB까지 용량제한</string>
     <string name="screenrecord_skip_time_label">스킵 타이머</string>
     <string name="screenrecord_skip_time_summary">3초타이머 제거</string>
-    <string name="screenrecord_hevc_switch_label">H. 265 활성화</string>
+    <string name="screenrecord_hevc_switch_label">Enable HEVC</string>
     <string name="screenrecord_hevc_switch_summary">HEVC(h. 265) 더 효율적인 비디오 인코딩을 사용</string>
     <!-- Label for UI element which allows deleting the screenshot [CHAR LIMIT=30] -->
     <string name="screenshot_delete_label">삭제</string>
@@ -45,6 +45,7 @@
     <string name="status_bar_vpn">VPN</string>
     <string name="status_bar_data_saver">데이터 절약 모드</string>
     <string name="status_bar_call_strength">통화 세기</string>
+    <string name="status_bar_firewall">Firewall</string>
     <string name="status_bar_ims">VoLTE/voWiFI</string>
     <!-- Text to use when the number in a notification info is too large -->
     <!-- Indication on the keyguard that is shown when the device is charging with a dash charger. Should match keyguard_plugged_in_dash_charging [CHAR LIMIT=40]-->
@@ -125,10 +126,6 @@
     <!-- Smart Pixels QS Tile -->
     <string name="quick_settings_smart_pixels">스마트 픽셀</string>
     <string name="quick_settings_smart_pixels_on_power_save">스마트 픽셀 자동으로 켜기</string>
-    <!-- Weather Tile -->
-    <string name="omnijaws_service_error">날씨 정보 불러오기 오류</string>
-    <string name="omnijaws_service_unknown">날씨 정보 없음</string>
-    <string name="omnijaws_label_default">날씨</string>
     <!-- Face Unlock -->
     <string name="face_unlock_recognizing">얼굴 인식 중...</string>
     <!-- Refresh Rate Tile -->
@@ -138,14 +135,7 @@
     <string name="screenshot_long_press">길게 누르기 - 지역 선택</string>
     <!-- SoundSearch Tile -->
     <string name="quick_settings_sound_search">사운드 검색</string>
-    <string name="quick_settings_sound_search_no_app">죄송합니다. 소리 검색 앱이 없으면 작동하지 않습니다.</string>
-    <!-- Status bar network traffic monitor strings -->
-    <string name="kilobitspersecond_short">kb/초</string>
-    <string name="megabitspersecond_short">Mb/초</string>
-    <string name="gigabitspersecond_short">Gb/초</string>
-    <string name="kilobytespersecond_short">kB/초</string>
-    <string name="megabytespersecond_short">MB/초</string>
-    <string name="gigabytespersecond_short">GB/초</string>
+    <string name="quick_settings_sound_search_no_app">Sorry, but this doesn\'t work if you don\'t have a Sound search app.</string>
     <!-- Language toggle tile -->
     <string name="quick_settings_locale_label">언어</string>
     <string name="quick_settings_locale_more_locales_toast">다중 언어를 설정하세요</string>
