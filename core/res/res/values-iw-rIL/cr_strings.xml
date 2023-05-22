@@ -18,8 +18,7 @@
     <!-- Title of an application permission, listed so the user can choose whether they want to allow the application to do this. -->
     <string name="permlab_fakePackageSignature">זיוף חתימת החבילה</string>
     <!-- Description of an application permission, listed so the user can choose whether they want to allow the application to do this. -->
-    <string name="permdesc_fakePackageSignature">מאפשר ליישום להתחזות ליישום אחר.
-יישומים זדוניים עלולים להשתמש ביכולת זו בכדי לקבל גישה למידע פרטי של יישומים. שימושים כשרים ליכולת זו כוללים מְדַמֶה (אמולטור) המתחזה למה שהוא נועד לדמות. התירו אישור זה ביתר זהירות!</string>
+    <string name="permdesc_fakePackageSignature">מאפשר ליישום להתחזות ליישום אחר. יישומים זדוניים עלולים להשתמש ביכולת זו בכדי לקבל גישה למידע פרטי של יישומים. שימושים כשרים ליכולת זו כוללים מְדַמֶה (אמולטור) המתחזה למה שהוא נועד לדמות. התירו אישור זה ביתר זהירות!</string>
     <!-- Title of a category of application permissions, listed so the user can choose whether they want to allow the application to do this. -->
     <string name="permgrouplab_fake_package_signature">זיוף חתימת החבילה</string>
     <!-- Description of a category of application permissions, listed so the user can choose whether they want to allow the application to do this. -->
