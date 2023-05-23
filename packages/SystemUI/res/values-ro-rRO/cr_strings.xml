@@ -16,35 +16,35 @@
 -->
 <resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
     <!-- Sound QS Tile -->
-    <string name="quick_settings_sound_label">Sound</string>
-    <string name="quick_settings_sound_ring">Ring</string>
-    <string name="quick_settings_sound_vibrate">Vibrate</string>
-    <string name="quick_settings_sound_dnd">Do not disturb</string>
+    <string name="quick_settings_sound_label">Sunet</string>
+    <string name="quick_settings_sound_ring">Sonerie</string>
+    <string name="quick_settings_sound_vibrate">Vibrații</string>
+    <string name="quick_settings_sound_dnd">Nu deranja</string>
     <!-- Screen record delete action -->
     <!-- Label for notification action to delete a screen recording file [CHAR LIMIT=35] -->
-    <string name="screenrecord_delete_label">Delete</string>
+    <string name="screenrecord_delete_label">Șterge</string>
     <!-- A toast message shown after successfully deleting a screen recording [CHAR LIMIT=NONE] -->
-    <string name="screenrecord_delete_description">Screen recording deleted</string>
+    <string name="screenrecord_delete_description">Înregistrarea ecranului a fost ștearsă</string>
     <!-- Screen record -->
-    <string name="screenrecord_stopdot_label">Show stop dot</string>
-    <string name="screenrecord_stopdot_summary">Longpress to move it</string>
-    <string name="screenrecord_lowquality_label">Lower quality</string>
-    <string name="screenrecord_lowquality_summary">For smaller file size</string>
-    <string name="screenrecord_longer_timeout_switch_label">Bigger file size limit</string>
-    <string name="screenrecord_longer_timeout_switch_summary">Limit recording size to 15 GB</string>
-    <string name="screenrecord_skip_time_label">Skip timer</string>
-    <string name="screenrecord_skip_time_summary">Remove 3 second wait</string>
-    <string name="screenrecord_hevc_switch_label">Enable HEVC</string>
-    <string name="screenrecord_hevc_switch_summary">Use more efficient HEVC video encoding</string>
+    <string name="screenrecord_stopdot_label">Se afișează punctul Stop</string>
+    <string name="screenrecord_stopdot_summary">Apasă lung pentru a-l muta</string>
+    <string name="screenrecord_lowquality_label">Calitate scăzută</string>
+    <string name="screenrecord_lowquality_summary">Pentru o dimensiune mai mică a fișierului</string>
+    <string name="screenrecord_longer_timeout_switch_label">Limită mai mare a dimensiunii fișierului</string>
+    <string name="screenrecord_longer_timeout_switch_summary">Limitează dimensiunea înregistrării la 15 GB</string>
+    <string name="screenrecord_skip_time_label">Omite cronometrul</string>
+    <string name="screenrecord_skip_time_summary">Elimină cele 3 secunde de așteptare</string>
+    <string name="screenrecord_hevc_switch_label">Activează HEVC</string>
+    <string name="screenrecord_hevc_switch_summary">Utilizează o codificare video HEVC mai eficientă</string>
     <!-- Label for UI element which allows deleting the screenshot [CHAR LIMIT=30] -->
-    <string name="screenshot_delete_label">Delete</string>
+    <string name="screenshot_delete_label">Șterge</string>
     <!-- Content description indicating that tapping the element will allow deleting the screenshot [CHAR LIMIT=NONE] -->
-    <string name="screenshot_delete_description">Delete screenshot</string>
+    <string name="screenshot_delete_description">Șterge captura de ecran</string>
     <!-- Statusbar Icons -->
     <string name="status_bar_nfc">NFC</string>
     <string name="status_bar_vpn">VPN</string>
-    <string name="status_bar_data_saver">Data saver</string>
-    <string name="status_bar_call_strength">Call strength</string>
+    <string name="status_bar_data_saver">Economisire date</string>
+    <string name="status_bar_call_strength">Putere apel</string>
     <string name="status_bar_firewall">Firewall</string>
     <string name="status_bar_ims">VoLTE/VoWiFi</string>
     <!-- Text to use when the number in a notification info is too large -->
