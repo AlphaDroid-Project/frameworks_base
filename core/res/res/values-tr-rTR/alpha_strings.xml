@@ -15,6 +15,6 @@
     limitations under the License.
 -->
 <resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
-    <string name="settings_restart_title">Settings restart required</string>
-    <string name="settings_restart_message">For all changes to take effect, a Settings restart is required. Restart Settings now?</string>
+    <string name="settings_restart_title">Ayarların yeniden başlatılması gerekiyor</string>
+    <string name="settings_restart_message">Tüm değişikliklerin etkili olması için Ayarlar\'ın yeniden başlatılması gerekir. Ayarlar şimdi yeniden başlatılsın mı?</string>
 </resources>
