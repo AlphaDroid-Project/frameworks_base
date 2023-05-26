@@ -285,6 +285,8 @@ public class CentralSurfacesImpl implements CoreStartable, CentralSurfaces, Tune
             "com.android.systemui.statusbar.banner_action_setup";
     private static final String QS_TRANSPARENCY =
             "system:" + Settings.System.QS_TRANSPARENCY;
+    private static final String QS_DUAL_TONE =
+            "system:" + Settings.System.QS_DUAL_TONE;
 
     private static final int MSG_LAUNCH_TRANSITION_TIMEOUT = 1003;
     // 1020-1040 reserved for BaseStatusBar
@@ -961,6 +963,7 @@ public class CentralSurfacesImpl implements CoreStartable, CentralSurfaces, Tune
         createAndAddWindows(result);
 
         mTunerService.addTunable(this, QS_TRANSPARENCY);
+        mTunerService.addTunable(this, QS_DUAL_TONE);
 
         // Set up the initial notification state. This needs to happen before CommandQueue.disable()
         setUpPresenter();
@@ -2939,6 +2942,10 @@ public class CentralSurfacesImpl implements CoreStartable, CentralSurfaces, Tune
             case QS_TRANSPARENCY:
                 mScrimController.setCustomScrimAlpha(
                         TunerService.parseInteger(newValue, 100));
+                break;
+            case QS_DUAL_TONE:
+                mScrimController.setDualToneColor(
+                        TunerService.parseIntegerSwitch(newValue, true));
                 break;
             default:
                 break;
