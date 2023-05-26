@@ -195,6 +195,8 @@ public class ScrimController implements ViewTreeObserver.OnPreDrawListener, Dump
 
     public static float mCustomScrimAlpha = 1f;
 
+    private boolean mUseDualToneColor = true;
+
     /**
      * Scrim opacity that can have text on top.
      */
@@ -974,6 +976,11 @@ public class ScrimController implements ViewTreeObserver.OnPreDrawListener, Dump
         }
     }
 
+    public void setDualToneColor(boolean useDualToneColor) {
+        mUseDualToneColor = useDualToneColor;
+        onThemeChanged();
+    }
+
     public void setCustomScrimAlpha(int value) {
         mCustomScrimAlpha = (float) value / 100f;
         for (ScrimState state : ScrimState.values()) {
@@ -1198,7 +1205,7 @@ public class ScrimController implements ViewTreeObserver.OnPreDrawListener, Dump
      * device is dozing when the light sensor is on.
      */
     public void setAodFrontScrimAlpha(float alpha) {
-    
+
          // Ensure alpha is fully opaque during AOD mode
         if (mState == ScrimState.AOD) {
             alpha = 0.0f; // Fully transparent
@@ -1639,10 +1646,10 @@ public class ScrimController implements ViewTreeObserver.OnPreDrawListener, Dump
             state.setSurfaceColor(surface);
         }
 
-        mBehindColors.setMainColor(surfaceBackground);
+        mBehindColors.setMainColor(mUseDualToneColor ? surfaceBackground : background);
         mBehindColors.setSecondaryColor(accent);
-        mBehindColors.setSupportsDarkText(
-                ColorUtils.calculateContrast(mBehindColors.getMainColor(), Color.WHITE) > 4.5);
+        final boolean isSurfaceBackgroundLight = !ContrastColorUtil.isColorDark(surfaceBackground);
+        mBehindColors.setSupportsDarkText(mUseDualToneColor ? isSurfaceBackgroundLight : isBackgroundLight);
 
         mNeedsDrawableColorUpdate = true;
     }
