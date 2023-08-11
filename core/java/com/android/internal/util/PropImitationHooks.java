@@ -1,6 +1,9 @@
 /*
  * Copyright (C) 2022 Paranoid Android
  * Copyright (C) 2022 StatiXOS
+ * Copyright (C) 2023 the RisingOS Android Project
+ *           (C) 2023 ArrowOS
+ *           (C) 2023 The LibreMobileOS Foundation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,31 +42,29 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+import java.util.regex.Pattern;
+import java.util.regex.Matcher;
+
 public class PropImitationHooks {
 
     private static final String TAG = "PropImitationHooks";
     private static final boolean DEBUG = false;
-
+    
     private static final String PRODUCT_DEVICE = "ro.product.device";
 
-    private static final String sCertifiedFp =
-            Resources.getSystem().getString(R.string.config_certifiedFingerprint);
+    private static final String sP7PFp = "google/cheetah/cheetah:13/TQ3A.230705.001/10216780:user/release-keys";
+    private static final String sFelixFp = "google/felix/felix:13/TQ3C.230805.001.A4/10354937:user/release-keys";
+    private static final String sStockFp = SystemProperties.get("ro.vendor.build.fingerprint");
 
-    private static final String sStockFp =
-            Resources.getSystem().getString(R.string.config_stockFingerprint);
-
-    private static final String ANDROIDX_TEST = "androidx.test";
     private static final String PACKAGE_ARCORE = "com.google.ar.core";
     private static final String PACKAGE_ASI = "com.google.android.as";
     private static final String PACKAGE_COMPUTE_SERVICES = "com.google.android.as.oss";
     private static final String PACKAGE_EXT_SERVICES = "com.google.android.ext.services";
     private static final String PACKAGE_FINSKY = "com.android.vending";
-    private static final String PACKAGE_GMS_RESTORE = "com.google.android.apps.restore";
     private static final String PACKAGE_GMS = "com.google.android.gms";
-    private static final String PROCESS_GMS_UNSTABLE = "unstable";
-    private static final String PROCESS_GMS_PERSISTENT = "persistent";
-    private static final String PROCESS_GMS_PIXEL_MIGRATE = "pixelmigrate";
-    private static final String PROCESS_INSTRUMENTATION = "instrumentation";
+    private static final String PROCESS_GMS_PERSISTENT = PACKAGE_GMS + ".persistent";
+    private static final String PROCESS_GMS_UI = PACKAGE_GMS + ".ui";
+    private static final String PROCESS_GMS_UNSTABLE = PACKAGE_GMS + ".unstable";
 
     private static final String PACKAGE_AIAI = "com.google.android.apps.miphone.aiai.AiaiApplication";
     private static final String PACKAGE_GASSIST = "com.google.android.apps.googleassistant";
@@ -73,32 +74,97 @@ public class PropImitationHooks {
     private static final String PACKAGE_TURBO = "com.google.android.apps.turbo";
     private static final String PACKAGE_VELVET = "com.google.android.googlequicksearchbox";
     private static final String PACKAGE_GBOARD = "com.google.android.inputmethod.latin";
+    private static final String PACKAGE_SETIINGS_INTELLIGENCE = "com.google.android.settings.intelligence";
     private static final String PACKAGE_SETUPWIZARD = "com.google.android.setupwizard";
     private static final String PACKAGE_EMOJI_WALLPAPER = "com.google.android.apps.emojiwallpaper";
     private static final String PACKAGE_CINEMATIC_PHOTOS = "com.google.android.wallpaper.effects";
     private static final String PACKAGE_GOOGLE_WALLPAPERS = "com.google.android.wallpaper";
+    private static final String PACKAGE_SNAPCHAT = "com.snapchat.android";
 
-    private static final Map<String, Object> sP7Props = createGoogleSpoofProps(
-            "cheetah", "Pixel 7 Pro", "TQ3A.230901.001", "google/cheetah/cheetah:13/TQ3A.230901.001/10750268:user/release-keys");
-    private static final Map<String, Object> gPhotosProps = createGoogleSpoofProps(
-            "marlin", "Pixel XL", "QP1A.191005.007.A3", "google/marlin/marlin:10/QP1A.191005.007.A3/5972272:user/release-keys");
-    private static final Map<String, Object> sPFoldProps = createGoogleSpoofProps(
-            "felix", "Pixel Fold", "TQ3C.230901.001.B1", "google/felix/felix:13/TQ3C.230901.001.B1/10750989:user/release-keys");
     private static final ComponentName GMS_ADD_ACCOUNT_ACTIVITY = ComponentName.unflattenFromString(
             "com.google.android.gms/.auth.uiflows.minutemaid.MinuteMaidActivity");
 
-    private static Map<String, Object> createGoogleSpoofProps(String device, String model, String buildId, String fingerprint) {
+    private static final Map<String, Object> sP7Props = createGoogleSpoofProps("cheetah", "Pixel 7 Pro", sP7PFp);
+    private static final Map<String, Object> sPFoldProps = createGoogleSpoofProps("felix", "Pixel Fold", sFelixFp);
+    private static final Map<String, Object> gPhotosProps = createGoogleSpoofProps("marlin", "Pixel XL", "google/marlin/marlin:10/QP1A.191005.007.A3/5972272:user/release-keys");
+    private static final Map<String, Object> redfinProps = createGoogleSpoofProps("redfin", "Pixel 5", "google/redfin/redfin:13/TQ3A.230605.011/10161073:user/release-keys");
+    private static final Map<String, Object> asusROG1Props = createGameProps("ASUS_Z01QD", "Asus");
+    private static final Map<String, Object> asusROG3Props = createGameProps("ASUS_I003D", "Asus");
+    private static final Map<String, Object> xperia5Props = createGameProps("SO-52A", "Sony");
+    private static final Map<String, Object> op8ProProps = createGameProps("IN2020", "OnePlus");
+    private static final Map<String, Object> op9RProps = createGameProps("LE2101", "OnePlus");
+    private static final Map<String, Object> xmMi11TProps = createGameProps("21081111RG", "Xiaomi");
+    private static final Map<String, Object> xmF4Props = createGameProps("22021211RG", "Xiaomi");
+
+    private static Map<String, Object> createGameProps(String model, String manufacturer) {
+        Map<String, Object> props = new HashMap<>();
+        props.put("MODEL", model);
+        props.put("MANUFACTURER", manufacturer);
+        return props;
+    }
+
+    private static Map<String, Object> createGoogleSpoofProps(String device, String model, String fingerprint) {
         Map<String, Object> props = new HashMap<>();
         props.put("BRAND", "google");
         props.put("MANUFACTURER", "Google");
+        props.put("ID", getBuildID(fingerprint));
         props.put("DEVICE", device);
+        props.put("NAME", device);
         props.put("PRODUCT", device);
-        props.put("HARDWARE", device);
         props.put("MODEL", model);
-        props.put("ID", buildId);
         props.put("FINGERPRINT", fingerprint);
+        props.put("TYPE", "user");
+        props.put("TAGS", "release-keys");
         return props;
     }
+
+    private static final Set<String> packagesToChangeROG1 = new HashSet<>(Arrays.asList(
+            "com.madfingergames.legends"
+    ));
+
+    private static final Set<String> packagesToChangeROG3 = new HashSet<>(Arrays.asList(
+            "com.pearlabyss.blackdesertm",
+            "com.pearlabyss.blackdesertm.gl"
+    ));
+
+    private static final Set<String> packagesToChangeXP5 = new HashSet<>(Arrays.asList(
+            "com.activision.callofduty.shooter",
+            "com.garena.game.codm",
+            "com.tencent.tmgp.kr.codm",
+            "com.vng.codmvn"
+    ));
+
+    private static final Set<String> packagesToChangeOP8P = new HashSet<>(Arrays.asList(
+            "com.netease.lztgglobal",
+            "com.pubg.imobile",
+            "com.pubg.krmobile",
+            "com.rekoo.pubgm",
+            "com.riotgames.league.wildrift",
+            "com.riotgames.league.wildrifttw",
+            "com.riotgames.league.wildriftvn",
+            "com.tencent.ig",
+            "com.tencent.tmgp.pubgmhd",
+            "com.vng.pubgmobile"
+    ));
+
+    private static final Set<String> packagesToChangeOP9R = new HashSet<>(Arrays.asList(
+            "com.epicgames.fortnite",
+            "com.epicgames.portal"
+    ));
+
+    private static final Set<String> packagesToChange11T = new HashSet<>(Arrays.asList(
+            "com.ea.gp.apexlegendsmobilefps",
+            "com.levelinfinite.hotta.gp",
+            "com.mobile.legends",
+            "com.supercell.clashofclans",
+            "com.tencent.tmgp.sgame",
+            "com.vng.mlbbvn"
+    ));
+
+    private static final Set<String> packagesToChangeF4 = new HashSet<>(Arrays.asList(
+            "com.dts.freefiremax",
+            "com.dts.freefireth"
+    ));
 
     // Codenames for Pixel 6 series
     private static final String[] pixel6Series = {
@@ -107,6 +173,16 @@ public class PropImitationHooks {
             "raven",
     };
 
+    private static String getBuildID(String fingerprint) {
+        Pattern pattern = Pattern.compile("([A-Za-z0-9]+\\.\\d+\\.\\d+\\.\\w+)");
+        Matcher matcher = pattern.matcher(fingerprint);
+
+        if (matcher.find()) {
+            return matcher.group(1);
+        }
+        return "";
+    }
+
     private static volatile boolean sIsGms, sIsFinsky;
     private static volatile String sProcessName;
 
@@ -114,51 +190,52 @@ public class PropImitationHooks {
         final String packageName = app.getPackageName();
         final String processName = app.getProcessName();
 
-        if (packageName == null || processName == null || packageName.equals(PACKAGE_AIAI)) {
+        if (packageName == null || processName == null) {
             return;
         }
 
-        boolean isPackageGms = packageName.toLowerCase().contains(ANDROIDX_TEST) 
-        	    || packageName.equals(PACKAGE_GMS_RESTORE) 
-        	    || packageName.equals(PACKAGE_GMS);
         sProcessName = processName;
-        sIsGms = isPackageGms && processName.toLowerCase().contains(PROCESS_GMS_UNSTABLE) 
-                || processName.toLowerCase().contains(PROCESS_GMS_PERSISTENT) 
-                || processName.toLowerCase().contains(PROCESS_GMS_PIXEL_MIGRATE)
-                || processName.toLowerCase().contains(PROCESS_INSTRUMENTATION);
+        sIsGms = packageName.equals(PACKAGE_GMS) && processName.equals(PROCESS_GMS_UNSTABLE);
         sIsFinsky = packageName.equals(PACKAGE_FINSKY);
+        boolean sIsAtraceCoreService = packageName.equals(PACKAGE_GMS) 
+            && (processName.equals(PROCESS_GMS_PERSISTENT) || processName.equals(PROCESS_GMS_UI));
 
         if (sIsGms) {
             dlog("Setting Pixel 2 fingerprint for: " + packageName);
             setCertifiedPropsForGms();
-        } else if (!sCertifiedFp.isEmpty() && sIsFinsky) {
-            dlog("Setting certified fingerprint for: " + packageName);
-            setPropValue("FINGERPRINT", sCertifiedFp);
-        } else if (!sStockFp.isEmpty() && packageName.equals(PACKAGE_ARCORE)) {
-            dlog("Setting stock fingerprint for: " + packageName);
-            setPropValue("FINGERPRINT", sStockFp);
+        } else if (sIsAtraceCoreService){
+            dlog("Spoofing as Pixel Fold for: " + packageName);
+            sPFoldProps.forEach((k, v) -> setPropValue(k, v));
         } else {
             switch (packageName) {
+                case PACKAGE_ARCORE:
+                    dlog("Setting stock fingerprint for: " + packageName);
+                    setPropValue("FINGERPRINT", sStockFp);
+                    break;
+                case PACKAGE_SNAPCHAT:
+                    dlog("Spoofing as Pixel 2 for: " + packageName);
+                    spoofBuildGms();
+                    break;
                 case PACKAGE_GCAM:
                     boolean isPixel6Series = Arrays.asList(pixel6Series).contains(SystemProperties.get(PRODUCT_DEVICE));
-                    if (isPixel6Series) {
-                        dlog("Spoofing as Pixel 7 Pro for: " + packageName);
-                        sP7Props.forEach((k, v) -> setPropValue(k, v));
+                    if (!isPixel6Series) {
+                        break;
                     }
-                    break;
                 case PACKAGE_SUBSCRIPTION_RED:
                     dlog("Spoofing as Pixel 7 Pro for: " + packageName);
                     sP7Props.forEach((k, v) -> setPropValue(k, v));
                     break;
                 case PACKAGE_AIAI:
                 case PACKAGE_ASI:
+                case PACKAGE_GMS:
                 case PACKAGE_COMPUTE_SERVICES:
+                case PACKAGE_FINSKY:
+                case PACKAGE_SETIINGS_INTELLIGENCE:
+                case PACKAGE_GASSIST:
+                case PACKAGE_GBOARD:
                 case PACKAGE_CINEMATIC_PHOTOS:
                 case PACKAGE_GOOGLE_WALLPAPERS:
                 case PACKAGE_EMOJI_WALLPAPER:
-                case PACKAGE_GASSIST:
-                case PACKAGE_GBOARD:
-                case PACKAGE_GMS:
                 case PACKAGE_SETUPWIZARD:
                 case PACKAGE_TURBO:
                 case PACKAGE_VELVET:
@@ -166,12 +243,40 @@ public class PropImitationHooks {
                     sPFoldProps.forEach((k, v) -> setPropValue(k, v));
                     break;
                 case PACKAGE_GPHOTOS:
-                    if (SystemProperties.getBoolean("persist.sys.pixelprops.gphotos", true)) {
+                    if (SystemProperties.getBoolean("persist.sys.pixelprops.gphotos", false)) {
                         dlog("Spoofing as Pixel XL for: " + packageName);
                         gPhotosProps.forEach((k, v) -> setPropValue(k, v));
                     }
                     break;
                 default:
+                    if (SystemProperties.getBoolean("persist.sys.pixelprops.games", false)) {
+                        Map<String, Object> gamePropsToSpoof = null;
+                        if (packagesToChangeROG1.contains(packageName)) {
+                            dlog("Spoofing as Asus ROG 1 for: " + packageName);
+                            gamePropsToSpoof = asusROG1Props;
+                        } else if (packagesToChangeROG3.contains(packageName)) {
+                            dlog("Spoofing as Asus ROG 3 for: " + packageName);
+                            gamePropsToSpoof = asusROG3Props;
+                        } else if (packagesToChangeXP5.contains(packageName)) {
+                            dlog("Spoofing as Sony Xperia 5 for: " + packageName);
+                            gamePropsToSpoof = xperia5Props;
+                        } else if (packagesToChangeOP8P.contains(packageName)) {
+                            dlog("Spoofing as Oneplus 8 Pro for: " + packageName);
+                            gamePropsToSpoof = op8ProProps;
+                        } else if (packagesToChangeOP9R.contains(packageName)) {
+                            dlog("Spoofing as Oneplus 9R for: " + packageName);
+                            gamePropsToSpoof = op9RProps;
+                        } else if (packagesToChange11T.contains(packageName)) {
+                            dlog("Spoofing as Xiaomi Mi 11T for: " + packageName);
+                            gamePropsToSpoof = xmMi11TProps;
+                        } else if (packagesToChangeF4.contains(packageName)) {
+                            dlog("Spoofing as Xiaomi F4 for: " + packageName);
+                            gamePropsToSpoof = xmF4Props;
+                        }
+                        if (gamePropsToSpoof != null) {
+                            gamePropsToSpoof.forEach((k, v) -> setPropValue(k, v));
+                        }
+                    }
                     break;
             }
         }
@@ -256,16 +361,34 @@ public class PropImitationHooks {
     }
 
     private static void spoofBuildGms() {
-        // Alter model name and fingerprint to Pixel 2 to avoid hardware attestation enforcement
+        // Alter most build properties for cts profile match checks
         setPropValue("BRAND", "google");
+        setPropValue("PRODUCT", "walleye");
+        setPropValue("MODEL", "Pixel 2");
     	setPropValue("MANUFACTURER", "Google");
         setPropValue("DEVICE", "walleye");
-        setPropValue("PRODUCT", "walleye");
-        setPropValue("HARDWARE", "walleye");
-        setPropValue("MODEL", "Pixel 2");
-        setPropValue("ID", "OPM1.171019.011");
         setPropValue("FINGERPRINT", "google/walleye/walleye:8.1.0/OPM1.171019.011/4448085:user/release-keys");
-        setVersionField("DEVICE_INITIAL_SDK_INT", Build.VERSION_CODES.O);
+        setPropValue("ID", "OPM1.171019.011");
+        setPropValue("TYPE", "user");
+        setPropValue("TAGS", "release-keys");
+        setVersionField("DEVICE_INITIAL_SDK_INT", Build.VERSION_CODES.O_MR1);
+        setVersionFieldString("SECURITY_PATCH", "2017-12-05");
+    }
+
+    private static void setVersionFieldString(String key, String value) {
+        try {
+            // Unlock
+            Field field = Build.VERSION.class.getDeclaredField(key);
+            field.setAccessible(true);
+
+            // Edit
+            field.set(null, value);
+
+            // Lock
+            field.setAccessible(false);
+        } catch (NoSuchFieldException | IllegalAccessException e) {
+            Log.e(TAG, "Failed to spoof Build." + key, e);
+        }
     }
 
     private static boolean isCallerSafetyNet() {
