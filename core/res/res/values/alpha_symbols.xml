@@ -2,10 +2,32 @@
 
 <resources>
 
+    <!-- Default UDFPS pressed icon -->
+    <java-symbol type="integer" name="config_udfps_pressed_color" />
+
+    <!-- Settings Restart -->
+    <java-symbol type="string" name="settings_restart_title" />
+    <java-symbol type="string" name="settings_restart_message" />
+
     <!-- Status bar paddings -->
     <java-symbol type="dimen" name="status_bar_padding_start" />
     <java-symbol type="dimen" name="status_bar_padding_end" />
     <java-symbol type="dimen" name="status_bar_padding_top" />
+
+    <!-- Bootleg unneccesary gradient declaration | Just for our shishu bars -->
+    <java-symbol type="color" name="bootleg_accent_gradient_end_color" />
+
+    <!-- Powermenu animations -->
+    <java-symbol type="style" name="GlobalActionsAnimation" />
+    <java-symbol type="style" name="GlobalActionsAnimationTop" />
+    <java-symbol type="style" name="GlobalActionsAnimationEnter" />
+    <java-symbol type="style" name="GlobalActionsAnimationFly" />
+    <java-symbol type="style" name="GlobalActionsAnimationTn" />
+    <java-symbol type="style" name="GlobalActionsAnimationTranslucent" />
+    <java-symbol type="style" name="GlobalActionsAnimationXylon" />
+    <java-symbol type="style" name="GlobalActionsAnimationCard" />
+    <java-symbol type="style" name="GlobalActionsAnimationRotate" />
+
     <!-- More battery styles -->
     <java-symbol type="string" name="config_batterymeterLandPerimeterPathBuddy" />
     <java-symbol type="string" name="config_batterymeterLandFillMaskBuddy" />
@@ -62,27 +84,6 @@
     <java-symbol type="string" name="config_batterymeterLandBoltPathiOS16" />
     <java-symbol type="string" name="config_batterymeterLandPowersavePathiOS16" />
     <java-symbol type="string" name="config_batterymeterLandErrorPerimeterPathiOS16" />
-
-    <!-- Default UDFPS pressed icon -->
-    <java-symbol type="integer" name="config_udfps_pressed_color" />
-
-    <!-- Bootleg unneccesary gradient declaration | Just for our shishu bars -->
-    <java-symbol type="color" name="bootleg_accent_gradient_end_color" />
-
-    <!-- Settings Restart -->
-    <java-symbol type="string" name="settings_restart_title" />
-    <java-symbol type="string" name="settings_restart_message" />
-
-    <!-- Powermenu animations -->
-    <java-symbol type="style" name="GlobalActionsAnimation" />
-    <java-symbol type="style" name="GlobalActionsAnimationTop" />
-    <java-symbol type="style" name="GlobalActionsAnimationEnter" />
-    <java-symbol type="style" name="GlobalActionsAnimationFly" />
-    <java-symbol type="style" name="GlobalActionsAnimationTn" />
-    <java-symbol type="style" name="GlobalActionsAnimationTranslucent" />
-    <java-symbol type="style" name="GlobalActionsAnimationXylon" />
-    <java-symbol type="style" name="GlobalActionsAnimationCard" />
-    <java-symbol type="style" name="GlobalActionsAnimationRotate" />
 
     <java-symbol type="id" name="qs_state_layer" />
 

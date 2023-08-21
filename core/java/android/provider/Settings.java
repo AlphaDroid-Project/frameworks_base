@@ -6334,12 +6334,6 @@ public final class Settings {
         public static final String SETTINGS_DASHBOARD_STYLE = "settings_dashboard_style";
 
         /**
-         * Settings Dashboard Style
-         * @hide
-         */
-        public static final String SETTINGS_DASHBOARD_STYLE = "settings_dashboard_style";
-
-        /**
          * Volume styles
          * @hide
          */
