@@ -31,4 +31,8 @@
     <java-symbol type="string" name="sleep_mode_notification_content" />
     <java-symbol type="string" name="sleep_mode_enabled_toast" />
     <java-symbol type="string" name="sleep_mode_disabled_toast" />
+
+    <!-- QS panel styles -->
+    <java-symbol type="id" name="qs_state_layer" />
+
 </resources>
