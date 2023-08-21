@@ -84,4 +84,6 @@
     <java-symbol type="style" name="GlobalActionsAnimationCard" />
     <java-symbol type="style" name="GlobalActionsAnimationRotate" />
 
+    <java-symbol type="id" name="qs_state_layer" />
+
 </resources>
