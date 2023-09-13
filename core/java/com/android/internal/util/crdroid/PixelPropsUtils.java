@@ -39,7 +39,6 @@ public class PixelPropsUtils {
     private static final Map<String, Object> propsToChangePixel5;
     private static final Map<String, Object> propsToChangePixel7Pro;
     private static final Map<String, Object> propsToChangePixel2;
-    private static final Map<String, Object> propsToChangePixelXL;
     private static final Map<String, Object> propsToChangeROG6;
     private static final Map<String, Object> propsToChangeXP5;
     private static final Map<String, Object> propsToChangeOP8P;
@@ -201,15 +200,6 @@ public class PixelPropsUtils {
         propsToChangePixel2.put("MODEL", "Pixel 2");
         propsToChangePixel2.put("ID", "OPM1.171019.011");
         propsToChangePixel2.put("FINGERPRINT", "google/walleye/walleye:8.1.0/OPM1.171019.011/4448085:user/release-keys");
-        propsToChangePixelXL = new HashMap<>();
-        propsToChangePixelXL.put("BRAND", "google");
-        propsToChangePixelXL.put("MANUFACTURER", "Google");
-        propsToChangePixelXL.put("DEVICE", "marlin");
-        propsToChangePixelXL.put("PRODUCT", "marlin");
-        propsToChangePixelXL.put("HARDWARE", "marlin");
-        propsToChangePixelXL.put("MODEL", "Pixel XL");
-        propsToChangePixelXL.put("ID", "QP1A.191005.007.A3");
-        propsToChangePixelXL.put("FINGERPRINT", "google/marlin/marlin:10/QP1A.191005.007.A3/5972272:user/release-keys");
         propsToChangeROG6 = new HashMap<>();
         propsToChangeROG6.put("BRAND", "asus");
         propsToChangeROG6.put("MANUFACTURER", "asus");
@@ -257,7 +247,7 @@ public class PixelPropsUtils {
 
             if (packageName.equals("com.google.android.apps.photos")) {
                 if (SystemProperties.getBoolean("persist.sys.pixelprops.gphotos", true)) {
-                    propsToChange.putAll(propsToChangePixelXL);
+                    propsToChange.putAll(propsToChangePixel2);
                 } else {
                     propsToChange.putAll(propsToChangePixel5);
                 }
