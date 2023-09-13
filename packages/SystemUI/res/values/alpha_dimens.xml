@@ -5,4 +5,8 @@
      <!-- Base Multiplier for dp to px. -->
     <dimen name="amb_font_base_multiplier_dp">1dp</dimen>
 
+    <!-- Brightness bar percentage  -->
+    <dimen name="bb_percentage_margin_left">6dp</dimen>
+    <dimen name="bb_percentage_margin_right">0dp</dimen>
+
 </resources>

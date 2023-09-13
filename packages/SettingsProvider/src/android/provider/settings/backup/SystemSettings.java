@@ -108,5 +108,6 @@ public class SystemSettings {
         Settings.System.NOTIFICATION_COOLDOWN_ALL,
         Settings.System.NOTIFICATION_COOLDOWN_VIBRATE_UNLOCKED,
         Settings.System.MAX_VISIBLE_NOTIFICATION_ICONS,
+        Settings.System.SHOW_BRIGHTNESS_BAR_PERCENTAGE,
     };
 }
