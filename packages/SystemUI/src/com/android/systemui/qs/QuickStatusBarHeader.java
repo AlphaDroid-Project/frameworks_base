@@ -17,10 +17,12 @@ package com.android.systemui.qs;
 import static android.app.StatusBarManager.DISABLE2_QUICK_SETTINGS;
 import static android.view.ViewGroup.LayoutParams.WRAP_CONTENT;
 
+import android.content.ContentResolver;
 import android.content.Context;
 import android.content.res.Configuration;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.TransitionDrawable;
@@ -52,7 +54,10 @@ import com.android.settingslib.Utils;
 import com.android.systemui.util.LargeScreenUtils;
 import com.android.systemui.tuner.TunerService;
 
-import java.io.IOException;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.InputStream;
+import java.lang.Exception;
 
 /**
  * View that contains the top-most bits of the QS panel (primarily the status bar with date, time,
@@ -83,6 +88,8 @@ public class QuickStatusBarHeader extends FrameLayout implements TunerService.Tu
     private static final String QS_HEADER_IMAGE_URI =
             "system:" + Settings.System.QS_HEADER_IMAGE_URI;
 
+    private static final String HEADER_FILE_NAME = "qsheader";
+
     private final int MAX_TINT_OPACITY = 155;
 
     private boolean mExpanded;
@@ -107,9 +114,31 @@ public class QuickStatusBarHeader extends FrameLayout implements TunerService.Tu
     private int mColorAccent;
     private int mColorTextPrimary;
     private int mColorTextPrimaryInverse;
+    private TunerService mTuner;
 
     public QuickStatusBarHeader(Context context, AttributeSet attrs) {
         super(context, attrs);
+    }
+
+    @Override
+    protected void onAttachedToWindow() {
+        mTuner = Dependency.get(TunerService.class);
+        mTuner.addTunable(this,
+                QS_HEADER_IMAGE,
+                QS_HEADER_IMAGE_TINT,
+                QS_HEADER_IMAGE_TINT_CUSTOM,
+                QS_HEADER_IMAGE_ALPHA,
+                QS_HEADER_IMAGE_HEIGHT_PORTRAIT,
+                QS_HEADER_IMAGE_HEIGHT_LANDSCAPE,
+                QS_HEADER_IMAGE_LANDSCAPE_ENABLED,
+                QS_HEADER_IMAGE_PADDING_SIDE,
+                QS_HEADER_IMAGE_PADDING_TOP,
+                QS_HEADER_IMAGE_URI);
+    }
+
+    @Override
+    protected void onDetachedFromWindow() {
+        if (mTuner != null) mTuner.removeTunable(this);
     }
 
     @Override
@@ -121,19 +150,19 @@ public class QuickStatusBarHeader extends FrameLayout implements TunerService.Tu
         qshiView = findViewById(R.id.qs_header_image_view);
         qshiView.setClipToOutline(true);
 
+        if (mTuner != null) {
+            qshiValue = mTuner.getValue(QS_HEADER_IMAGE, 0);
+            qshiEnabled = qshiValue != 0;
+            qshiTint = mTuner.getValue(QS_HEADER_IMAGE_TINT, 0);
+            qshiTintCustom = mTuner.getValue(QS_HEADER_IMAGE_TINT_CUSTOM, 0XFFFFFFFF);
+            qshiAlpha = mTuner.getValue(QS_HEADER_IMAGE_ALPHA, 255);
+            qshiHeightPortrait = mTuner.getValue(QS_HEADER_IMAGE_HEIGHT_PORTRAIT, 325);
+            qshiHeightLandscape = mTuner.getValue(QS_HEADER_IMAGE_HEIGHT_LANDSCAPE, 200);
+            qshiLandscapeEnabled = mTuner.getValue(QS_HEADER_IMAGE_LANDSCAPE_ENABLED, 1) == 1;
+            qshiPaddingSide = mTuner.getValue(QS_HEADER_IMAGE_PADDING_SIDE, -50);
+            qshiPaddingTop = mTuner.getValue(QS_HEADER_IMAGE_PADDING_TOP, 0);
+        }
         updateResources();
-
-        Dependency.get(TunerService.class).addTunable(this,
-                QS_HEADER_IMAGE,
-                QS_HEADER_IMAGE_TINT,
-                QS_HEADER_IMAGE_TINT_CUSTOM,
-                QS_HEADER_IMAGE_ALPHA,
-                QS_HEADER_IMAGE_HEIGHT_PORTRAIT,
-                QS_HEADER_IMAGE_HEIGHT_LANDSCAPE,
-                QS_HEADER_IMAGE_LANDSCAPE_ENABLED,
-                QS_HEADER_IMAGE_PADDING_SIDE,
-                QS_HEADER_IMAGE_PADDING_TOP,
-                QS_HEADER_IMAGE_URI);
     }
 
     @Override
@@ -157,11 +186,11 @@ public class QuickStatusBarHeader extends FrameLayout implements TunerService.Tu
                 updateResources();
                 break;
             case QS_HEADER_IMAGE_HEIGHT_PORTRAIT:
-                qshiHeightPortrait = TunerService.parseInteger(newValue, 155);
+                qshiHeightPortrait = TunerService.parseInteger(newValue, 325);
                 updateResources();
                 break;
             case QS_HEADER_IMAGE_HEIGHT_LANDSCAPE:
-                qshiHeightLandscape = TunerService.parseInteger(newValue, 155);
+                qshiHeightLandscape = TunerService.parseInteger(newValue, 200);
                 updateResources();
                 break;
             case QS_HEADER_IMAGE_LANDSCAPE_ENABLED:
@@ -205,16 +234,9 @@ public class QuickStatusBarHeader extends FrameLayout implements TunerService.Tu
         if (qshiValue == -1) {
             String uriStr = Settings.System.getStringForUser(mContext.getContentResolver(),
                     Settings.System.QS_HEADER_IMAGE_URI, UserHandle.USER_CURRENT);
-            try {
-                qshiUri = Uri.parse(uriStr);
-                Bitmap customHeader = ImageHelper.getBitmapFromUri(mContext, qshiUri);
-                if (customHeader != null) {
-                    qshiView.setImageBitmap(customHeader);
-                }
-            }
-            catch (IOException e) {
-                Log.e(TAG, "Couldn't load image Uri: " + uriStr);
-                return;
+            Bitmap customHeader = loadFromStringUri(uriStr);
+            if (customHeader != null) {
+                qshiView.setImageBitmap(customHeader);
             }
         } else {
             int resId = getResources().getIdentifier("qs_header_image_" +
@@ -372,5 +394,40 @@ public class QuickStatusBarHeader extends FrameLayout implements TunerService.Tu
         else {
             return customTint;
         }
+    }
+
+    private Bitmap loadFromStringUri(String uriStr) {
+        saveHeader(uriStr);
+        return getSavedHeader();
+    }
+
+    private void saveHeader(String uriStr) {
+        try {
+            Uri uri = Uri.parse(uriStr);
+            final InputStream imageStream =
+                    mContext.getContentResolver().openInputStream(uri);
+            File file = new File(mContext.getFilesDir(), HEADER_FILE_NAME);
+            if (file.exists()) {
+                file.delete();
+            }
+            FileOutputStream output = new FileOutputStream(file);
+            byte[] buffer = new byte[8 * 1024];
+            int read;
+
+            while ((read = imageStream.read(buffer)) != -1) {
+                output.write(buffer, 0, read);
+            }
+            output.flush();
+        } catch (Exception e) {
+            Log.e(TAG, "Failed to store header image");
+        }
+    }
+
+    private Bitmap getSavedHeader() {
+        File file = new File(mContext.getFilesDir(), HEADER_FILE_NAME);
+        if (file.exists()) {
+            return BitmapFactory.decodeFile(file.getAbsolutePath());
+        }
+        return null;
     }
 }
