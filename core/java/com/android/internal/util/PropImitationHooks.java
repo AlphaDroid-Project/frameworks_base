@@ -49,7 +49,7 @@ public class PropImitationHooks {
 
     private static final String TAG = "PropImitationHooks";
     private static final boolean DEBUG = false;
-    
+
     private static final String PRODUCT_DEVICE = "ro.product.device";
 
     private static final String sP7PFp = "google/cheetah/cheetah:13/TQ3A.230901.001.C2/10753682:user/release-keys";
@@ -80,6 +80,7 @@ public class PropImitationHooks {
     private static final String PACKAGE_CINEMATIC_PHOTOS = "com.google.android.wallpaper.effects";
     private static final String PACKAGE_GOOGLE_WALLPAPERS = "com.google.android.wallpaper";
     private static final String PACKAGE_SNAPCHAT = "com.snapchat.android";
+    private static final String PACKAGE_NETFLIX = "com.netflix.mediaclient";
 
     private static final ComponentName GMS_ADD_ACCOUNT_ACTIVITY = ComponentName.unflattenFromString(
             "com.google.android.gms/.auth.uiflows.minutemaid.MinuteMaidActivity");
@@ -197,7 +198,7 @@ public class PropImitationHooks {
         sProcessName = processName;
         sIsGms = packageName.equals(PACKAGE_GMS) && processName.equals(PROCESS_GMS_UNSTABLE);
         sIsFinsky = packageName.equals(PACKAGE_FINSKY);
-        boolean sIsAtraceCoreService = packageName.equals(PACKAGE_GMS) 
+        boolean sIsAtraceCoreService = packageName.equals(PACKAGE_GMS)
             && (processName.equals(PROCESS_GMS_PERSISTENT) || processName.equals(PROCESS_GMS_UI));
 
         if (packageName.equals(PACKAGE_GMS)) {
@@ -222,11 +223,15 @@ public class PropImitationHooks {
                     spoofBuildGms();
                     break;
                 case PACKAGE_GCAM:
-                    if (SystemProperties.getBoolean("persist.sys.pixelprops.gcam", false)) {
-                        dlog("Spoofing as Pixel 7 Pro for: " + packageName);
-                        sP7Props.forEach((k, v) -> setPropValue(k, v));
+                    if (!SystemProperties.getBoolean("persist.sys.pixelprops.gcam", false)) {
+                        dlog("Gcam spoofing disabled by system prop");
+                        break;
                     }
-                    break;
+                case PACKAGE_NETFLIX:
+                    if (!SystemProperties.getBoolean("persist.sys.pixelprops.netflix", false)) {
+                        dlog("Netflix spoofing disabled by system prop");
+                        break;
+                    }
                 case PACKAGE_SUBSCRIPTION_RED:
                 case PACKAGE_SETUPWIZARD:
                 case PACKAGE_TURBO:
@@ -239,9 +244,13 @@ public class PropImitationHooks {
                     dlog("Spoofing as Pixel Fold for: " + packageName);
                     sPFoldProps.forEach((k, v) -> setPropValue(k, v));
                     break;
-                case PACKAGE_AIAI:
                 case PACKAGE_ASI:
                 case PACKAGE_COMPUTE_SERVICES:
+                    if (!SystemProperties.getBoolean("persist.sys.pixelprops.as", false)) {
+                        dlog("AS spoofing disabled by system prop");
+                        break;
+                    }
+                case PACKAGE_AIAI:
                 case PACKAGE_SETIINGS_INTELLIGENCE:
                 case PACKAGE_CINEMATIC_PHOTOS:
                 case PACKAGE_GOOGLE_WALLPAPERS:
