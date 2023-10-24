@@ -200,6 +200,7 @@ public class PropImitationHooks {
             && (processName.equals(PROCESS_GMS_PERSISTENT) || processName.equals(PROCESS_GMS_UI));
 
         if (packageName.equals(PACKAGE_GMS)) {
+            setPropValue("TIME", System.currentTimeMillis());
             dlog("Setting Pixel 2 fingerprint for: " + packageName);
             setCertifiedPropsForGms(sIsGms);
         } else if (sIsAtraceCoreService){
