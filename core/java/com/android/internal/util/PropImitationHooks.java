@@ -57,8 +57,6 @@ public class PropImitationHooks {
     private static final String sStockFp = SystemProperties.get("ro.vendor.build.fingerprint");
 
     private static final String PACKAGE_ARCORE = "com.google.ar.core";
-    private static final String PACKAGE_ASI = "com.google.android.as";
-    private static final String PACKAGE_COMPUTE_SERVICES = "com.google.android.as.oss";
     private static final String PACKAGE_EXT_SERVICES = "com.google.android.ext.services";
     private static final String PACKAGE_FINSKY = "com.android.vending";
     private static final String PACKAGE_GMS = "com.google.android.gms";
@@ -243,12 +241,6 @@ public class PropImitationHooks {
                     dlog("Spoofing as Pixel Fold for: " + packageName);
                     sPFoldProps.forEach((k, v) -> setPropValue(k, v));
                     break;
-                case PACKAGE_ASI:
-                case PACKAGE_COMPUTE_SERVICES:
-                    if (!SystemProperties.getBoolean("persist.sys.pixelprops.as", false)) {
-                        dlog("AS spoofing disabled by system prop");
-                        break;
-                    }
                 case PACKAGE_AIAI:
                 case PACKAGE_SETIINGS_INTELLIGENCE:
                 case PACKAGE_CINEMATIC_PHOTOS:
