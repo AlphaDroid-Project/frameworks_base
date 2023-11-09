@@ -373,18 +373,12 @@ public class PropImitationHooks {
     }
 
     private static void spoofBuildGms() {
-        // Alter most build properties for cts profile match checks
-        setPropValue("BRAND", "google");
-        setPropValue("PRODUCT", "walleye");
-        setPropValue("MODEL", "Pixel 2");
-    	setPropValue("MANUFACTURER", "Google");
-        setPropValue("DEVICE", "walleye");
-        setPropValue("FINGERPRINT", "google/walleye/walleye:8.1.0/OPM1.171019.011/4448085:user/release-keys");
-        setPropValue("ID", "OPM1.171019.011");
-        setPropValue("TYPE", "user");
-        setPropValue("TAGS", "release-keys");
-        setVersionField("DEVICE_INITIAL_SDK_INT", Build.VERSION_CODES.O_MR1);
-        setVersionFieldString("SECURITY_PATCH", "2017-12-05");
+        // Alter build parameters to ASUS_X00HD for avoiding hardware attestation enforcement
+        setPropValue("FINGERPRINT", "asus/WW_Phone/ASUS_X00HD_4:7.1.1/NMF26F/14.2016.1801.372-20180119:user/release-keys");
+        setPropValue("PRODUCT", "WW_Phone");
+        setPropValue("DEVICE", "ASUS_X00HD_4");
+        setPropValue("MODEL", "ASUS_X00HD");
+        setVersionField("DEVICE_INITIAL_SDK_INT", Build.VERSION_CODES.N_MR1);
     }
 
     private static void setVersionFieldString(String key, String value) {
