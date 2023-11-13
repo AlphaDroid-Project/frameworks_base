@@ -155,8 +155,6 @@ public class RecentsAnimationController implements DeathRecipient {
 
     private final ArrayList<RemoteAnimationTarget> mPendingTaskAppears = new ArrayList<>();
 
-    private boolean mIsActivityStarting = false;
-
     /**
      * An app transition listener to cancel the recents animation only after the app transition
      * starts or is canceled.
@@ -369,14 +367,6 @@ public class RecentsAnimationController implements DeathRecipient {
             }
         }
     };
-
-    void notifyActivityStarting() {
-        mIsActivityStarting = true;
-    }
-
-    boolean isActivityStarting() {
-        return mIsActivityStarting;
-    }
 
     /**
      * @param remoteAnimationRunner The remote runner which should be notified when the animation is
