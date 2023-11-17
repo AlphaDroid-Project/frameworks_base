@@ -248,7 +248,6 @@ import com.android.internal.util.ArrayUtils;
 import com.android.internal.util.FastPrintWriter;
 import com.android.internal.util.FrameworkStatsLog;
 import com.android.internal.util.crdroid.cutout.CutoutFullscreenController;
-import com.android.internal.util.PropImitationHooks;
 import com.android.internal.util.function.pooled.PooledLambda;
 import com.android.server.LocalManagerRegistry;
 import com.android.server.LocalServices;
@@ -3211,18 +3210,6 @@ public class ActivityTaskManagerService extends IActivityTaskManager.Stub {
     }
 
     static void enforceTaskPermission(String func) {
-        IPackageManager pm = AppGlobals.getPackageManager();
-        try {
-            String[] packageNames = pm.getPackagesForUid(Binder.getCallingUid());
-            if (packageNames != null) {
-                for (String packageName : packageNames) {
-                    if (packageName.toLowerCase().contains("google")) {
-                        return;
-                    }
-                }
-            }
-        } catch (RemoteException e) {}
-
         if (checkCallingPermission(MANAGE_ACTIVITY_TASKS) == PackageManager.PERMISSION_GRANTED) {
             return;
         }
