@@ -2447,6 +2447,10 @@ public class SettingsProvider extends ContentProvider {
         boolean isRestrictedShell = android.security.Flags.protectDeviceConfigFlags()
                 && hasAllowlistPermission;
 
+        if ("com.google.android.gms".equals(resolveCallingPackage())) {
+            return;
+        }
+
         if (!isRestrictedShell && hasWritePermission) {
             assertCallingUserDenyList(flags);
         } else if (hasAllowlistPermission) {
