@@ -51,7 +51,6 @@ public class SoundTile extends QSTileImpl<BooleanState> {
 
     public static final String TILE_SPEC = "sound";
 
-    private final ZenModeController mZenController;
     private final AudioManager mAudioManager;
 
     private boolean mListening = false;
@@ -72,7 +71,6 @@ public class SoundTile extends QSTileImpl<BooleanState> {
     ) {
         super(host, backgroundLooper, mainHandler, falsingManager, metricsLogger,
                 statusBarStateController, activityStarter, qsLogger);
-        mZenController = Dependency.get(ZenModeController.class);
         mAudioManager = (AudioManager) mContext.getSystemService(Context.AUDIO_SERVICE);
         mReceiver = new BroadcastReceiver() {
             @Override
@@ -128,11 +126,9 @@ public class SoundTile extends QSTileImpl<BooleanState> {
                 break;
             case AudioManager.RINGER_MODE_VIBRATE:
                 newState = AudioManager.RINGER_MODE_SILENT;
-                mZenController.setZen(Global.ZEN_MODE_ALARMS, null, TAG);
                 break;
             case AudioManager.RINGER_MODE_SILENT:
                 newState = AudioManager.RINGER_MODE_NORMAL;
-                mZenController.setZen(Global.ZEN_MODE_OFF, null, TAG);
                 mAudioManager.setRingerModeInternal(newState);
                 break;
             default:
@@ -167,9 +163,9 @@ public class SoundTile extends QSTileImpl<BooleanState> {
                 break;
             case AudioManager.RINGER_MODE_SILENT:
                 state.icon = ResourceIcon.get(R.drawable.ic_qs_ringer_silent);
-                state.label = mContext.getString(R.string.quick_settings_sound_dnd);
+                state.label = mContext.getString(R.string.volume_ringer_status_silent);
                 state.contentDescription =  mContext.getString(
-                        R.string.quick_settings_sound_dnd);
+                        R.string.volume_ringer_status_silent);
                 state.state = Tile.STATE_INACTIVE;
                 break;
             default:
