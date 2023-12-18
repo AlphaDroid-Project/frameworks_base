@@ -6466,12 +6466,6 @@ public final class Settings {
         public static final String WIFI_STANDARD_ICON = "wifi_standard_icon";
 
         /**
-         * Haptic feedback on brightness slider
-         * @hide
-         */
-        public static final String QS_BRIGHTNESS_SLIDER_HAPTIC = "qs_brightness_slider_haptic";
-
-        /**
          * Whether to disable qs on secure lockscreen.
          * @hide
          */
