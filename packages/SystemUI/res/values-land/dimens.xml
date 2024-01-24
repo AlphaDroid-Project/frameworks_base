@@ -91,4 +91,6 @@
 
     <dimen name="keyguard_indication_margin_bottom">8dp</dimen>
     <dimen name="lock_icon_margin_bottom">24dp</dimen>
+
+    <dimen name="large_screen_shade_header_height">25dp</dimen>
 </resources>
