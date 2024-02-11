@@ -856,7 +856,7 @@ public class UdfpsController implements DozeReceiver, Dumpable {
     
     private void updateUdfpsAnimation() {
         if (com.android.internal.util.crdroid.Utils.isPackageInstalled(mContext,
-                "com.crdroid.udfps.animations")) {
+                "com.alpha.udfps.animations")) {
             if (mUdfpsAnimation != null) {
                 mUdfpsAnimation.removeAnimation();
                 mUdfpsAnimation = null;
