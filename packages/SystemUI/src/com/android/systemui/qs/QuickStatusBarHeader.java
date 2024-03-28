@@ -632,14 +632,14 @@ public class QuickStatusBarHeader extends FrameLayout
         mQQSContainerAnimator = builderP.build();
 
         // Hide header image in landscape mode
-    	if (orientation == Configuration.ORIENTATION_LANDSCAPE) {
-    	    mQsHeaderImageView.setVisibility(View.GONE);
-    	} else {
-    	    mQsHeaderImageView.setVisibility(View.VISIBLE);
-    	    updateHeaderImage();
-    	    applyHeaderBackgroundShadow();
-      }
-      updateMediaPlayer();
+    	  if (orientation == Configuration.ORIENTATION_LANDSCAPE) {
+    	      mQsHeaderImageView.setVisibility(View.GONE);
+    	  } else {
+    	      mQsHeaderImageView.setVisibility(View.VISIBLE);
+    	      updateHeaderImage();
+    	      applyHeaderBackgroundShadow();
+        }
+        updateMediaPlayer();
     }
 
     public void startUpdateInterntTileStateAsync() {
