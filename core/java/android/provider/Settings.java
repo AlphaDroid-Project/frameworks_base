@@ -13019,18 +13019,6 @@ public final class Settings {
         public static final String SPOOF_STORAGE_ENCRYPTION_STATUS = "spoof_storage_encryption_status";
 
         /**
-         * Show lyric in status bar when playing music
-         * <ul>
-         *    <li> 0 = disabled </li>
-         *    <li> 1 = enabled </li>
-         * </ul>
-         *
-         * @hide
-         */
-        @Readable
-        public static final String STATUS_BAR_SHOW_LYRIC = "status_bar_show_lyric";
-
-        /**
          * Whether to trigger doze for new notifications
          * @hide
          */
