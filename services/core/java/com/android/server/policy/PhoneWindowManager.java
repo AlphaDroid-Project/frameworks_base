@@ -267,6 +267,8 @@ import lineageos.providers.LineageSettings;
 import org.lineageos.internal.buttons.LineageButtons;
 import org.lineageos.internal.util.ActionUtils;
 
+import com.android.server.alpha.ShakeGestureService;
+
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
@@ -682,6 +684,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
 
     private SwipeToScreenshotListener mSwipeToScreenshot;
     private boolean haveEnableGesture = false;
+    private ShakeGestureService mShakeGestures;
 
     // Tracks user-customisable behavior for certain key events
     private Action mBackLongPressAction;
@@ -6388,6 +6391,9 @@ public class PhoneWindowManager implements WindowManagerPolicy {
         if (mPocketManager != null) {
             mPocketManager.onInteractiveChanged(false);
         }
+        if (mShakeGestures != null) {
+            mShakeGestures.onInteractiveChanged(false);
+        }
     }
 
     // Called on the PowerManager's Notifier thread.
@@ -6463,6 +6469,9 @@ public class PhoneWindowManager implements WindowManagerPolicy {
 
         if (mPocketManager != null) {
             mPocketManager.onInteractiveChanged(true);
+        }
+        if (mShakeGestures != null) {
+            mShakeGestures.onInteractiveChanged(true);
         }
     }
 
@@ -6983,12 +6992,17 @@ public class PhoneWindowManager implements WindowManagerPolicy {
             mVrManagerInternal.addPersistentVrModeStateListener(mPersistentVrModeListener);
         }
 
+        GestureCallbacks gestureCallbacks = new GestureCallbacks(mContext, mCurrentUserId);
+
         mSwipeToScreenshot = new SwipeToScreenshotListener(mContext, new SwipeToScreenshotListener.Callbacks() {
             @Override
             public void onSwipeThreeFinger() {
                 interceptScreenshotChord(TAKE_SCREENSHOT_FULLSCREEN, SCREENSHOT_KEY_OTHER, 0 /*pressDelay*/);
             }
         });
+
+        mShakeGestures = ShakeGestureService.getInstance(mContext, (ShakeGestureService.ShakeGesturesCallbacks) gestureCallbacks);
+        mShakeGestures.onStart();
 
         mLineageHardware = LineageHardwareManager.getInstance(mContext);
 
@@ -7015,7 +7029,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
         mGestureLauncherService = LocalServices.getService(GestureLauncherService.class);
     }
 
-    class GestureCallbacks implements SwipeToScreenshotListener.Callbacks, ShakeGestureService.ShakeGesturesCallbacks {
+    public class GestureCallbacks implements SwipeToScreenshotListener.Callbacks, ShakeGestureService.ShakeGesturesCallbacks {
         private Context mContext;
         private int mCurrentUserId;
 
@@ -8182,6 +8196,17 @@ public class PhoneWindowManager implements WindowManagerPolicy {
             case AudioManager.RINGER_MODE_SILENT:
                 am.setRingerMode(AudioManager.RINGER_MODE_NORMAL);
                 break;
+        }
+    }
+
+    private void turnScreenOnOrOff() {
+        if (mPowerManager.isInteractive()) {
+            mPowerManager.goToSleep(SystemClock.uptimeMillis());
+        } else {
+            mBroadcastWakeLock.acquire();
+            wakeUp(SystemClock.uptimeMillis(), mAllowTheaterModeWakeFromWakeGesture,
+                    PowerManager.WAKE_REASON_GESTURE, "android.policy:GESTURE", true);
+            mBroadcastWakeLock.release();
         }
     }
 
