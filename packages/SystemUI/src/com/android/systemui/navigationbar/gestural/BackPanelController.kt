@@ -23,6 +23,7 @@ import android.graphics.Point
 import android.os.AsyncTask
 import android.os.Handler
 import android.os.SystemClock
+import android.os.VibrationEffect
 import android.util.Log
 import android.util.MathUtils
 import android.view.Gravity
@@ -77,6 +78,8 @@ private const val POP_ON_COMMITTED_VELOCITY = 3f
 private const val POP_ON_ENTRY_TO_ACTIVE_VELOCITY = 4.5f
 private const val POP_ON_INACTIVE_TO_ACTIVE_VELOCITY = 4.7f
 private const val POP_ON_INACTIVE_VELOCITY = -1.5f
+
+private const val MAX_VIBRATION_INTENSITY = 5
 
 private const val DEBUG = false
 
@@ -974,16 +977,8 @@ internal constructor(
             GestureState.ACTIVE -> {
                 previousXTranslationOnActiveOffset = previousXTranslation
                 updateRestingArrowDimens()
-                if (featureFlags.isEnabled(ONE_WAY_HAPTICS_API_MIGRATION)) {
-                    if (mEdgeHapticIntensity > 0)
-                        vibratorHelper.performHapticFeedback(
-                            mView,
-                            HapticFeedbackConstants.GESTURE_THRESHOLD_ACTIVATE
-                        )
-                } else {
-                    vibratorHelper.cancel()
-                    triggerVibration()
-                }
+                vibratorHelper.cancel()
+                triggerVibration()
                 val popVelocity =
                     if (previousState == GestureState.INACTIVE) {
                         POP_ON_INACTIVE_TO_ACTIVE_VELOCITY
@@ -1003,16 +998,7 @@ internal constructor(
                 totalTouchDeltaInactive = params.deactivationTriggerThreshold
 
                 mView.popOffEdge(POP_ON_INACTIVE_VELOCITY)
-
-                if (featureFlags.isEnabled(ONE_WAY_HAPTICS_API_MIGRATION)) {
-                    if (mEdgeHapticIntensity > 0)
-                        vibratorHelper.performHapticFeedback(
-                            mView,
-                            HapticFeedbackConstants.GESTURE_THRESHOLD_DEACTIVATE
-                        )
-                } else {
-                    triggerVibration()
-                }
+                triggerVibration()
                 updateRestingArrowDimens()
             }
             GestureState.FLUNG -> {
@@ -1061,13 +1047,15 @@ internal constructor(
     }
 
     private fun triggerVibration() {
-        if (vibratorHelper == null || mEdgeHapticIntensity == 0) {
+        if (vibratorHelper == null || mEdgeHapticIntensity < 1) {
             return
         }
 
-        val effect = vibrationEffectsMap[mEdgeHapticIntensity]
-            ?: fallbackVibEffect
+        if (mEdgeHapticIntensity > MAX_VIBRATION_INTENSITY) {
+            mEdgeHapticIntensity = MAX_VIBRATION_INTENSITY
+        }
 
+        val effect = (vibrationEffectsMap[mEdgeHapticIntensity] ?: fallbackVibEffect) as VibrationEffect
         AsyncTask.execute { vibratorHelper.vibrate(effect) }
     }
 
