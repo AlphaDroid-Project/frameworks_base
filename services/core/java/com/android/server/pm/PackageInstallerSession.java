@@ -1586,17 +1586,12 @@ public class PackageInstallerSession extends IPackageInstallerSession.Stub {
     }
 
     @GuardedBy("mLock")
-    private void enableFsVerityToAddedApksWithIdsig() throws PackageManagerException {
-        try {
-            List<File> files = getAddedApksLocked();
-            for (var file : files) {
-                if (new File(file.getPath() + V4Signature.EXT).exists()) {
-                    VerityUtils.setUpFsverity(file.getPath());
-                }
+    private void enableFsVerityToAddedApksWithIdsig() {
+        List<File> files = getAddedApksLocked();
+        for (var file : files) {
+            if (new File(file.getPath() + V4Signature.EXT).exists()) {
+                VerityUtils.setUpFsverity(file.getPath());
             }
-        } catch (IOException e) {
-            throw new PrepareFailure(PackageManager.INSTALL_FAILED_BAD_SIGNATURE,
-                    "Failed to enable fs-verity to verify with idsig: " + e);
         }
     }
 
