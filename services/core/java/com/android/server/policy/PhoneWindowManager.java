@@ -1130,7 +1130,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                     Settings.System.LOCKSCREEN_ENABLE_POWER_MENU), true, this,
                     UserHandle.USER_ALL);
             resolver.registerContentObserver(Settings.System.getUriFor(
-                    Settings.System.THREE_FINGER_GESTURE), false, this,
+                    "three_finger_gesture_action"), false, this,
                     UserHandle.USER_ALL);
             resolver.registerContentObserver(Settings.System.getUriFor(
                     Settings.System.HARDWARE_KEYS_DISABLE), false, this,
@@ -3481,7 +3481,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
             }
 
             boolean threeFingerGesture = Settings.System.getIntForUser(resolver,
-                    Settings.System.THREE_FINGER_GESTURE, 0, UserHandle.USER_CURRENT) == 1;
+                    "three_finger_gesture_action", 0, UserHandle.USER_CURRENT) != 0;
             if (mSwipeToScreenshot != null) {
                 if (haveEnableGesture != threeFingerGesture) {
                     haveEnableGesture = threeFingerGesture;
@@ -6994,12 +6994,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
 
         GestureCallbacks gestureCallbacks = new GestureCallbacks(mContext, mCurrentUserId);
 
-        mSwipeToScreenshot = new SwipeToScreenshotListener(mContext, new SwipeToScreenshotListener.Callbacks() {
-            @Override
-            public void onSwipeThreeFinger() {
-                interceptScreenshotChord(TAKE_SCREENSHOT_FULLSCREEN, SCREENSHOT_KEY_OTHER, 0 /*pressDelay*/);
-            }
-        });
+        mSwipeToScreenshot = new SwipeToScreenshotListener(mContext, (SwipeToScreenshotListener.Callbacks) gestureCallbacks);
 
         mShakeGestures = ShakeGestureService.getInstance(mContext, (ShakeGestureService.ShakeGesturesCallbacks) gestureCallbacks);
         mShakeGestures.onStart();
