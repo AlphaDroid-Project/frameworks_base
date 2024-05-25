@@ -177,7 +177,6 @@ public class PixelPropsUtils {
             "com.proximabeta.mf.uamo"
     };
 
-    private static volatile boolean sIsGms = false;
     private static volatile boolean sIsFinsky = false;
     private static volatile boolean sIsExcluded = false;
 
@@ -300,7 +299,6 @@ public class PixelPropsUtils {
                 final String processName = Application.getProcessName();
                 if (processName.toLowerCase().contains("unstable")
                     || processName.toLowerCase().contains("instrumentation")) {
-                    sIsGms = true;
                     spoofBuildGms();
                 }
                 return;
@@ -423,14 +421,15 @@ public class PixelPropsUtils {
     }
 
     private static boolean isCallerSafetyNet() {
-        return sIsGms && Arrays.stream(Thread.currentThread().getStackTrace())
-                .anyMatch(elem -> elem.getClassName().contains("DroidGuard"));
+        return Arrays.stream(Thread.currentThread().getStackTrace())
+                        .anyMatch(elem -> elem.getClassName().toLowerCase()
+                            .contains("droidguard"));
     }
 
     public static void onEngineGetCertificateChain() {
         // Check stack for SafetyNet or Play Integrity
         if ((isCallerSafetyNet() || sIsFinsky) && !sIsExcluded) {
-            Log.i(TAG, "Blocked key attestation sIsGms=" + sIsGms + " sIsFinsky=" + sIsFinsky);
+            Log.i(TAG, "Blocked key attestation");
             throw new UnsupportedOperationException();
         }
     }
