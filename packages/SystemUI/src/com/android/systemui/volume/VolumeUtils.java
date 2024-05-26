@@ -28,9 +28,15 @@ import android.provider.Settings;
 import android.util.Log;
 
 import com.android.systemui.R;
+import com.android.systemui.Dependency;
+import com.android.systemui.tuner.TunerService;
 
-public class VolumeUtils {
+public class VolumeUtils implements TunerService.Tunable {
     private static final String TAG = "VolumeUtils";
+
+    public static final String VOLUME_SOUND_HAPTICS =
+            "system:" + "volume_sound_haptics";
+
     private static final int SOUND_HAPTICS_DELAY = 50;
     private static final int SOUND_HAPTICS_DURATION = 2000;
 
@@ -39,6 +45,9 @@ public class VolumeUtils {
     private AudioManager mAudioManager;
     private Context mContext;
     private Handler mHandler;
+    private TunerService mTunerService;
+
+    private boolean mSoundHapticsEnabled;
 
     public VolumeUtils(Context context, AudioManager audioManager) {
         mAudioManager = audioManager;
@@ -48,7 +57,19 @@ public class VolumeUtils {
         mMediaPlayer.setOnCompletionListener(mp -> stopPlayback());
     }
 
+    @Override
+    public void onTuningChanged(String key, String newValue) {
+        switch (key) {
+            case VOLUME_SOUND_HAPTICS:
+                mSoundHapticsEnabled = TunerService.parseIntegerSwitch(newValue, false);
+                break;
+            default:
+                break;
+        }
+    }
+
     public void playSoundForStreamType(int streamType) {
+        if (!mSoundHapticsEnabled) return;
         Uri soundUri = null;
         switch (streamType) {
             case AudioManager.STREAM_RING:
@@ -104,13 +125,13 @@ public class VolumeUtils {
                 return AudioAttributes.USAGE_UNKNOWN;
         }
     }
-    
+
     private void startRingtone() {
         if (mRingtone != null) {
             mRingtone.play();
         }
     }
-    
+
     private void startMediaPlayer() {
         if (mMediaPlayer != null) {
             mMediaPlayer.seekTo(0);
