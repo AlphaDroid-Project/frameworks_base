@@ -18,6 +18,7 @@ package com.android.systemui.keyguard.util
 
 import android.content.Context
 import android.content.Intent
+import com.android.systemui.res.R
 
 import com.android.internal.util.crdroid.Utils
 
@@ -25,8 +26,11 @@ import com.android.internal.util.crdroid.Utils
 object WallpaperPickerIntentUtils {
 
     fun getIntent(context: Context, launchSource: String): Intent {
-        val isGoogleWpInstalled = Utils.isPackageInstalled(context, GOOGLE_WP_PKG)
-        val wpPkg = if (isGoogleWpInstalled) GOOGLE_WP_PKG else DEFAULT_WP_PKG
+        val cfgPkg = context.getString(R.string.config_wallpaperPickerPackage)
+        val isValidCfgPkg = cfgPkg.isNotEmpty() &&
+            Utils.isPackageInstalled(context, cfgPkg)
+        val wpPkg = if (isValidCfgPkg) cfgPkg else DEFAULT_WP_PKG
+
         return Intent(Intent.ACTION_SET_WALLPAPER).apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK
             setPackage(wpPkg)
@@ -37,5 +41,4 @@ object WallpaperPickerIntentUtils {
     private const val WALLPAPER_LAUNCH_SOURCE = "com.android.wallpaper.LAUNCH_SOURCE"
     const val LAUNCH_SOURCE_KEYGUARD = "app_launched_keyguard"
     private const val DEFAULT_WP_PKG = "com.android.wallpaper"
-    private const val GOOGLE_WP_PKG = "com.google.android.apps.wallpaper"
 }
