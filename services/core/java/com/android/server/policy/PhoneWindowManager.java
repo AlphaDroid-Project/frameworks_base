@@ -913,7 +913,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                             AssistUtils.INVOCATION_TYPE_ASSIST_BUTTON);
                     break;
                 case MSG_LAUNCH_VOICE_ASSIST_WITH_WAKE_LOCK:
-                    launchVoiceAssistWithWakeLock(true);
+                    launchVoiceAssistWithWakeLock();
                     break;
                 case MSG_SHOW_PICTURE_IN_PICTURE_MENU:
                     showPictureInPictureMenuInternal();
@@ -2299,7 +2299,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                 logKeyboardSystemsEvent(event, KeyboardLogEvent.LAUNCH_ASSISTANT);
                 break;
             case VOICE_SEARCH:
-                launchVoiceAssistWithWakeLock(true);
+                launchVoiceAssistWithWakeLock();
                 break;
             case IN_APP_SEARCH:
                 triggerVirtualKeypress(KeyEvent.KEYCODE_SEARCH);
@@ -6170,7 +6170,9 @@ public class PhoneWindowManager implements WindowManagerPolicy {
 
             mHandler.removeMessages(MSG_DISPATCH_MEDIA_KEY_REPEAT_WITH_WAKE_LOCK);
             mHavePendingMediaKeyRepeatWithWakeLock = false;
-            mBroadcastWakeLock.release(); // pending repeat was holding onto the wake lock
+            if (mBroadcastWakeLock.isHeld()) {
+                mBroadcastWakeLock.release(); // pending repeat was holding onto the wake lock
+            }
         }
 
         dispatchMediaKeyWithWakeLockToAudioService(event);
@@ -6184,7 +6186,9 @@ public class PhoneWindowManager implements WindowManagerPolicy {
             msg.setAsynchronous(true);
             mHandler.sendMessageDelayed(msg, ViewConfiguration.getKeyRepeatTimeout());
         } else {
-            mBroadcastWakeLock.release();
+            if (mBroadcastWakeLock.isHeld()) {
+                mBroadcastWakeLock.release();
+            }
         }
     }
 
@@ -6207,7 +6211,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
         }
     }
 
-    void launchVoiceAssistWithWakeLock(boolean withWakelock) {
+    void launchVoiceAssistWithWakeLock() {
         sendCloseSystemWindows(SYSTEM_DIALOG_REASON_ASSIST);
 
         final Intent voiceIntent;
@@ -6222,7 +6226,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
             voiceIntent.putExtra(RecognizerIntent.EXTRA_SECURE, true);
         }
         startActivityAsUser(voiceIntent, UserHandle.CURRENT_OR_SELF);
-        if (withWakelock) {
+        if (mBroadcastWakeLock.isHeld()){
             mBroadcastWakeLock.release();
         }
     }
@@ -6953,7 +6957,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
 
         @Override
         public void onVoiceLaunch() {
-            launchVoiceAssistWithWakeLock(false);
+            launchVoiceAssistWithWakeLock();
         }
 
         @Override
