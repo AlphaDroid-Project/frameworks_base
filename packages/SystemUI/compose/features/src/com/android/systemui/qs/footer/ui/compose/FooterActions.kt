@@ -234,7 +234,7 @@ private fun IconButton(
     modifier: Modifier = Modifier,
 ) {
     Expandable(
-        color = Color.Transparent,
+        color = colorAttr(model.backgroundColor),
         shape = CircleShape,
         onClick = model.onClick,
         onLongClick = model.onLongClick,
@@ -320,7 +320,7 @@ private fun TextButton(
 ) {
     Expandable(
         shape = CircleShape,
-        color = Color.Transparent,
+        color = colorAttr(R.attr.underSurface),
         contentColor = LocalAndroidColorScheme.current.onSurfaceVariant,
         borderStroke = BorderStroke(1.dp, colorAttr(R.attr.shadeInactive)),
         modifier = modifier.padding(horizontal = 4.dp),

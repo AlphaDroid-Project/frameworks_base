@@ -205,7 +205,7 @@ fun FooterActionsViewModel(
     }
 
     fun onPowerButtonClicked(expandable: Expandable) {
-        if (keyguardStateController.isShowing() && keyguardStateController.isMethodSecure() 
+        if (keyguardStateController.isShowing() && keyguardStateController.isMethodSecure()
                 && Settings.System.getIntForUser(appContext.getContentResolver(),
                 Settings.System.LOCKSCREEN_ENABLE_POWER_MENU, 1, UserHandle.USER_CURRENT) == 0) {
             return
@@ -365,10 +365,11 @@ fun settingsButtonViewModel(
             ContentDescription.Resource(R.string.accessibility_quick_settings_settings)
         ),
         iconTint =
-            Utils.getColorStateListDefaultColor(
+            Utils.getColorAttrDefaultColor(
                 qsThemedContext,
-                R.color.qs_color_button_settings,
+                R.attr.onShadeInactiveVariant,
             ),
+        backgroundColor = R.attr.shadeInactive,
         onSettingsButtonClicked,
         onSettingsButtonLongClicked,
     )
@@ -381,14 +382,15 @@ fun powerButtonViewModel(
     return FooterActionsButtonViewModel(
         id = R.id.pm_lite,
         Icon.Resource(
-                R.drawable.ic_qs_lock_power_off,
-                ContentDescription.Resource(R.string.accessibility_quick_settings_power_menu)
+            R.drawable.ic_qs_lock_power_off,
+            ContentDescription.Resource(R.string.accessibility_quick_settings_power_menu)
+        ),
+        iconTint =
+            Utils.getColorAttrDefaultColor(
+                qsThemedContext,
+                R.attr.onShadeActive,
             ),
-            iconTint =
-                Utils.getColorStateListDefaultColor(
-                    qsThemedContext,
-                    R.color.qs_color_button_power,
-                ),
+        backgroundColor = R.attr.shadeActive,
         onPowerButtonClicked,
     )
 }
