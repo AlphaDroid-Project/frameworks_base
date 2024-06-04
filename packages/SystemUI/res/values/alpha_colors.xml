@@ -27,6 +27,7 @@
     <color name="qs_color_icon_active">@*android:color/qs_color_icon_active</color>
     <color name="qs_color_icon_inactive">@*android:color/qs_color_icon_inactive</color>
     <color name="qs_color_icon_unavailable">@*android:color/qs_color_icon_unavailable</color>
+    <color name="qs_color_active">@*android:color/qs_color_active</color>
     <color name="qs_color_inactive">@*android:color/qs_color_inactive</color>
     <color name="qs_color_neutral">@*android:color/qs_color_neutral</color>
     <color name="qs_color_accent_primary">@*android:color/qs_color_accent_primary</color>
