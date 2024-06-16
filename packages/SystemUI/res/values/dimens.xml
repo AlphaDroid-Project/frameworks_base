@@ -585,6 +585,8 @@
 
     <dimen name="volume_dialog_slider_corner_radius">21dp</dimen>
 
+    <dimen name="volume_dialog_slider_corner_radius_small">17dp</dimen>
+
     <!-- (volume_dialog_panel_width - rounded_slider_icon_size) / 2 -->
     <dimen name="volume_slider_icon_inset">11dp</dimen>
 
@@ -971,7 +973,7 @@
     <!-- Minimum margin of the notification panel on the side, when being positioned dynamically -->
     <dimen name="notification_panel_min_side_margin">48dp</dimen>
 
-    <dimen name="volume_row_slider_height">192dp</dimen>
+    <dimen name="volume_row_slider_height">184dp</dimen>
 
     <!-- Thickness of the assist disclosure beams -->
     <dimen name="assist_disclosure_thickness">2.5dp</dimen>
