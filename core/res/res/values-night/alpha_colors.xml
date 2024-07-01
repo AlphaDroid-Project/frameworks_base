@@ -36,5 +36,6 @@
     <color name="qs_color_accent_secondary">@android:color/system_accent1_200</color>
     <color name="qs_color_accent_custom_primary">@color/system_accent3_400</color>
     <color name="qs_color_accent_custom_secondary">@color/system_accent3_200</color>
+    <color name="vs_icon_tint">@color/system_accent1_800</color>
 
 </resources>

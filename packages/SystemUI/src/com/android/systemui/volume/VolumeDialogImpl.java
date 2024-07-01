@@ -878,8 +878,8 @@ public class VolumeDialogImpl implements VolumeDialog, Dumpable,
     private boolean isWindowGravityLeft() {
         return (mWindowGravity & Gravity.LEFT) == Gravity.LEFT;
     }
-    
-    private float getDialogTranslation() { 
+
+    private float getDialogTranslation() {
         return (isWindowGravityLeft() ? -1 : 1) * mDialogView.getWidth() / 2.0f;
     }
 
@@ -1035,9 +1035,9 @@ public class VolumeDialogImpl implements VolumeDialog, Dumpable,
                         android.R.id.progress)).getDrawable();
 
         row.sliderProgressSolid = seekbarProgressDrawable.findDrawableByLayerId(
-                R.id.volume_seekbar_progress_solid);
+                com.android.internal.R.id.volume_seekbar_progress_solid);
         final Drawable sliderProgressIcon = seekbarProgressDrawable.findDrawableByLayerId(
-                        R.id.volume_seekbar_progress_icon);
+                        com.android.internal.R.id.volume_seekbar_progress_icon);
         row.sliderProgressIcon = sliderProgressIcon != null ? (AlphaTintDrawableWrapper)
                 ((RotateDrawable) sliderProgressIcon).getDrawable() : null;
 
@@ -2243,7 +2243,7 @@ public class VolumeDialogImpl implements VolumeDialog, Dumpable,
         final VolumeRow ringer = findRow(STREAM_RING);
         final VolumeRow notif = findRow(STREAM_NOTIFICATION);
 
-        if (ringer != null && ringer.ss.muted) {
+        if (ringer != null && ringer.ss != null && ringer.ss.muted) {
             final int ringerLevel = ringer.ss.levelMin * 100;
             if (ringer.slider.getProgress() != ringerLevel) {
                 ringer.slider.setProgress(ringerLevel, true);
@@ -2255,7 +2255,7 @@ public class VolumeDialogImpl implements VolumeDialog, Dumpable,
                         ringer.ss.levelMax));
             }
         }
-        if (notif != null && notif.ss.muted) {
+        if (notif != null && notif.ss != null && notif.ss.muted) {
             final int notifLevel = notif.ss.levelMin * 100;
             if (notif.slider.getProgress() != notifLevel) {
                 notif.slider.setProgress(notifLevel, true);
@@ -2361,7 +2361,7 @@ public class VolumeDialogImpl implements VolumeDialog, Dumpable,
 
     private void updateVolumeRowH(VolumeRow row) {
         if (D.BUG) Log.i(TAG, "updateVolumeRowH s=" + row.stream);
-        if (mState == null) return;
+        if (row == null || mState == null) return;
         final StreamState ss = mState.states.get(row.stream);
         if (ss == null) return;
         row.ss = ss;
@@ -2503,6 +2503,7 @@ public class VolumeDialogImpl implements VolumeDialog, Dumpable,
     }
 
     private void updateVolumeRowTintH(VolumeRow row, boolean isActive) {
+        if (row == null || row.slider == null) return;
         if (isActive) {
             row.slider.requestFocus();
         }
@@ -2524,19 +2525,21 @@ public class VolumeDialogImpl implements VolumeDialog, Dumpable,
         final ColorStateList inverseTextTint = Utils.getColorAttr(
                 mContext, com.android.internal.R.attr.textColorOnAccent);
 
-        row.sliderProgressSolid.setTintList(colorTint);
-        if (row.sliderProgressIcon != null) {
-            row.sliderProgressIcon.setTintList(bgTint);
-        }
+        if (row.sliderProgressSolid != null) {
+            row.sliderProgressSolid.setTintList(colorTint);
+            if (row.sliderProgressIcon != null) {
+                row.sliderProgressIcon.setTintList(bgTint);
+            }
 
-        if (row.icon != null) {
-            row.icon.setImageTintList(inverseTextTint);
-            row.icon.setImageAlpha(alpha);
-        }
+            if (row.icon != null) {
+                row.icon.setImageTintList(inverseTextTint);
+                row.icon.setImageAlpha(alpha);
+            }
 
-        if (row.number != null) {
-            row.number.setTextColor(colorTint);
-            row.number.setAlpha(alpha);
+            if (row.number != null) {
+                row.number.setTextColor(colorTint);
+                row.number.setAlpha(alpha);
+            }
         }
     }
 
