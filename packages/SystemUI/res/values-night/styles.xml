@@ -52,6 +52,10 @@
         <item name="android:itemTextAppearance">@style/Control.MenuItem</item>
     </style>
 
+    <style name="volume_dialog_theme" parent="Theme.SystemUI">
+        <item name="androidprv:alphaColorOnAccent">@color/vs_icon_tint</item>
+    </style>
+
     <!-- Screenshots -->
     <style name="LongScreenshotActivity" parent="@android:style/Theme.DeviceDefault.DayNight">
         <item name="android:windowNoTitle">true</item>

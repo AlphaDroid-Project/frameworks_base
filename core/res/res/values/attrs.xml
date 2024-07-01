@@ -1186,6 +1186,9 @@
         <!-- Color applied to effects. -->
         <attr name="effectColor" format="color" />
 
+        <!-- Volume slider progress icon tint -->
+        <attr name="alphaColorOnAccent" format="color" />
+
         <!-- =================== -->
         <!-- Lighting properties -->
         <!-- =================== -->
