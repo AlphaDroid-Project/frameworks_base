@@ -326,7 +326,10 @@ public class BatteryMeterView extends LinearLayout implements DarkReceiver {
      * @param pluggedIn whether the device is plugged in or not
      */
     public void onBatteryLevelChanged(@IntRange(from = 0, to = 100) int level, boolean pluggedIn) {
-        if (mLevel != level) {
+        boolean mLevelChanged = mLevel != level;
+        boolean mChargingChanged = mCharging != pluggedIn;
+
+        if (mLevelChanged) {
             mLevel = level;
             mAccessorizedDrawable.setBatteryLevel(mLevel);
             mCircleDrawable.setBatteryLevel(mLevel);
@@ -346,9 +349,11 @@ public class BatteryMeterView extends LinearLayout implements DarkReceiver {
             mLandscapeDrawableiOS16.setBatteryLevel(mLevel);
             mLandscapeDrawableOrigami.setBatteryLevel(mLevel);
             mLandscapeDrawableMiUIPill.setBatteryLevel(mLevel);
-            updatePercentText();
+            if (!mChargingChanged) {
+                updatePercentText();
+            }
         }
-        if (mCharging != pluggedIn) {
+        if (mChargingChanged) {
             mCharging = pluggedIn;
             mAccessorizedDrawable.setCharging(mCharging);
             mCircleDrawable.setCharging(mCharging);
@@ -448,50 +453,41 @@ public class BatteryMeterView extends LinearLayout implements DarkReceiver {
         }
 
         if (mBatteryPercentView != null) {
-            setPercentTextAtCurrentLevel();
-        } else {
-            updateContentDescription();
-        }
-    }
+            mEstimateText = null;
 
-    private void setPercentTextAtCurrentLevel() {
-        String text = NumberFormat.getPercentInstance().format(mLevel / 100f);
-
-        mEstimateText = null;
-
-        if (mBatteryEstimateFetcher != null && mShowPercentMode == MODE_ESTIMATE && !isCharging()) {
-            mBatteryEstimateFetcher.fetchBatteryTimeRemainingEstimate(
+            if (mBatteryEstimateFetcher != null
+                && mShowPercentMode == MODE_ESTIMATE && !isCharging()) {
+                    mBatteryEstimateFetcher.fetchBatteryTimeRemainingEstimate(
                     (String estimate) -> {
-                if (mBatteryPercentView == null) {
-                    return;
-                }
-                if (estimate != null && mShowPercentMode == MODE_ESTIMATE) {
-                    mEstimateText = estimate;
-                    if (!TextUtils.equals(mBatteryPercentView.getText(), estimate)) {
-                        mBatteryPercentView.setText(estimate);
-                    }
-                } else {
-                    if (!TextUtils.equals(mBatteryPercentView.getText(), text)) {
-                       mBatteryPercentView.setText(text);
-                    }
-                }
-            });
-        } else {
-            // Use the high voltage symbol ⚡ (u26A1 unicode) but prevent the system
-            // to load its emoji colored variant with the uFE0E flag
-            String bolt = "\u26A1\uFE0E";
-            CharSequence mChargeIndicator = isCharging() && (mBatteryStyle == BATTERY_STYLE_HIDDEN ||
-                    mBatteryStyle == BATTERY_STYLE_TEXT) ? (bolt + " ") : "";
-            String percentText = mChargeIndicator + text;
-            // Setting text actually triggers a layout pass (because the text view is set to
-            // wrap_content width and TextView always relayouts for this). Avoid needless
-            // relayout if the text didn't actually change.
-            if (!TextUtils.equals(mBatteryPercentView.getText(), percentText)) {
-                mBatteryPercentView.setText(percentText);
+                        if (estimate != null
+                            && mShowPercentMode == MODE_ESTIMATE) {
+                            mEstimateText = estimate;
+                            if (!TextUtils.equals(
+                                    mBatteryPercentView.getText(), estimate)) {
+                                mBatteryPercentView.setText(estimate);
+                            }
+                        } else {
+                            setPercentTextAtCurrentLevel();
+                        }
+                    });
+            } else {
+                setPercentTextAtCurrentLevel();
             }
         }
 
         updateContentDescription();
+    }
+
+    private void setPercentTextAtCurrentLevel() {
+        if (mBatteryPercentView == null) {
+              return;
+        }
+        String text = NumberFormat.getPercentInstance().format(mLevel / 100f);
+        if (mCharging && (mBatteryPercentView != null && (mBatteryStyle == BATTERY_STYLE_TEXT
+            || mBatteryStyle == BATTERY_STYLE_HIDDEN))) {
+            text = "⚡ " + text;
+        }
+        mBatteryPercentView.setText(text);
     }
 
     private void updateContentDescription() {
@@ -528,13 +524,16 @@ public class BatteryMeterView extends LinearLayout implements DarkReceiver {
     }
 
     void updateShowPercent() {
-        boolean drawPercentInside = mShowBatteryPercent == 1
-                                    && !isCharging() && !mBatteryStateUnknown;
-        boolean showPercent = mShowBatteryPercent >= 2
-                                    || mBatteryStyle == BATTERY_STYLE_TEXT
-                                    || mShowPercentMode == MODE_ON;
-        showPercent = showPercent && !mBatteryStateUnknown
-                                    && mBatteryStyle != BATTERY_STYLE_HIDDEN;
+        boolean drawPercentInside =
+                mShowBatteryPercent == 1
+                && !isCharging()
+                && !mBatteryStateUnknown;
+        boolean showPercent =
+                (mShowBatteryPercent >= 2
+                || mBatteryStyle == BATTERY_STYLE_TEXT
+                || mShowPercentMode == MODE_ON)
+                && !mBatteryStateUnknown
+                && mBatteryStyle != BATTERY_STYLE_HIDDEN;
 
         mAccessorizedDrawable.showPercent(drawPercentInside);
         mCircleDrawable.setShowPercent(drawPercentInside);
