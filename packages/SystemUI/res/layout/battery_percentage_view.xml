@@ -26,5 +26,4 @@
         android:textColor="?android:attr/textColorPrimary"
         android:gravity="center_vertical|start"
         android:importantForAccessibility="no"
-        android:includeFontPadding="false"
         />

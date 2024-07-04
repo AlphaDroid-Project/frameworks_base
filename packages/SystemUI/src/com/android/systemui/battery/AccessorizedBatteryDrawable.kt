@@ -28,7 +28,7 @@ import android.graphics.Rect
 import android.graphics.drawable.DrawableWrapper
 import android.util.PathParser
 import com.android.settingslib.graph.ThemedBatteryDrawable
-import com.android.systemui.res.R
+import com.android.systemui.R
 import com.android.systemui.battery.BatterySpecs.BATTERY_HEIGHT
 import com.android.systemui.battery.BatterySpecs.BATTERY_HEIGHT_WITH_SHIELD
 import com.android.systemui.battery.BatterySpecs.BATTERY_WIDTH
@@ -202,11 +202,6 @@ class AccessorizedBatteryDrawable(
     fun setColors(fgColor: Int, bgColor: Int, singleToneColor: Int) {
         shieldPaint.color = if (dualTone) fgColor else singleToneColor
         mainBatteryDrawable.setColors(fgColor, bgColor, singleToneColor)
-    }
-
-    /** Shows the battery percentage. */
-    fun showPercent(percentage: Boolean) {
-        mainBatteryDrawable.showPercent = percentage
     }
 
     /** Notifies this drawable that the density might have changed. */
