@@ -8203,8 +8203,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
             mPowerManager.goToSleep(SystemClock.uptimeMillis());
         } else {
             mBroadcastWakeLock.acquire();
-            wakeUp(SystemClock.uptimeMillis(), mAllowTheaterModeWakeFromWakeGesture,
-                    PowerManager.WAKE_REASON_GESTURE, "android.policy:GESTURE", true);
+            mWindowWakeUpPolicy.wakeUpFromWakeGesture();
             mBroadcastWakeLock.release();
         }
     }
