@@ -6330,7 +6330,7 @@ public final class Settings {
          * 0..n - dashboard style
          * @hide
          */
-         public static final String SETTINGS_DASHBOARD_STYLE = "settings_dashboard_style";
+        public static final String SETTINGS_DASHBOARD_STYLE = "settings_dashboard_style";
 
         /**
          * Settings homepage revamp
@@ -6338,12 +6338,19 @@ public final class Settings {
          * 1 - enable
          * @hide
          */
-         public static final String SETTINGS_HOMEPAGE_REVAMP = "settings_homepage_revamp";
+        public static final String SETTINGS_HOMEPAGE_REVAMP = "settings_homepage_revamp";
 
-         /**
-          * @hide
-          */
-         public static final String RECENTS_LOCKED_TASKS = "recents_locked_tasks";
+        /**
+         * @hide
+         */
+        public static final String RECENTS_LOCKED_TASKS = "recents_locked_tasks";
+
+        /**
+         * Whether long press on navbar gesture is enabled
+         * @hide
+         */
+        @Readable
+        public static final String NAVBAR_LONG_PRESS_GESTURE = "navbar_long_press_gesture";
 
         /**
          * IMPORTANT: If you add a new public settings you also have to add it to
