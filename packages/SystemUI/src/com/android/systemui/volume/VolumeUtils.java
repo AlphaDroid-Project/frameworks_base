@@ -45,7 +45,7 @@ public class VolumeUtils implements TunerService.Tunable {
     private AudioManager mAudioManager;
     private Context mContext;
     private Handler mHandler;
-    private TunerService mTunerService;
+    private final TunerService mTunerService;
 
     private boolean mSoundHapticsEnabled;
 
@@ -55,6 +55,8 @@ public class VolumeUtils implements TunerService.Tunable {
         mHandler = new Handler();
         mMediaPlayer = new MediaPlayer();
         mMediaPlayer.setOnCompletionListener(mp -> stopPlayback());
+        mTunerService = Dependency.get(TunerService.class);
+        mTunerService.addTunable(this, VOLUME_SOUND_HAPTICS);
     }
 
     @Override
@@ -147,5 +149,9 @@ public class VolumeUtils implements TunerService.Tunable {
             mMediaPlayer.stop();
             mMediaPlayer.reset();
         }
+    }
+
+    public void onDestroy() {
+        mTunerService.removeTunable(this);
     }
 }
