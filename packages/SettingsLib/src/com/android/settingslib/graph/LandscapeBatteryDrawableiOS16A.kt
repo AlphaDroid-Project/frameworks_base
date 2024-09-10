@@ -404,27 +404,27 @@ open class LandscapeBatteryDrawableiOS16A(private val context: Context, frameCol
 
     private fun loadPaths() {
         val pathString = context.resources.getString(
-                com.android.internal.R.string.config_batterymeterLandPerimeterPathiOS16A)
+                com.android.internal.R.string.config_batterymeterLandPerimeterPathiOS16)
         perimeterPath.set(PathParser.createPathFromPathData(pathString))
         perimeterPath.computeBounds(RectF(), true)
 
         val errorPathString = context.resources.getString(
-                com.android.internal.R.string.config_batterymeterLandErrorPerimeterPathiOS16A)
+                com.android.internal.R.string.config_batterymeterLandErrorPerimeterPathiOS16)
         errorPerimeterPath.set(PathParser.createPathFromPathData(errorPathString))
         errorPerimeterPath.computeBounds(RectF(), true)
 
         val fillMaskString = context.resources.getString(
-                com.android.internal.R.string.config_batterymeterLandFillMaskiOS16A)
+                com.android.internal.R.string.config_batterymeterLandFillMaskiOS16)
         fillMask.set(PathParser.createPathFromPathData(fillMaskString))
         // Set the fill rect so we can calculate the fill properly
         fillMask.computeBounds(fillRect, true)
 
         val boltPathString = context.resources.getString(
-                com.android.internal.R.string.config_batterymeterLandBoltPathiOS16A)
+                com.android.internal.R.string.config_batterymeterLandBoltPathiOS16)
         boltPath.set(PathParser.createPathFromPathData(boltPathString))
 
         val plusPathString = context.resources.getString(
-                com.android.internal.R.string.config_batterymeterLandPowersavePathiOS16A)
+                com.android.internal.R.string.config_batterymeterLandPowersavePathiOS16)
         plusPath.set(PathParser.createPathFromPathData(plusPathString))
 
         dualTone = true

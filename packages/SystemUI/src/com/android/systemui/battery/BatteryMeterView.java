@@ -464,7 +464,7 @@ public class BatteryMeterView extends LinearLayout implements DarkReceiver {
             mLandscapeDrawableSignal.setPowerSaveEnabled(isPowerSave);
             mLandscapeDrawableiOS15.setPowerSaveEnabled(isPowerSave);
             mLandscapeDrawableiOS16.setPowerSaveEnabled(isPowerSave);
-mLandscapeDrawableiOS16A.setPowerSaveEnabled(isPowerSave);                       
+            mLandscapeDrawableiOS16A.setPowerSaveEnabled(isPowerSave);
             mLandscapeDrawableOrigami.setPowerSaveEnabled(isPowerSave);
             mLandscapeDrawableMiUIPill.setPowerSaveEnabled(isPowerSave);
         } else {
@@ -722,7 +722,8 @@ mLandscapeDrawableiOS16A.setPowerSaveEnabled(isPowerSave);
                                     || mShowPercentMode == MODE_ON;
         showPercent = showPercent && !mBatteryStateUnknown
                                     && mBatteryStyle != BATTERY_STYLE_HIDDEN
-                                    && mBatteryStyle != BATTERY_STYLE_LANDSCAPE_IOS16;
+                                    && mBatteryStyle != BATTERY_STYLE_LANDSCAPE_IOS16
+                                    && mBatteryStyle != BATTERY_STYLE_LANDSCAPE_IOS16A;
 
         mAccessorizedDrawable.showPercent(drawPercentInside);
         mCircleDrawable.setShowPercent(drawPercentInside);
@@ -740,7 +741,7 @@ mLandscapeDrawableiOS16A.setPowerSaveEnabled(isPowerSave);
         mLandscapeDrawableSignal.setShowPercent(drawPercentInside);
         mLandscapeDrawableiOS15.setShowPercent(drawPercentInside);
         mLandscapeDrawableiOS16.setShowPercent(drawPercentInside);
-mLandscapeDrawableiOS16A.setShowPercent(drawPercentInside);        
+        mLandscapeDrawableiOS16A.setShowPercent(drawPercentInside);
         mLandscapeDrawableOrigami.setShowPercent(drawPercentInside);
         mLandscapeDrawableMiUIPill.setShowPercent(drawPercentInside);
 
@@ -867,10 +868,8 @@ mLandscapeDrawableiOS16A.setShowPercent(drawPercentInside);
                 res.getDimensionPixelSize(R.dimen.status_bar_battery_icon_height_landscape_buddy) : batteryHeight;
         batteryHeight = mBatteryStyle == BATTERY_STYLE_LANDSCAPE_IOS15 ?
                 res.getDimensionPixelSize(R.dimen.status_bar_battery_icon_height_landscape_ios15) : batteryHeight;
-        batteryHeight = mBatteryStyle == BATTERY_STYLE_LANDSCAPE_IOS16 ?
+        batteryHeight = mBatteryStyle == BATTERY_STYLE_LANDSCAPE_IOS16 || mBatteryStyle == BATTERY_STYLE_LANDSCAPE_IOS16A ?
                 res.getDimensionPixelSize(R.dimen.status_bar_battery_icon_height_landscape_ios16) : batteryHeight;
-        batteryHeight = mBatteryStyle == BATTERY_STYLE_LANDSCAPE_IOS16A ?
-                res.getDimensionPixelSize(R.dimen.status_bar_battery_icon_height_landscape_ios16a) : batteryHeight;
         batteryHeight = mBatteryStyle == BATTERY_STYLE_LANDSCAPE_ORIGAMI ?
                 res.getDimensionPixelSize(R.dimen.status_bar_battery_icon_height_landscape_origami) : batteryHeight;
         batteryHeight = mBatteryStyle == BATTERY_STYLE_LANDSCAPE_MIUI_PILL ?
@@ -882,19 +881,17 @@ mLandscapeDrawableiOS16A.setShowPercent(drawPercentInside);
         batteryWidth = mBatteryStyle == BATTERY_STYLE_LANDSCAPE || mBatteryStyle == BATTERY_STYLE_RLANDSCAPE || mBatteryStyle == BATTERY_STYLE_RLANDSCAPE_STYLE_A || mBatteryStyle == BATTERY_STYLE_LANDSCAPE_STYLE_A || mBatteryStyle == BATTERY_STYLE_RLANDSCAPE_STYLE_B || mBatteryStyle == BATTERY_STYLE_LANDSCAPE_STYLE_B ?
                 res.getDimensionPixelSize(R.dimen.status_bar_battery_icon_width_landscape) : batteryWidth;               
         batteryWidth = mBatteryStyle == BATTERY_STYLE_LANDSCAPE_SIGNAL ?
-               res.getDimensionPixelSize(R.dimen.status_bar_battery_icon_width_landscape_signal): batteryWidth;      
+                res.getDimensionPixelSize(R.dimen.status_bar_battery_icon_width_landscape_signal): batteryWidth;
         batteryWidth = mBatteryStyle == BATTERY_STYLE_LANDSCAPE_LINE ?
-               res.getDimensionPixelSize(R.dimen.status_bar_battery_icon_width_landscape_line) : batteryWidth;      
+                res.getDimensionPixelSize(R.dimen.status_bar_battery_icon_width_landscape_line) : batteryWidth;
         batteryWidth = mBatteryStyle == BATTERY_STYLE_LANDSCAPE_PILL || mBatteryStyle == BATTERY_STYLE_LANDSCAPE_MUSKU ?
-               res.getDimensionPixelSize(R.dimen.status_bar_battery_icon_width_landscape_pill_musku) : batteryWidth;      
+                res.getDimensionPixelSize(R.dimen.status_bar_battery_icon_width_landscape_pill_musku) : batteryWidth;
         batteryWidth = mBatteryStyle == BATTERY_STYLE_LANDSCAPE_BUDDY ?
-               res.getDimensionPixelSize(R.dimen.status_bar_battery_icon_width_landscape_buddy) : batteryWidth;
+                res.getDimensionPixelSize(R.dimen.status_bar_battery_icon_width_landscape_buddy) : batteryWidth;
          batteryWidth = mBatteryStyle == BATTERY_STYLE_LANDSCAPE_IOS15 ?
                 res.getDimensionPixelSize(R.dimen.status_bar_battery_icon_width_landscape_ios15) : batteryWidth;
-         batteryWidth = mBatteryStyle == BATTERY_STYLE_LANDSCAPE_IOS16 ?
+         batteryWidth = mBatteryStyle == BATTERY_STYLE_LANDSCAPE_IOS16 || mBatteryStyle == BATTERY_STYLE_LANDSCAPE_IOS16A ?
                 res.getDimensionPixelSize(R.dimen.status_bar_battery_icon_width_landscape_ios16) : batteryWidth;
-         batteryWidth = mBatteryStyle == BATTERY_STYLE_LANDSCAPE_IOS16A ?
-                res.getDimensionPixelSize(R.dimen.status_bar_battery_icon_width_landscape_ios16a) : batteryWidth;          
          batteryWidth = mBatteryStyle == BATTERY_STYLE_LANDSCAPE_ORIGAMI ?
                 res.getDimensionPixelSize(R.dimen.status_bar_battery_icon_width_landscape_origami) : batteryWidth;  
          batteryWidth = mBatteryStyle == BATTERY_STYLE_LANDSCAPE_MIUI_PILL ?
