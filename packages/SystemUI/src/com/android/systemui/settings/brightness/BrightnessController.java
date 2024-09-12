@@ -120,6 +120,7 @@ public class BrightnessController implements ToggleSlider.Listener, MirroredBrig
     private static final VibrationEffect BRIGHTNESS_SLIDER_HAPTIC =
             VibrationEffect.get(VibrationEffect.EFFECT_TICK);
     private int mBrightnessSliderHaptic;
+    private final TunerService mTunerService;
 
 
     @Override
@@ -309,6 +310,7 @@ public class BrightnessController implements ToggleSlider.Listener, MirroredBrig
         mDisplayId = mContext.getDisplayId();
         mDisplayManager = displayManager;
         mVrManager = iVrManager;
+        mTunerService = tunerService;
 
         mMainHandler = new Handler(mainLooper, mHandlerCallback);
 
@@ -323,8 +325,6 @@ public class BrightnessController implements ToggleSlider.Listener, MirroredBrig
                     Settings.System.SCREEN_BRIGHTNESS_MODE_MANUAL :
                     Settings.System.SCREEN_BRIGHTNESS_MODE_AUTOMATIC,
                 UserHandle.USER_CURRENT));
-        tunerService.addTunable(this, SCREEN_BRIGHTNESS_MODE);
-        tunerService.addTunable(this, BRIGHTNESS_SLIDER_HAPTICS_INTENSITY);
     }
 
     public void registerCallbacks() {
@@ -337,6 +337,17 @@ public class BrightnessController implements ToggleSlider.Listener, MirroredBrig
         mBackgroundHandler.removeCallbacks(mStopListeningRunnable);
         mBackgroundHandler.post(mStopListeningRunnable);
         mControlValueInitialized = false;
+    }
+
+    public void addListeners() {
+        mTunerService.addTunable(this, SCREEN_BRIGHTNESS_MODE);
+        mTunerService.addTunable(this, BRIGHTNESS_SLIDER_HAPTICS_INTENSITY);
+    }
+
+    public void removeListeners() {
+        mBackgroundHandler.removeCallbacksAndMessages(null);
+        mMainHandler.removeCallbacksAndMessages(null);
+        mTunerService.removeTunable(this);
     }
 
     @Override
