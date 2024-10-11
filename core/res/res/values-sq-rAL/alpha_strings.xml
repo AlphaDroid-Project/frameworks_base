@@ -6,10 +6,8 @@
 <resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
     <!-- Upload crash log -->
     <string name="url_copy_failed">An error occured while uploading the log</string>
-
     <!-- Digital Wellbeing shorter title -->
     <string name="digital_wellbeing_title">Digital Wellbeing</string>
-
     <!-- Settings Restart -->
     <string name="settings_restart_title">Settings restart required</string>
     <string name="settings_restart_message">For all changes to take effect, a Settings app restart is required. Restart Settings app now?</string>

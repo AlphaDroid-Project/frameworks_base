@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+     SPDX-FileCopyrightText: 2025 AlphaDroid
+     SPDX-License-Identifier: Apache-2.0
+-->
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <!-- Upload crash log -->
+    <string name="url_copy_failed">上传日志时出现错误</string>
+    <!-- Digital Wellbeing shorter title -->
+    <string name="digital_wellbeing_title">数字健康</string>
+    <!-- Settings Restart -->
+    <string name="settings_restart_title">需要重启设置</string>
+    <string name="settings_restart_message">要使所有更改生效，需要重新启动“设置”应用。 立即重启设置？</string>
+    <!-- System Reboot -->
+    <string name="system_restart_title">需要重启系统</string>
+    <string name="system_restart_message">要使所有更改生效，需要重新启动系统。现在执行系统重启吗？</string>
+    <!-- SystemUI Restart -->
+    <string name="systemui_restart_title">需要重启系统界面</string>
+    <string name="systemui_restart_message">要使所有更改生效，需要重新启动系统界面。现在重新启动系统界面吗？</string>
+    <string name="systemui_restart_yes">是</string>
+    <string name="systemui_restart_not_now">暂不</string>
+    <string name="systemui_restart_process">正在重启系统界面以应用更改……</string>
+    <!-- Launcher Restart -->
+    <string name="launcher_restart_title">需要重启系统桌面</string>
+    <string name="launcher_restart_message">要使所有更改生效，需要重新启动桌面。现在重新启动桌面吗？</string>
+</resources>
