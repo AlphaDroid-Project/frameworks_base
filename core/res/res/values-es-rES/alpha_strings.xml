@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+     SPDX-FileCopyrightText: 2025 AlphaDroid
+     SPDX-License-Identifier: Apache-2.0
+-->
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <!-- Upload crash log -->
+    <string name="url_copy_failed">Se produjo un error al cargar el registro</string>
+    <!-- Digital Wellbeing shorter title -->
+    <string name="digital_wellbeing_title">Bienestar digital</string>
+    <!-- Settings Restart -->
+    <string name="settings_restart_title">Es necesario reiniciar la configuración</string>
+    <string name="settings_restart_message">Para que todos los cambios surtan efecto, es necesario reiniciar la aplicación Configuración. ¿Reiniciar la aplicación Configuración ahora?</string>
+    <!-- System Reboot -->
+    <string name="system_restart_title">Es necesario reiniciar el sistema</string>
+    <string name="system_restart_message">Para que todos los cambios surtan efecto, es necesario reiniciar el sistema. ¿Desea reiniciar el sistema ahora?</string>
+    <!-- SystemUI Restart -->
+    <string name="systemui_restart_title">Se requiere el reinicio de la interfaz de usuario del sistema</string>
+    <string name="systemui_restart_message">Para que todos los cambios surtan efecto, es necesario reiniciar SystemUI. ¿Reiniciar SystemUI ahora?</string>
+    <string name="systemui_restart_yes">Si</string>
+    <string name="systemui_restart_not_now">Ahora no</string>
+    <string name="systemui_restart_process">Reiniciando interfaz de usuario para aplicar los cambios...</string>
+    <!-- Launcher Restart -->
+    <string name="launcher_restart_title">Es necesario reiniciar el lanzador</string>
+    <string name="launcher_restart_message">Para que todos los cambios surtan efecto, es necesario reiniciar el lanzador. ¿Reiniciar el lanzador ahora?</string>
+</resources>
