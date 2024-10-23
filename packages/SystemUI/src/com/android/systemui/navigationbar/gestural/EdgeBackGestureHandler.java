@@ -421,8 +421,6 @@ public class EdgeBackGestureHandler implements PluginListener<NavigationEdgeBack
         }
     };
 
-    private int mEdgeHapticIntensity;
-
     EdgeBackGestureHandler(
             Context context,
             OverviewProxyService overviewProxyService,
@@ -550,7 +548,7 @@ public class EdgeBackGestureHandler implements PluginListener<NavigationEdgeBack
         mIsButtonForcedVisible =
                 mGestureNavigationSettingsObserver.areNavigationButtonForcedVisible();
         mIsBackGestureArrowEnabled = mGestureNavigationSettingsObserver.getBackArrowGesture();
-        mEdgeHapticIntensity = mGestureNavigationSettingsObserver.getEdgeHapticIntensity();
+        mIsEdgeHapticEnabled = mGestureNavigationSettingsObserver.getEdgeHapticEnabled();
         if (previousForcedVisible != mIsButtonForcedVisible
                 && mButtonForcedVisibleCallback != null) {
             mButtonForcedVisibleCallback.accept(mIsButtonForcedVisible);
@@ -1127,7 +1125,7 @@ public class EdgeBackGestureHandler implements PluginListener<NavigationEdgeBack
             if (mAllowGesture) {
                 mEdgeBackPlugin.setIsLeftPanel(mIsOnLeftEdge);
                 mEdgeBackPlugin.setBackArrowVisibility(mIsBackGestureArrowEnabled);
-                mEdgeBackPlugin.setEdgeHapticIntensity(mEdgeHapticIntensity);
+                mEdgeBackPlugin.setEdgeHapticEnabled(mIsEdgeHapticEnabled);
                 mEdgeBackPlugin.onMotionEvent(ev);
                 dispatchToBackAnimation(ev);
             }
