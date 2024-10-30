@@ -49,7 +49,8 @@ public class ExecutorUtils {
         final String callingPackage = controllerInstance.getContext().getPackageManager().getNameForUid(callingUid);
 
         final RemoteCallable<T> controller = controllerInstance;
-        if (callingPackage != null && !callingPackage.toLowerCase().contains("google")) {
+        boolean isExempted = com.android.internal.util.android.BypassUtils.shouldBypassPermission(callingUid);
+        if (!isExempted) {
             controllerInstance.getContext().enforceCallingPermission(
                     Manifest.permission.MANAGE_ACTIVITY_TASKS, log);
         }

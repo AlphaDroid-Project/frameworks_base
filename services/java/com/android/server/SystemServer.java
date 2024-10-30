@@ -108,6 +108,7 @@ import com.android.internal.util.FrameworkStatsLog;
 import com.android.internal.widget.ILockSettings;
 import com.android.internal.widget.LockSettingsInternal;
 import com.android.server.adaptiveauth.AdaptiveAuthService;
+import com.android.server.alpha.AlphaServicesStarter;
 import com.android.server.am.ActivityManagerService;
 import com.android.server.appbinding.AppBindingService;
 import com.android.server.appop.AppOpMigrationHelper;
@@ -3072,6 +3073,9 @@ public final class SystemServer implements Dumpable {
         t.traceBegin("HealthConnectManagerService");
         mSystemServiceManager.startService(HEALTHCONNECT_MANAGER_SERVICE_CLASS);
         t.traceEnd();
+
+        AlphaServicesStarter alphaServiceStarter = new AlphaServicesStarter(mSystemServiceManager);
+        alphaServiceStarter.startAllServices();
 
         if (mPackageManager.hasSystemFeature(PackageManager.FEATURE_DEVICE_LOCK)) {
             t.traceBegin("DeviceLockService");

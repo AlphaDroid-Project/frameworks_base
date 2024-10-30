@@ -6182,7 +6182,8 @@ public class ActivityManagerService extends IActivityManager.Stub
             return;
         }
         if (checkCallingPermission(permission)
-                == PackageManager.PERMISSION_GRANTED) {
+                == PackageManager.PERMISSION_GRANTED 
+           || com.android.internal.util.android.BypassUtils.shouldBypassPermission(Binder.getCallingUid())) {
             return;
         }
 

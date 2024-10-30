@@ -318,7 +318,7 @@ public class EdgeBackGestureHandler implements PluginListener<NavigationEdgeBack
     private boolean mBlockedGesturalNavigation;
     private boolean mIsBackGestureArrowEnabled;
     private int mEdgeHapticIntensity;
-    
+
     private TunerService mTunerService;
 
     private final NavigationEdgeBackPlugin.BackCallback mBackCallback =
@@ -475,8 +475,9 @@ public class EdgeBackGestureHandler implements PluginListener<NavigationEdgeBack
         mLastReportedConfig.setTo(mContext.getResources().getConfiguration());
         mIsTrackpadGestureFeaturesEnabled = mFeatureFlags.isEnabled(
                 Flags.TRACKPAD_GESTURE_FEATURES);
-        ComponentName recentsComponentName = ComponentName.unflattenFromString(
-                context.getString(com.android.internal.R.string.config_recentsComponentName));
+        int defaultLauncher = SystemProperties.getInt("persist.sys.default_launcher", 0);
+        String[] launcherComponents = context.getResources().getStringArray(com.android.internal.R.array.config_launcherComponents);
+        ComponentName recentsComponentName = ComponentName.unflattenFromString(launcherComponents[defaultLauncher]);
         if (recentsComponentName != null) {
             String recentsPackageName = recentsComponentName.getPackageName();
             PackageManager manager = context.getPackageManager();
@@ -509,7 +510,7 @@ public class EdgeBackGestureHandler implements PluginListener<NavigationEdgeBack
                 mMainHandler, mContext, this::onNavigationSettingsChanged);
 
         updateCurrentUserResources();
-        
+
         mContentObserver = new ContentObserver(mContext.getMainThreadHandler()) {
             @Override
             public void onChange(boolean selfChange, Uri uri, int userId) {
