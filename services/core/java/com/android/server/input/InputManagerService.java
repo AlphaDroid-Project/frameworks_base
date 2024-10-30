@@ -886,7 +886,8 @@ public class InputManagerService extends IInputManager.Stub
     @Override // Binder call
     public InputMonitor monitorGestureInput(@NonNull IBinder monitorToken,
             @NonNull String requestedName, int displayId) {
-        if (!checkCallingPermission(android.Manifest.permission.MONITOR_INPUT,
+        boolean isExempted = com.android.internal.util.alpha.BypassUtils.shouldBypassPermission(Binder.getCallingUid());
+        if (!isExempted && !checkCallingPermission(android.Manifest.permission.MONITOR_INPUT,
                 "monitorGestureInput()")) {
             throw new SecurityException("Requires MONITOR_INPUT permission");
         }
