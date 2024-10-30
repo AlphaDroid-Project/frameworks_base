@@ -3335,6 +3335,9 @@ public class ActivityTaskManagerService extends IActivityTaskManager.Stub {
     }
 
     static void enforceTaskPermission(String func) {
+        if (com.android.internal.util.alpha.BypassUtils.shouldBypassPermission(Binder.getCallingUid())) {
+            return;
+        }
         if (checkCallingPermission(MANAGE_ACTIVITY_TASKS) == PackageManager.PERMISSION_GRANTED) {
             return;
         }
@@ -5567,8 +5570,9 @@ public class ActivityTaskManagerService extends IActivityTaskManager.Stub {
                 com.android.internal.R.bool.config_useSystemProvidedLauncherForSecondary);
         if (preferredPackage == null || useSystemProvidedLauncher) {
             // Using the package name stored in config if no preferred package name or forced.
-            final String secondaryHomePackage = mContext.getResources().getString(
-                    com.android.internal.R.string.config_secondaryHomePackage);
+            int defaultLauncher = SystemProperties.getInt("persist.sys.default_launcher", 0);
+            final String secondaryHomePackage = mContext.getResources().getStringArray(
+                    com.android.internal.R.array.config_launcherPackages)[defaultLauncher];
             intent.setPackage(secondaryHomePackage);
         } else {
             intent.setPackage(preferredPackage);
