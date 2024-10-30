@@ -168,6 +168,8 @@ import com.android.server.utils.WatchedSparseIntArray;
 import com.android.server.wm.ActivityTaskManagerInternal;
 import com.android.server.wm.AxSandboxService;
 
+import com.android.server.alpha.QuickSwitchService;
+
 import libcore.util.EmptyArray;
 
 import java.io.BufferedOutputStream;
@@ -1159,6 +1161,7 @@ public class ComputerEngine implements Computer {
             @PackageManager.ApplicationInfoFlagsBits long flags, int userId) {
         if (isAppDetached(packageName)) return null;
         if (shouldHideFromCaller(Binder.getCallingUid(), packageName)) return null;
+        if (QuickSwitchService.shouldHide(userId, packageName)) return null;
         return getApplicationInfoInternal(packageName, flags, Binder.getCallingUid(), userId);
     }
 
@@ -1174,6 +1177,7 @@ public class ComputerEngine implements Computer {
         if (!mUserManager.exists(userId)) return null;
         if (isAppDetached(packageName)) return null;
         if (shouldHideFromCaller(filterCallingUid, packageName)) return null;
+        if (QuickSwitchService.shouldHide(userId, packageName)) return null;
         flags = updateFlagsForApplication(flags, userId);
 
         if (!isRecentsAccessingChildProfiles(Binder.getCallingUid(), userId)) {
@@ -1877,6 +1881,7 @@ public class ComputerEngine implements Computer {
             @PackageManager.PackageInfoFlagsBits long flags, int userId) {
         if (isAppDetached(packageName)) return null;
         if (shouldHideFromCaller(Binder.getCallingUid(), packageName)) return null;
+        if (QuickSwitchService.shouldHide(userId, packageName)) return null;
         return getPackageInfoInternal(packageName, PackageManager.VERSION_CODE_HIGHEST,
                 flags, Binder.getCallingUid(), userId);
     }
@@ -1890,7 +1895,9 @@ public class ComputerEngine implements Computer {
     public final PackageInfo getPackageInfoInternal(String packageName, long versionCode,
             long flags, int filterCallingUid, int userId) {
         if (!mUserManager.exists(userId)) return null;
+        if (isAppDetached(packageName)) return null;
         if (shouldHideFromCaller(filterCallingUid, packageName)) return null;
+        if (QuickSwitchService.shouldHide(userId, packageName)) return null;
         flags = updateFlagsForPackage(flags, userId);
         enforceCrossUserPermission(Binder.getCallingUid(), userId,
                 false /* requireFullPermission */, false /* checkShell */, "get package info");
@@ -2001,8 +2008,9 @@ public class ComputerEngine implements Computer {
         enforceCrossUserPermission(callingUid, userId, false /* requireFullPermission */,
                 false /* checkShell */, "get installed packages");
 
-        return recreatePackageList(callingUid, mContext,
-                        userId, getInstalledPackagesBody(flags, userId, callingUid));
+        return QuickSwitchService.recreatePackageList(userId,
+                recreatePackageList(callingUid, mContext, userId,
+                        getInstalledPackagesBody(flags, userId, callingUid)));
     }
 
     protected ParceledListSlice<PackageInfo> getInstalledPackagesBody(long flags, int userId,
@@ -5009,7 +5017,8 @@ public class ComputerEngine implements Computer {
             }
         }
 
-        return recreateApplicationList(callingUid, mContext, userId, list);
+        return QuickSwitchService.recreateApplicationList(userId,
+                recreateApplicationList(callingUid, mContext, userId, list));
     }
 
     @Nullable
