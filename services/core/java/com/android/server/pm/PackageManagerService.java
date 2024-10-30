@@ -2322,8 +2322,9 @@ public class PackageManagerService implements PackageSender, TestUtilityService 
             mRetailDemoPackage = getRetailDemoPackageName();
             mOverlayConfigSignaturePackage = ensureSystemPackageName(computer,
                     mInjector.getSystemConfig().getOverlayConfigSignaturePackage());
-            mRecentsPackage = ensureSystemPackageName(computer,
-                    getPackageFromComponentString(R.string.config_recentsComponentName));
+            int defaultLauncher = SystemProperties.getInt("persist.sys.default_launcher", 0);
+            String[] defaultLaunchers = mContext.getResources().getStringArray(com.android.internal.R.array.config_launcherPackages);
+            mRecentsPackage = defaultLaunchers[defaultLauncher];
             mAmbientContextDetectionPackage = ensureSystemPackageName(computer,
                     getPackageFromComponentString(
                             R.string.config_defaultAmbientContextDetectionService));

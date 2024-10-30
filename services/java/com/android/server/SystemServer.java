@@ -123,6 +123,7 @@ import com.android.server.accessibility.AccessibilityManagerService;
 import com.android.server.accounts.AccountManagerService;
 import com.android.server.adb.AdbService;
 import com.android.server.alarm.AlarmManagerService;
+import com.android.server.alpha.AlphaServicesStarter;
 import com.android.server.am.ActivityManagerService;
 import com.android.server.ambientcontext.AmbientContextManagerService;
 import com.android.server.app.AppLockManagerService;
@@ -3218,6 +3219,9 @@ public final class SystemServer implements Dumpable {
         t.traceBegin("HealthConnectManagerService");
         mSystemServiceManager.startService(HEALTHCONNECT_MANAGER_SERVICE_CLASS);
         t.traceEnd();
+
+        AlphaServicesStarter alphaServiceStarter = new AlphaServicesStarter(mSystemServiceManager);
+        alphaServiceStarter.startAllServices();
 
         if (mPackageManager.hasSystemFeature(PackageManager.FEATURE_DEVICE_LOCK)) {
             t.traceBegin("DeviceLockService");
