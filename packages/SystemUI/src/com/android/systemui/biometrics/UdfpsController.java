@@ -809,7 +809,7 @@ public class UdfpsController implements DozeReceiver, Dumpable {
         mDefaultUdfpsTouchOverlayViewModel = defaultUdfpsTouchOverlayViewModel;
 
         mDumpManager.registerDumpable(TAG, this);
-        
+
         mAuthController = authController;
 
         mOrientationListener = new BiometricDisplayListener(
@@ -864,21 +864,21 @@ public class UdfpsController implements DozeReceiver, Dumpable {
             }
         }
 
-        updateUdfpsAnimation();
-        mConfigurationController.addCallback(mConfigurationListener);
-    }
-    
-    private void updateUdfpsAnimation() {
         if (com.android.internal.util.crdroid.Utils.isPackageInstalled(mContext,
                 "com.alpha.udfps.animations")) {
-            if (mUdfpsAnimation != null) {
-                mUdfpsAnimation.removeAnimation();
-                mUdfpsAnimation = null;
-            }
-            mUdfpsAnimation = new UdfpsAnimation(mContext, mWindowManager, mSensorProps, mAuthController);
-            if (mUdfpsAnimation != null) {
-                mUdfpsAnimation.updatePosition();
-            }
+            updateUdfpsAnimation();
+            mConfigurationController.addCallback(mConfigurationListener);
+        }
+    }
+
+    private void updateUdfpsAnimation() {
+        if (mUdfpsAnimation != null) {
+            mUdfpsAnimation.removeAnimation();
+            mUdfpsAnimation = null;
+        }
+        mUdfpsAnimation = new UdfpsAnimation(mContext, mWindowManager, mSensorProps, mAuthController);
+        if (mUdfpsAnimation != null) {
+            mUdfpsAnimation.updatePosition();
         }
     }
 
