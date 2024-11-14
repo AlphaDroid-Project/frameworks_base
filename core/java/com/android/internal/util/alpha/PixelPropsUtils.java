@@ -246,7 +246,7 @@ public class PixelPropsUtils {
             ActivityTaskManager.getService().registerTaskStackListener(taskStackListener);
             return false;
         } catch (Exception e) {
-            Log.e(TAG, "Failed to register task stack listener!", e);
+            dlog("Failed to register task stack listener!");
             return true;
         }
     }
@@ -418,7 +418,7 @@ public class PixelPropsUtils {
             return focusedTask != null && focusedTask.topActivity != null
                     && focusedTask.topActivity.equals(GMS_ADD_ACCOUNT_ACTIVITY);
         } catch (Exception e) {
-            Log.e(TAG, "Unable to get top activity!", e);
+            dlog ("Unable to get top activity!");
         }
         return false;
     }
@@ -431,7 +431,7 @@ public class PixelPropsUtils {
             gmsUid = context.getPackageManager().getApplicationInfo("com.google.android.gms", 0).uid;
             dlog("shouldBypassTaskPermission: gmsUid:" + gmsUid + " callingUid:" + callingUid);
         } catch (Exception e) {
-            Log.e(TAG, "shouldBypassTaskPermission: unable to get gms uid", e);
+            dlog ("shouldBypassTaskPermission: unable to get gms uid");
             return false;
         }
         return gmsUid == callingUid;
