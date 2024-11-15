@@ -1,9 +1,14 @@
 /*
  * SPDX-FileCopyrightText: 2016 The CyanogenMod Project
- * SPDX-FileCopyrightText: 2017-2019 The LineageOS Project
+ * SPDX-FileCopyrightText: 2017-2024 The LineageOS Project
  * SPDX-License-Identifier: Apache-2.0
  */
 package org.lineageos.server.display;
+
+import static org.lineageos.server.display.LiveDisplayService.ALL_CHANGED;
+import static org.lineageos.server.display.LiveDisplayService.DISPLAY_CHANGED;
+import static org.lineageos.server.display.LiveDisplayService.MODE_CHANGED;
+import static org.lineageos.server.display.LiveDisplayService.TWILIGHT_CHANGED;
 
 import android.content.Context;
 import android.hardware.display.ColorDisplayManager;
@@ -15,11 +20,6 @@ import org.lineageos.server.display.LiveDisplayService.State;
 import org.lineageos.server.display.TwilightTracker.TwilightState;
 
 import java.util.BitSet;
-
-import static org.lineageos.server.display.LiveDisplayService.ALL_CHANGED;
-import static org.lineageos.server.display.LiveDisplayService.DISPLAY_CHANGED;
-import static org.lineageos.server.display.LiveDisplayService.MODE_CHANGED;
-import static org.lineageos.server.display.LiveDisplayService.TWILIGHT_CHANGED;
 
 public abstract class LiveDisplayFeature extends LineageBaseFeature {
 

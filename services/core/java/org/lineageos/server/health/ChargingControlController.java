@@ -5,6 +5,11 @@
 
 package org.lineageos.server.health;
 
+import static lineageos.health.HealthInterface.MODE_AUTO;
+import static lineageos.health.HealthInterface.MODE_LIMIT;
+import static lineageos.health.HealthInterface.MODE_MANUAL;
+import static lineageos.health.HealthInterface.MODE_NONE;
+
 import static java.time.format.FormatStyle.SHORT;
 
 import android.app.AlarmManager;
@@ -29,6 +34,11 @@ import android.util.Log;
 
 import com.android.internal.R;
 
+import android.provider.Settings;
+
+import vendor.lineage.health.ChargingControlSupportedMode;
+import vendor.lineage.health.IChargingControl;
+
 import java.io.PrintWriter;
 import java.text.SimpleDateFormat;
 import java.time.Instant;
@@ -39,16 +49,6 @@ import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Calendar;
-
-import android.provider.Settings;
-
-import vendor.lineage.health.ChargingControlSupportedMode;
-import vendor.lineage.health.IChargingControl;
-
-import static lineageos.health.HealthInterface.MODE_NONE;
-import static lineageos.health.HealthInterface.MODE_AUTO;
-import static lineageos.health.HealthInterface.MODE_MANUAL;
-import static lineageos.health.HealthInterface.MODE_LIMIT;
 
 public class ChargingControlController extends LineageHealthFeature {
     private final IChargingControl mChargingControl;
