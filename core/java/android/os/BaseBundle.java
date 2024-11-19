@@ -16,6 +16,7 @@
 
 package android.os;
 
+import static android.os.Build.IS_ENG;
 import static java.util.Objects.requireNonNull;
 
 import android.annotation.NonNull;
@@ -47,7 +48,7 @@ import java.util.function.BiFunction;
 public class BaseBundle {
     /** @hide */
     protected static final String TAG = "Bundle";
-    static final boolean DEBUG = false;
+    static final boolean DEBUG = false || IS_ENG;
 
     /**
      * Keep them in sync with frameworks/native/libs/binder/PersistableBundle.cpp.
@@ -1116,6 +1117,7 @@ public class BaseBundle {
     // Log a message if the value was non-null but not of the expected type
     void typeWarning(String key, @Nullable Object value, String className,
             Object defaultValue, RuntimeException e) {
+        if (!DEBUG) return;
         StringBuilder sb = new StringBuilder();
         sb.append("Key ");
         sb.append(key);
