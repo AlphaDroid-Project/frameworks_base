@@ -1,5 +1,6 @@
 /*
  * Copyright (C) 2023 The RisingOS Android Project
+ * Copyright (C) 2023-2024 AlphaDroid Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +17,7 @@
 
 package com.android.server.alpha;
 
+import static android.os.Build.IS_ENG;
 import static android.os.Process.THREAD_PRIORITY_DEFAULT;
 
 import android.app.ActivityManager;
@@ -35,6 +37,7 @@ import android.os.IUserManager;
 import android.os.RemoteException;
 import android.os.ServiceManager;
 import android.os.SystemProperties;
+import android.util.Log;
 
 import com.android.server.ServiceThread;
 import com.android.server.SystemService;
@@ -45,10 +48,40 @@ import java.util.List;
 
 public final class QuickSwitchService extends SystemService {
 
-    private static final List<String> LAUNCHER_PACKAGES = List.of(
-        "com.android.launcher3",
-        "com.google.android.apps.nexuslauncher",
-        "app.lawnchair"
+    private static final boolean DEBUG = true || IS_ENG;
+
+    private static final String LAUNCHER3 = "com.android.launcher3";
+    private static final String NEXUS_LAUNCHER = "com.google.android.apps.nexuslauncher";
+    private static final String LAWNCHAIR = "app.lawnchair";
+
+    private static final List<String> LAUNCHER_PACKAGES = List.of(LAUNCHER3, NEXUS_LAUNCHER, LAWNCHAIR);
+
+    private static final String DEFAULT_LAUNCHER_PROP = "persist.sys.default_launcher";
+    private static final String LAWNCHAIR_OVERLAY = "app.lawnchair.overlay";
+
+    private static final List <String> WALLPAPER_PICKER_PACKAGES = List.of(
+        "com.android.wallpaper",
+        "com.android.wallpaper.picker.overlay.android",
+        "com.android.wallpaper.picker.overlay.settings",
+        "com.android.customization.themes"
+    );
+
+    private static final List<String> WALLPAPER_PICKER_GOOGLE_PACKAGES = List.of(
+        "com.google.android.aicore",
+        "com.google.android.apps.aiwallpapers",
+        "com.google.android.apps.customization.pixel",
+        "com.google.android.apps.emojiwallpaper",
+        "com.google.android.apps.wallpaper",
+        "com.google.android.apps.wallpaper.overlay.android",
+        "com.google.android.apps.wallpaper.overlay.settings",
+        "com.google.android.apps.wallpaper.pixel",
+        "com.google.android.wallpaper.effects",
+        "com.google.pixel.livewallpaper"
+    );
+
+    private static final List<String> NEXUS_LAUNCHER_OVERLAYS = List.of(
+        "com.google.nexus.launcher.overlay.android",
+        "com.google.nexus.launcher.overlay.systemui"
     );
 
     private static final String TAG = "QuickSwitchService";
@@ -63,63 +96,117 @@ public final class QuickSwitchService extends SystemService {
     private ServiceThread mWorker;
     private Handler mHandler;
 
-    private static List<String> disabledLaunchersCache = null;
-    private static int lastDefaultLauncher = -1;
-
     public static boolean shouldHide(int userId, String packageName) {
-        return packageName != null && getDisabledDefaultLaunchers().contains(packageName);
+        return packageName != null && isDisabledPackage(packageName);
     }
 
     public static ParceledListSlice<PackageInfo> recreatePackageList(
             int userId, ParceledListSlice<PackageInfo> list) {
         List<PackageInfo> appList = list.getList();
-        List<String> disabledLaunchers = getDisabledDefaultLaunchers();
-        appList.removeIf(info -> disabledLaunchers.contains(info.packageName));
+        appList.removeIf(info -> isDisabledPackage(info.packageName));
         return new ParceledListSlice<>(appList);
     }
 
     public static List<ApplicationInfo> recreateApplicationList(
             int userId, List<ApplicationInfo> list) {
         List<ApplicationInfo> appList = new ArrayList<>(list);
-        List<String> disabledLaunchers = getDisabledDefaultLaunchers();
-        appList.removeIf(info -> disabledLaunchers.contains(info.packageName));
+        appList.removeIf(info -> isDisabledPackage(info.packageName));
         return appList;
     }
 
     private void updateStateForUser(int userId) {
-        int defaultLauncher = SystemProperties.getInt("persist.sys.default_launcher", 0);
-        try {
-            for (String packageName : LAUNCHER_PACKAGES) {
-                try {
-                    if (packageName.equals(LAUNCHER_PACKAGES.get(defaultLauncher))) {
-                        mPM.setApplicationEnabledSetting(packageName,
-                                PackageManager.COMPONENT_ENABLED_STATE_DEFAULT,
-                                0, userId, mOpPackageName);
-                    } else {
-                        mPM.setApplicationEnabledSetting(packageName,
-                                PackageManager.COMPONENT_ENABLED_STATE_DISABLED,
-                                0, userId, mOpPackageName);
-                    }
-                } catch (IllegalArgumentException ignored) {}
+
+        List<String> enabledPackages = new ArrayList<>();
+        List<String> disabledPackages = new ArrayList<>();
+
+        int i = SystemProperties.getInt(DEFAULT_LAUNCHER_PROP, 0);
+        if (i < 0 || i >= LAUNCHER_PACKAGES.size()) {
+            Log.e(TAG, "Invalid Launcher");
+            return;
+        }
+
+        // handle launchers
+        String defaultLauncher = LAUNCHER_PACKAGES.get(i);
+        for (String launcher : LAUNCHER_PACKAGES) {
+            if (launcher.equals(defaultLauncher)) {
+                enabledPackages.add(defaultLauncher);
             }
-        } catch (RemoteException e) {
+            else {
+                disabledPackages.add(launcher);
+            }
+        }
+
+        // handle relatives
+        if (defaultLauncher.equals(LAUNCHER3)) {
+            enabledPackages.addAll(WALLPAPER_PICKER_PACKAGES);
+            disabledPackages.addAll(WALLPAPER_PICKER_GOOGLE_PACKAGES);
+            disabledPackages.addAll(NEXUS_LAUNCHER_OVERLAYS);
+            disabledPackages.add(LAWNCHAIR_OVERLAY);
+        } else if (defaultLauncher.equals(LAWNCHAIR)) {
+            enabledPackages.add(LAWNCHAIR_OVERLAY);
+            enabledPackages.addAll(WALLPAPER_PICKER_PACKAGES);
+            disabledPackages.addAll(WALLPAPER_PICKER_GOOGLE_PACKAGES);
+            disabledPackages.addAll(NEXUS_LAUNCHER_OVERLAYS);
+        } else if (defaultLauncher.equals(NEXUS_LAUNCHER)) {
+            enabledPackages.addAll(WALLPAPER_PICKER_GOOGLE_PACKAGES);
+            enabledPackages.addAll(NEXUS_LAUNCHER_OVERLAYS);
+            disabledPackages.addAll(WALLPAPER_PICKER_PACKAGES);
+            disabledPackages.add(LAWNCHAIR_OVERLAY);
+        }
+
+        for (String pkg : disabledPackages) {
+            updateLauncherComponentsState(userId, pkg, false);
+            if (DEBUG) Log.d(TAG, "disabling " + pkg + "... done");
+        }
+        for (String pkg: enabledPackages) {
+            updateLauncherComponentsState(userId, pkg, true);
+            if (DEBUG) Log.d(TAG, "enabling " + pkg + "... done");
+        }
+    }
+
+    private void updateLauncherComponentsState(int userId, String packageName, boolean enable) {
+        try {
+            mPM.setApplicationEnabledSetting(packageName,
+                    enable ? PackageManager.COMPONENT_ENABLED_STATE_DEFAULT
+                          : PackageManager.COMPONENT_ENABLED_STATE_DISABLED,
+                    0, userId, mOpPackageName);
+        } catch (IllegalArgumentException ignored) {
+            Log.e(TAG, (enable ? "enabling " : "disabling ") + packageName + "... not found");
+        }
+        catch (RemoteException e) {
             e.rethrowAsRuntimeException();
         }
     }
 
-    public static List<String> getDisabledDefaultLaunchers() {
-        int defaultLauncher = SystemProperties.getInt("persist.sys.default_launcher", 0);
-        if (defaultLauncher != lastDefaultLauncher || disabledLaunchersCache == null) {
-            lastDefaultLauncher = defaultLauncher;
-            List<String> disabledDefaultLaunchers = new ArrayList<>();
-            for (int i = 0; i < LAUNCHER_PACKAGES.size(); i++) {
-                if (i != defaultLauncher) {
-                    disabledDefaultLaunchers.add(LAUNCHER_PACKAGES.get(i));
+    private static boolean isDisabledPackage(String packageName) {
+        int defaultLauncher = SystemProperties.getInt(DEFAULT_LAUNCHER_PROP, 0);
+        for (int i = 0; i < LAUNCHER_PACKAGES.size(); i++) {
+            if (i != defaultLauncher) {
+                String launcher = LAUNCHER_PACKAGES.get(i);
+                if (launcher.equals(packageName)
+                        || getDisabledLauncherPackages(launcher).equals(packageName)) {
+                    return true;
                 }
             }
-            disabledLaunchersCache = disabledDefaultLaunchers;
         }
-        return disabledLaunchersCache;
+        return false;
+    }
+
+    private static List<String> getDisabledLauncherPackages(String launcher) {
+        List<String> disabledPackages = new ArrayList<>();
+
+        if (launcher.equals(LAUNCHER3)) {
+            disabledPackages.addAll(WALLPAPER_PICKER_GOOGLE_PACKAGES);
+            disabledPackages.addAll(NEXUS_LAUNCHER_OVERLAYS);
+            disabledPackages.add(LAWNCHAIR_OVERLAY);
+        } else if (launcher.equals(LAWNCHAIR)) {
+            disabledPackages.addAll(WALLPAPER_PICKER_GOOGLE_PACKAGES);
+            disabledPackages.addAll(NEXUS_LAUNCHER_OVERLAYS);
+        } else if (launcher.equals(NEXUS_LAUNCHER)) {
+            disabledPackages.addAll(WALLPAPER_PICKER_PACKAGES);
+            disabledPackages.add(LAWNCHAIR_OVERLAY);
+        }
+        return disabledPackages;
     }
 
     private void initForUser(int userId) {
