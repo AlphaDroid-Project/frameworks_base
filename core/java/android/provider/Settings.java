@@ -6326,6 +6326,21 @@ public final class Settings {
         public static final String VOLUME_KEY_CURSOR_CONTROL = "volume_key_cursor_control";
 
         /**
+         * Settings dashboard styles
+         * 0..n - dashboard style
+         * @hide
+         */
+         public static final String SETTINGS_DASHBOARD_STYLE = "settings_dashboard_style";
+
+        /**
+         * Settings homepage revamp
+         * 0 - disable
+         * 1 - enable
+         * @hide
+         */
+         public static final String SETTINGS_HOMEPAGE_REVAMP = "settings_homepage_revamp";
+
+        /**
          * IMPORTANT: If you add a new public settings you also have to add it to
          * PUBLIC_SETTINGS below. If the new setting is hidden you have to add
          * it to PRIVATE_SETTINGS below. Also add a validator that can validate
