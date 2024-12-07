@@ -526,5 +526,6 @@ public class SecureSettingsValidators {
         VALIDATORS.put(Secure.NETWORK_TRAFFIC_SHOW_UNITS, new InclusiveIntegerRangeValidator(0, 2));
         VALIDATORS.put(Secure.VOLUME_PANEL_ON_LEFT, BOOLEAN_VALIDATOR);
         VALIDATORS.put(Secure.HIDE_DEVELOPER_STATUS, ANY_STRING_VALIDATOR);
+        VALIDATORS.put(Secure.HIDE_APPLIST, ANY_STRING_VALIDATOR);
     }
 }
