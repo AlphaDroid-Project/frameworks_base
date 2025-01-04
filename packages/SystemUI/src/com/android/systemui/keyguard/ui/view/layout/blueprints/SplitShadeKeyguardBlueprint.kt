@@ -28,6 +28,7 @@ import com.android.systemui.keyguard.ui.view.layout.sections.AxDynamicBarKeyguar
 import com.android.systemui.keyguard.ui.view.layout.sections.ClockSection
 import com.android.systemui.keyguard.ui.view.layout.sections.DefaultDeviceEntrySection
 import com.android.systemui.keyguard.ui.view.layout.sections.DefaultIndicationAreaSection
+import com.android.systemui.keyguard.ui.view.layout.sections.DefaultIndicationAreaTopSection
 import com.android.systemui.keyguard.ui.view.layout.sections.DefaultSettingsPopupMenuSection
 import com.android.systemui.keyguard.ui.view.layout.sections.DefaultShortcutsSection
 import com.android.systemui.keyguard.ui.view.layout.sections.DefaultStatusBarSection
@@ -55,6 +56,7 @@ class SplitShadeKeyguardBlueprint
 constructor(
     accessibilityActionsSection: AccessibilityActionsSection,
     defaultIndicationAreaSection: DefaultIndicationAreaSection,
+    defaultIndicationAreaTopSection: DefaultIndicationAreaTopSection,
     defaultDeviceEntrySection: DefaultDeviceEntrySection,
     defaultShortcutsSection: DefaultShortcutsSection,
     @Named(KeyguardSectionsModule.KEYGUARD_AMBIENT_INDICATION_AREA_SECTION)
@@ -79,6 +81,7 @@ constructor(
         listOfNotNull(
             accessibilityActionsSection,
             defaultIndicationAreaSection,
+            defaultIndicationAreaTopSection,
             defaultShortcutsSection,
             defaultAmbientIndicationAreaSection.getOrNull(),
             defaultSettingsPopupMenuSection,
