@@ -7022,6 +7022,14 @@ public final class Settings {
         public static final String DEPTH_WALLPAPER_OFFSET_Y = "depth_wallpaper_offset_y";
 
         /**
+         * Ongoing action chip
+         * 0 - disabled
+         * 1 - enabled
+         * @hide
+         */
+        public static final String ONGOING_ACTION_CHIP = "ongoing_action_chip";
+
+        /**
          * Keys we no longer back up under the current schema, but want to continue to
          * process when restoring historical backup datasets.
          *
