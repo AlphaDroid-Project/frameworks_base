@@ -28,4 +28,7 @@
     <dimen name="qs_bottom_brightness_margin_top">8dp</dimen>
     <dimen name="qs_bottom_brightness_margin_bottom">4dp</dimen>
 
+    <!-- QS Brightness slider percentage -->
+    <dimen name="qs_brightness_percentage_margin_left">6dp</dimen>
+
 </resources>
