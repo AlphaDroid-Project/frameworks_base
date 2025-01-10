@@ -43,6 +43,7 @@ import com.android.systemui.settings.brightness.BrightnessMirrorHandler;
 import com.android.systemui.settings.brightness.BrightnessSliderController;
 import com.android.systemui.settings.brightness.MirrorController;
 import com.android.systemui.statusbar.phone.StatusBarKeyguardViewManager;
+import com.android.systemui.statusbar.policy.ConfigurationController;
 import com.android.systemui.statusbar.policy.SplitShadeStateController;
 import com.android.systemui.tuner.TunerService;
 
@@ -57,7 +58,8 @@ import javax.inject.Provider;
  * Controller for {@link QSPanel}.
  */
 @QSScope
-public class QSPanelController extends QSPanelControllerBase<QSPanel> {
+public class QSPanelController extends QSPanelControllerBase<QSPanel>
+        implements ConfigurationController.ConfigurationListener {
 
     private final TunerService mTunerService;
     private final QSCustomizerController mQsCustomizerController;
@@ -195,6 +197,11 @@ public class QSPanelController extends QSPanelControllerBase<QSPanel> {
         if (mView.isListening()) {
             refreshAllTiles();
         }
+    }
+
+    @Override
+    public void onUiModeChanged() {
+        mView.updateResources();
     }
 
     private void maybeReinflateBrightnessSlider() {
