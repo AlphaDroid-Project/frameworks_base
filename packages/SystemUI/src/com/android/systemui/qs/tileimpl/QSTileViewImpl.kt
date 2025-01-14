@@ -17,6 +17,7 @@
 package com.android.systemui.qs.tileimpl
 
 import android.animation.ArgbEvaluator
+import android.animation.ObjectAnimator
 import android.animation.PropertyValuesHolder
 import android.animation.ValueAnimator
 import android.annotation.SuppressLint
@@ -32,6 +33,8 @@ import android.graphics.drawable.GradientDrawable
 import android.graphics.drawable.LayerDrawable
 import android.graphics.drawable.RippleDrawable
 import android.os.Trace
+import android.os.UserHandle;
+import android.provider.Settings;
 import android.service.quicksettings.Tile
 import android.text.TextUtils
 import android.util.Log
@@ -44,7 +47,14 @@ import android.view.ViewConfiguration
 import android.view.ViewGroup
 import android.view.accessibility.AccessibilityEvent
 import android.view.accessibility.AccessibilityNodeInfo
+import android.view.animation.AccelerateInterpolator
 import android.view.animation.AccelerateDecelerateInterpolator
+import android.view.animation.AnticipateInterpolator
+import android.view.animation.AnticipateOvershootInterpolator
+import android.view.animation.BounceInterpolator
+import android.view.animation.DecelerateInterpolator
+import android.view.animation.LinearInterpolator
+import android.view.animation.OvershootInterpolator
 import android.widget.Button
 import android.widget.ImageView
 import android.widget.LinearLayout
@@ -57,6 +67,7 @@ import androidx.core.animation.doOnStart
 import androidx.core.graphics.drawable.updateBounds
 import com.android.app.tracing.traceSection
 import com.android.settingslib.Utils
+import com.android.systemui.Dependency
 import com.android.systemui.Flags
 import com.android.systemui.FontSizeUtils
 import com.android.systemui.animation.Expandable
@@ -70,6 +81,7 @@ import com.android.systemui.plugins.qs.QSTileView
 import com.android.systemui.qs.logging.QSLogger
 import com.android.systemui.qs.tileimpl.QSIconViewImpl.QS_ANIM_LENGTH
 import com.android.systemui.res.R
+import com.android.systemui.tuner.TunerService
 import java.util.Objects
 
 private const val TAG = "QSTileViewImpl"
@@ -80,7 +92,7 @@ constructor(
     context: Context,
     private val collapsed: Boolean = false,
     private val longPressEffect: QSLongPressEffect? = null,
-) : QSTileView(context), HeightOverrideable, LaunchableView {
+) : QSTileView(context), HeightOverrideable, LaunchableView, TunerService.Tunable {
 
     companion object {
         private const val INVALID = -1
@@ -94,6 +106,13 @@ constructor(
         @VisibleForTesting internal const val LONG_PRESS_EFFECT_WIDTH_SCALE = 1.1f
         @VisibleForTesting internal const val LONG_PRESS_EFFECT_HEIGHT_SCALE = 1.2f
         internal val EMPTY_RECT = Rect()
+
+        private const val QS_TILE_ANIMATION_STYLE: String =
+                "system:" + Settings.System.QS_TILE_ANIMATION_STYLE
+        private const val QS_TILE_ANIMATION_DURATION: String =
+                "system:" + Settings.System.QS_TILE_ANIMATION_DURATION
+        private const val QS_TILE_ANIMATION_INTERPOLATOR: String =
+                "system:" + Settings.System.QS_TILE_ANIMATION_INTERPOLATOR
     }
 
     private val icon: QSIconViewImpl = QSIconViewImpl(context)
@@ -119,6 +138,21 @@ constructor(
             field = value
             updateHeight()
         }
+
+    private var animStyle: Int = Settings.System.getIntForUser(
+            context.contentResolver,
+            Settings.System.QS_TILE_ANIMATION_STYLE, 0, UserHandle.USER_CURRENT
+        )
+
+    private var animDuration: Int = Settings.System.getIntForUser(
+            context.contentResolver,
+            Settings.System.QS_TILE_ANIMATION_DURATION, 1, UserHandle.USER_CURRENT
+        )
+
+    private var interpolatorType: Int = Settings.System.getIntForUser(
+            context.contentResolver,
+            Settings.System.QS_TILE_ANIMATION_INTERPOLATOR, 0, UserHandle.USER_CURRENT
+        )
 
     private val colorActive = Utils.getColorAttrDefaultColor(context, R.attr.shadeActive)
     private val colorInactive = Utils.getColorAttrDefaultColor(context, R.attr.shadeInactive)
@@ -237,8 +271,23 @@ constructor(
         val iconSize = resources.getDimensionPixelSize(R.dimen.qs_icon_size)
         addView(icon, LayoutParams(iconSize, iconSize))
 
+        val tunerService = Dependency.get(TunerService::class.java)
+        tunerService.addTunable(this, QS_TILE_ANIMATION_STYLE)
+        tunerService.addTunable(this, QS_TILE_ANIMATION_DURATION)
+        tunerService.addTunable(this, QS_TILE_ANIMATION_INTERPOLATOR)
+
         createAndAddLabels()
         createAndAddSideView()
+    }
+
+    override fun onTuningChanged(key: String, newValue: String?) {
+        if (key == QS_TILE_ANIMATION_STYLE) {
+            animStyle = TunerService.parseInteger(newValue, 0)
+        } else if (key == QS_TILE_ANIMATION_DURATION) {
+            animDuration = TunerService.parseInteger(newValue, 1)
+        } else if (key == QS_TILE_ANIMATION_INTERPOLATOR) {
+            interpolatorType = TunerService.parseInteger(newValue, 0)
+        }
     }
 
     override fun onConfigurationChanged(newConfig: Configuration?) {
@@ -433,6 +482,30 @@ constructor(
         }
     }
 
+    private fun setAnimationTile(v: View) {
+        val animTile: ObjectAnimator = when (animStyle) {
+            1 -> ObjectAnimator.ofFloat(v, "rotation", 0f, 360f)
+            2 -> ObjectAnimator.ofFloat(v, "rotationX", 0f, 360f)
+            3 -> ObjectAnimator.ofFloat(v, "rotationY", 0f, 360f)
+            else -> return
+        }
+
+        animTile.interpolator = when (interpolatorType) {
+            0 -> LinearInterpolator()
+            1 -> AccelerateInterpolator()
+            2 -> DecelerateInterpolator()
+            3 -> AccelerateDecelerateInterpolator()
+            4 -> BounceInterpolator()
+            5 -> OvershootInterpolator()
+            6 -> AnticipateInterpolator()
+            7 -> AnticipateOvershootInterpolator()
+            else -> null
+        }
+
+        animTile.duration = (animDuration * 1000).toLong()
+        animTile.start()
+    }
+
     private fun initLongPressEffectCallback() {
         longPressEffect?.callback =
             object : QSLongPressEffect.Callback {
@@ -485,8 +558,15 @@ constructor(
             }
     }
 
+    private fun getTileView(): View {
+        return this
+    }
+
     private fun init(click: OnClickListener?, longClick: OnLongClickListener?) {
-        setOnClickListener(click)
+        setOnClickListener {
+            setAnimationTile(getTileView())
+            click?.onClick(it)
+        }
         onLongClickListener = longClick
     }
 
