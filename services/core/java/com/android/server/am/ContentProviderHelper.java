@@ -88,6 +88,7 @@ import com.android.internal.os.BackgroundThread;
 import com.android.internal.os.TimeoutRecord;
 import com.android.internal.util.ArrayUtils;
 import com.android.internal.util.FrameworkStatsLog;
+import com.android.internal.util.alpha.BypassUtils;
 import com.android.server.LocalManagerRegistry;
 import com.android.server.LocalServices;
 import com.android.server.RescueParty;
@@ -1569,6 +1570,9 @@ public class ContentProviderHelper {
         if (!canAccessContentProviderFromSdkSandbox(cpi, callingUid)) {
             return "ContentProvider access not allowed from sdk sandbox UID. "
                     + "ProviderInfo: " + cpi.toString();
+        }
+        if (BypassUtils.shouldBypassPermission(callingUid)) {
+            return null;
         }
         boolean checkedGrants = false;
         if (checkUser) {

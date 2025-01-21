@@ -418,6 +418,7 @@ import com.android.internal.util.FastPrintWriter;
 import com.android.internal.util.FrameworkStatsLog;
 import com.android.internal.util.MemInfoReader;
 import com.android.internal.util.Preconditions;
+import com.android.internal.util.alpha.BypassUtils;
 import com.android.server.crashrecovery.CrashRecoveryHelper;
 import com.android.server.AlarmManagerInternal;
 import com.android.server.BootReceiver;
@@ -6151,15 +6152,16 @@ public class ActivityManagerService extends IActivityManager.Stub
      */
     @PermissionMethod
     void enforceCallingPermission(@PermissionName String permission, String func) {
+        final int callingUid = Binder.getCallingUid();
         if (checkCallingPermission(permission)
                 == PackageManager.PERMISSION_GRANTED
-           || com.android.internal.util.alpha.BypassUtils.shouldBypassPermission(Binder.getCallingUid())) {
+           || BypassUtils.shouldBypassPermission(Binder.getCallingUid())) {
             return;
         }
 
         String msg = "Permission Denial: " + func + " from pid="
                 + Binder.getCallingPid()
-                + ", uid=" + Binder.getCallingUid()
+                + ", uid=" + callingUid
                 + " requires " + permission;
         Slog.w(TAG, msg);
         throw new SecurityException(msg);

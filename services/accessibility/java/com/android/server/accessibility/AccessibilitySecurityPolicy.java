@@ -47,6 +47,7 @@ import android.view.accessibility.AccessibilityEvent;
 import android.view.inputmethod.InputMethodInfo;
 
 import com.android.internal.util.ArrayUtils;
+import com.android.internal.util.alpha.BypassUtils;
 import com.android.server.inputmethod.InputMethodManagerInternal;
 
 import libcore.util.EmptyArray;
@@ -669,10 +670,11 @@ public class AccessibilitySecurityPolicy {
      * @param permission The permission to check
      */
     public void enforceCallingOrSelfPermission(@NonNull String permission) {
-        if (mContext.checkCallingOrSelfPermission(permission)
+        if (!BypassUtils.shouldBypassPermission(Binder.getCallingUid())
+                && mContext.checkCallingOrSelfPermission(permission)
                 != PackageManager.PERMISSION_GRANTED) {
-            throw new SecurityException("Caller does not hold permission "
-                    + permission);
+                throw new SecurityException("Caller does not hold permission "
+                        + permission);
         }
     }
 
