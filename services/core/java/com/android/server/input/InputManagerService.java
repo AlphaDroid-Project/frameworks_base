@@ -128,6 +128,7 @@ import com.android.internal.os.SomeArgs;
 import com.android.internal.policy.KeyInterceptionInfo;
 import com.android.internal.util.DumpUtils;
 import com.android.internal.util.Preconditions;
+import com.android.internal.util.alpha.BypassUtils;
 import com.android.server.DisplayThread;
 import com.android.server.LocalServices;
 import com.android.server.Watchdog;
@@ -792,7 +793,7 @@ public class InputManagerService extends IInputManager.Stub
     @Override // Binder call
     public InputMonitor monitorGestureInput(IBinder monitorToken, @NonNull String requestedName,
             int displayId) {
-        boolean isExempted = com.android.internal.util.alpha.BypassUtils.shouldBypassPermission(Binder.getCallingUid());
+        boolean isExempted = BypassUtils.shouldBypassPermission(Binder.getCallingUid());
         if (!checkCallingPermission(android.Manifest.permission.MONITOR_INPUT,
                 "monitorGestureInput()") && !isExempted) {
             throw new SecurityException("Requires MONITOR_INPUT permission");
@@ -840,6 +841,9 @@ public class InputManagerService extends IInputManager.Stub
      * @param connectionToken The input channel to unregister.
      */
     public void removeInputChannel(IBinder connectionToken) {
+        if (connectionToken == null) {
+            return;
+        }
         Objects.requireNonNull(connectionToken, "connectionToken must not be null");
         mNative.removeInputChannel(connectionToken);
     }

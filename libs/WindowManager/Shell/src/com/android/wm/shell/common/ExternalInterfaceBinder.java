@@ -21,6 +21,8 @@ import android.os.Binder;
 import android.os.IBinder;
 import android.util.Slog;
 
+import com.android.internal.util.alpha.BypassUtils;
+
 import java.util.function.Consumer;
 
 /**
@@ -57,7 +59,7 @@ public interface ExternalInterfaceBinder {
         
         final RemoteCallable<T> controller = controllerInstance;
 
-        if (!com.android.internal.util.alpha.BypassUtils.isSystemLauncher(Binder.getCallingUid())) {
+        if (!BypassUtils.shouldBypassPermission(Binder.getCallingUid())) {
             controllerInstance.getContext().enforceCallingPermission(
                     Manifest.permission.MANAGE_ACTIVITY_TASKS, log);
         }
