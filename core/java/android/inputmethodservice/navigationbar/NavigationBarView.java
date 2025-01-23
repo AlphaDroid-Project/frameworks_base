@@ -30,7 +30,11 @@ import android.annotation.NonNull;
 import android.app.StatusBarManager;
 import android.content.Context;
 import android.content.res.Configuration;
+import android.database.ContentObserver;
 import android.graphics.Canvas;
+import android.os.Handler;
+import android.os.Looper;
+import android.provider.Settings;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.util.SparseArray;
@@ -80,6 +84,14 @@ public final class NavigationBarView extends FrameLayout {
     private Configuration mTmpLastConfiguration;
 
     private NavigationBarInflaterView mNavigationInflaterView;
+
+    private final ContentObserver mImeStyleObserver =
+            new ContentObserver(new Handler(Looper.getMainLooper())) {
+        @Override
+        public void onChange(boolean selfChange) {
+            updateNavButtonIcons();
+        }
+    };
 
     /**
      * Interface definition for callbacks to be invoked when navigation bar buttons are clicked.
@@ -311,12 +323,18 @@ public final class NavigationBarView extends FrameLayout {
 
         getImeSwitchButton().setImageDrawable(mImeSwitcherIcon);
 
+        // hide keyboard buttons on no space style
+        final boolean shouldHideKeyboardButtons =
+                Settings.System.getInt(getContext().getContentResolver(),
+                Settings.System.NAVIGATION_BAR_IME_STYLE, 0) == 2;
+
         // Update IME button visibility, a11y and rotate button always overrides the appearance
         final boolean imeSwitcherVisible =
-                (mNavigationIconHints & StatusBarManager.NAVIGATION_HINT_IME_SWITCHER_SHOWN) != 0;
+                (mNavigationIconHints & StatusBarManager.NAVIGATION_HINT_IME_SWITCHER_SHOWN) != 0 
+                    && !shouldHideKeyboardButtons;
         getImeSwitchButton().setVisibility(imeSwitcherVisible ? View.VISIBLE : View.INVISIBLE);
-
-        getBackButton().setVisibility(View.VISIBLE);
+        
+        getBackButton().setVisibility(shouldHideKeyboardButtons ? View.INVISIBLE : View.VISIBLE);
         getHomeHandle().setVisibility(View.INVISIBLE);
 
         // We used to be reporting the touch regions via notifyActiveTouchRegions() here.
@@ -400,6 +418,11 @@ public final class NavigationBarView extends FrameLayout {
     @Override
     protected void onAttachedToWindow() {
         super.onAttachedToWindow();
+        getContext().getContentResolver().registerContentObserver(
+                Settings.System.getUriFor(Settings.System.NAVIGATION_BAR_IME_STYLE),
+                false, 
+                mImeStyleObserver
+        );
         // This needs to happen first as it can changed the enabled state which can affect whether
         // the back button is visible
         requestApplyInsets();
@@ -410,6 +433,7 @@ public final class NavigationBarView extends FrameLayout {
     @Override
     protected void onDetachedFromWindow() {
         super.onDetachedFromWindow();
+        getContext().getContentResolver().unregisterContentObserver(mImeStyleObserver);
         for (int i = 0; i < mButtonDispatchers.size(); ++i) {
             mButtonDispatchers.valueAt(i).onDestroy();
         }

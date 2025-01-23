@@ -6393,6 +6393,15 @@ public final class Settings {
         public static final String NAVBAR_STYLE = "navbar_style";
 
         /**
+         * Navbar IME style
+         * 0 - full (default)
+         * 1 - narrow
+         * 2 - hidden
+         * @hide
+         */
+        public static final String NAVIGATION_BAR_IME_STYLE = "navigation_bar_ime_style";
+
+        /**
          * Keys we no longer back up under the current schema, but want to continue to
          * process when restoring historical backup datasets.
          *
