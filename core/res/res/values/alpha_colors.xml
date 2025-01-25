@@ -15,5 +15,10 @@
      limitations under the License.
 -->
 <resources>
-
+    <color name="alpha_color_primary_accent_light">@android:color/system_accent1_600</color>
+    <color name="alpha_color_secondary_accent_light">@android:color/system_accent2_600</color>
+    <color name="alpha_color_tertiary_accent_light">@android:color/system_accent3_600</color>
+    <color name="alpha_color_primary_accent_dark">@android:color/system_accent1_400</color>
+    <color name="alpha_color_secondary_accent_dark">@android:color/system_accent2_400</color>
+    <color name="alpha_color_tertiary_accent_dark">@android:color/system_accent3_400</color>
 </resources>

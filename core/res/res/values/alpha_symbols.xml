@@ -58,4 +58,12 @@
     <!-- Whether Pixel props is enabled -->
     <java-symbol type="bool" name="config_enablePixelProps" />
 
+    <!-- Alpha colors -->
+    <java-symbol type="color" name="alpha_color_primary_accent_light" />
+    <java-symbol type="color" name="alpha_color_secondary_accent_light" />
+    <java-symbol type="color" name="alpha_color_tertiary_accent_light" />
+    <java-symbol type="color" name="alpha_color_primary_accent_dark" />
+    <java-symbol type="color" name="alpha_color_secondary_accent_dark" />
+    <java-symbol type="color" name="alpha_color_tertiary_accent_dark" />
+
 </resources>
