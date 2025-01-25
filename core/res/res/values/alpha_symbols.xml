@@ -4,5 +4,11 @@
      SPDX-License-Identifier: Apache-2.0
 -->
 <resources>
-
+    <!-- Alpha colors -->
+    <java-symbol type="color" name="alpha_color_primary_accent_light" />
+    <java-symbol type="color" name="alpha_color_secondary_accent_light" />
+    <java-symbol type="color" name="alpha_color_tertiary_accent_light" />
+    <java-symbol type="color" name="alpha_color_primary_accent_dark" />
+    <java-symbol type="color" name="alpha_color_secondary_accent_dark" />
+    <java-symbol type="color" name="alpha_color_tertiary_accent_dark" />
 </resources>
