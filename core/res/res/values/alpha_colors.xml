@@ -15,6 +15,9 @@
      limitations under the License.
 -->
 <resources>
+    <!-- UI styles -->
+    <color name="bootleg_accent_gradient_end_color">@color/system_accent3_600</color>
+
     <color name="alpha_color_primary_accent_light">@android:color/system_accent1_600</color>
     <color name="alpha_color_secondary_accent_light">@android:color/system_accent2_600</color>
     <color name="alpha_color_tertiary_accent_light">@android:color/system_accent3_600</color>
