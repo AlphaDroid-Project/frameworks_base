@@ -140,7 +140,7 @@ public class FPSInfoTile extends QSTileImpl<BooleanState> {
 
     @Override
     public int getMetricsCategory() {
-        return MetricsEvent.CRDROID_SETTINGS;
+        return MetricsEvent.ALPHA;
     }
 
     @Override
