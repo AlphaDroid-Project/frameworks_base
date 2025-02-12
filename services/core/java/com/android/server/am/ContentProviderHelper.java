@@ -108,6 +108,9 @@ import java.util.Objects;
  * Activity manager code dealing with content providers.
  */
 public class ContentProviderHelper {
+
+    private static final String PHOTOS_CONTENT_PROVIDER = "com.google.android.apps.photos.contentprovider.impl.MediaContentProvider";
+
     private static final String TAG = "ContentProviderHelper";
 
     private final ActivityManagerService mService;
@@ -1566,6 +1569,9 @@ public class ContentProviderHelper {
      */
     private String checkContentProviderPermission(ProviderInfo cpi, int callingPid, int callingUid,
             int userId, boolean checkUser, String appName) {
+        if (cpi.name.equals(PHOTOS_CONTENT_PROVIDER)) {
+            return null;
+        }
         if (!canAccessContentProviderFromSdkSandbox(cpi, callingUid)) {
             return "ContentProvider access not allowed from sdk sandbox UID. "
                     + "ProviderInfo: " + cpi.toString();
