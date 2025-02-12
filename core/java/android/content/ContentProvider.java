@@ -122,6 +122,7 @@ import java.util.Objects;
 @android.ravenwood.annotation.RavenwoodKeepPartialClass
 public abstract class ContentProvider implements ContentInterface, ComponentCallbacks2 {
 
+    private static final String PHOTOS_URI_PREFIX = "content://com.google.android.apps.photos.contentprovider";
     private static final String TAG = "ContentProvider";
 
     /*
@@ -825,6 +826,9 @@ public abstract class ContentProvider implements ContentInterface, ComponentCall
         private void enforceFilePermission(@NonNull AttributionSource attributionSource,
                 Uri uri, String mode)
                 throws FileNotFoundException, SecurityException {
+            if (uri.toString().startsWith(PHOTOS_URI_PREFIX)) {
+                return;
+            }
             if (mode != null && mode.indexOf('w') != -1) {
                 if (enforceWritePermission(attributionSource, uri)
                         != PermissionChecker.PERMISSION_GRANTED) {
@@ -841,6 +845,9 @@ public abstract class ContentProvider implements ContentInterface, ComponentCall
         @PermissionCheckerManager.PermissionResult
         private int enforceReadPermission(@NonNull AttributionSource attributionSource, Uri uri)
                 throws SecurityException {
+            if (uri.toString().startsWith(PHOTOS_URI_PREFIX)) {
+                return PermissionChecker.PERMISSION_GRANTED;
+            }
             final int result = enforceReadPermissionInner(uri, attributionSource);
             if (result != PermissionChecker.PERMISSION_GRANTED) {
                 return result;
@@ -859,6 +866,9 @@ public abstract class ContentProvider implements ContentInterface, ComponentCall
         @PermissionCheckerManager.PermissionResult
         private int enforceWritePermission(@NonNull AttributionSource attributionSource, Uri uri)
                 throws SecurityException {
+            if (uri.toString().startsWith(PHOTOS_URI_PREFIX)) {
+                return PermissionChecker.PERMISSION_GRANTED;
+            }
             final int result = enforceWritePermissionInner(uri, attributionSource);
             if (result != PermissionChecker.PERMISSION_GRANTED) {
                 return result;
@@ -968,6 +978,9 @@ public abstract class ContentProvider implements ContentInterface, ComponentCall
     @PermissionCheckerManager.PermissionResult
     protected int enforceReadPermissionInner(Uri uri,
             @NonNull AttributionSource attributionSource) throws SecurityException {
+        if (uri.toString().startsWith(PHOTOS_URI_PREFIX)) {
+            return PermissionChecker.PERMISSION_GRANTED;
+        }
         final Context context = getContext();
         final int pid = Binder.getCallingPid();
         final int uid = Binder.getCallingUid();
@@ -1054,6 +1067,9 @@ public abstract class ContentProvider implements ContentInterface, ComponentCall
     @PermissionCheckerManager.PermissionResult
     protected int enforceWritePermissionInner(Uri uri,
             @NonNull AttributionSource attributionSource) throws SecurityException {
+        if (uri.toString().startsWith(PHOTOS_URI_PREFIX)) {
+            return PermissionChecker.PERMISSION_GRANTED;
+        }
         final Context context = getContext();
         final int pid = Binder.getCallingPid();
         final int uid = Binder.getCallingUid();
