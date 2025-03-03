@@ -185,6 +185,8 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 
+import com.android.internal.util.alpha.HideAppListUtils;
+
 /**
  * This class contains the implementation of the Computer functions.  It
  * is entirely self-contained - it has no implicit access to
@@ -993,9 +995,11 @@ public class ComputerEngine implements Computer {
 
     public final ApplicationInfo getApplicationInfo(String packageName,
             @PackageManager.ApplicationInfoFlagsBits long flags, int userId) {
-        if (QuickSwitchService.shouldHide(userId, packageName))
+        final int callingUid = Binder.getCallingUid();
+        if (shouldHidePackageForCaller(callingUid, userId, packageName)) {
             return null;
-        return getApplicationInfoInternal(packageName, flags, Binder.getCallingUid(), userId);
+        }
+        return getApplicationInfoInternal(packageName, flags, callingUid, userId);
     }
 
     /**
@@ -1008,8 +1012,11 @@ public class ComputerEngine implements Computer {
             @PackageManager.ApplicationInfoFlagsBits long flags,
             int filterCallingUid, int userId) {
         if (!mUserManager.exists(userId)) return null;
-        if (QuickSwitchService.shouldHide(userId, packageName))
+
+        if (shouldHidePackageForCaller(filterCallingUid, userId, packageName)) {
             return null;
+        }
+
         flags = updateFlagsForApplication(flags, userId);
 
         if (!isRecentsAccessingChildProfiles(Binder.getCallingUid(), userId)) {
@@ -1019,6 +1026,74 @@ public class ComputerEngine implements Computer {
         }
 
         return getApplicationInfoInternalBody(packageName, flags, filterCallingUid, userId);
+    }
+
+    private boolean canHideApp(int callingUid, @Nullable String targetPackageName, int userId) {
+        if (!isBootCompleted() || mContext == null || mContext.getPackageManager() == null) {
+            return false;
+        }
+
+        if (Process.isIsolated(callingUid)) {
+            callingUid = getIsolatedOwner(callingUid);
+        }
+
+        if (Process.isSdkSandboxUid(callingUid)) {
+            return false;
+        }
+
+        if (callingUid == Process.SHELL_UID || callingUid == Process.ROOT_UID) {
+            return false;
+        }
+
+        if (isCallerSystem(callingUid) || isCallerHome(callingUid, userId)) {
+            return false;
+        }
+
+        if (!TextUtils.isEmpty(targetPackageName) && isCallerSameApp(targetPackageName, callingUid)) {
+            return false;
+        }
+
+        return true;
+    }
+
+    private boolean isHiddenByQuickSwitch(int userId, @Nullable String packageName) {
+        return !TextUtils.isEmpty(packageName)
+                && QuickSwitchService.shouldHide(userId, packageName);
+    }
+
+    private boolean isHiddenByUserHideList(int userId, @Nullable String packageName) {
+        return !TextUtils.isEmpty(packageName)
+                && HideAppListUtils.containsForUser(mContext, packageName, userId);
+    }
+
+    private boolean shouldHidePackageForCaller(int callingUid, int userId,
+            @Nullable String packageName) {
+        if (TextUtils.isEmpty(packageName)) {
+            return false;
+        }
+
+        if (isHiddenByQuickSwitch(userId, packageName)) {
+            return true;
+        }
+
+        return canHideApp(callingUid, packageName, userId)
+                && isHiddenByUserHideList(userId, packageName);
+    }
+
+    public ParceledListSlice<PackageInfo> recreatePackageList(
+            int callingUid, int userId, ParceledListSlice<PackageInfo> list) {
+        final List<PackageInfo> appList = new ArrayList<>(list.getList());
+        appList.removeIf(info -> info == null
+                || shouldHidePackageForCaller(callingUid, userId, info.packageName));
+        return new ParceledListSlice<>(appList);
+    }
+
+    public List<ApplicationInfo> recreateApplicationList(
+            int callingUid, int userId, List<ApplicationInfo> list) {
+        final List<ApplicationInfo> appList = new ArrayList<>(list);
+        appList.removeIf(info -> info == null
+                || shouldHidePackageForCaller(callingUid, userId, info.packageName));
+        return appList;
     }
 
     protected ApplicationInfo getApplicationInfoInternalBody(String packageName,
@@ -1665,10 +1740,12 @@ public class ComputerEngine implements Computer {
 
     public final PackageInfo getPackageInfo(String packageName,
             @PackageManager.PackageInfoFlagsBits long flags, int userId) {
-        if (QuickSwitchService.shouldHide(userId, packageName))
+        final int callingUid = Binder.getCallingUid();
+        if (shouldHidePackageForCaller(callingUid, userId, packageName)) {
             return null;
+        }
         return getPackageInfoInternal(packageName, PackageManager.VERSION_CODE_HIGHEST,
-                flags, Binder.getCallingUid(), userId);
+                flags, callingUid, userId);
     }
 
     /**
@@ -1785,13 +1862,14 @@ public class ComputerEngine implements Computer {
             return ParceledListSlice.emptyList();
         }
         if (!mUserManager.exists(userId)) return ParceledListSlice.emptyList();
+
         flags = updateFlagsForPackage(flags, userId);
 
         enforceCrossUserPermission(callingUid, userId, false /* requireFullPermission */,
                 false /* checkShell */, "get installed packages");
 
-        return QuickSwitchService.recreatePackageList(
-                        userId, getInstalledPackagesBody(flags, userId, callingUid));
+        return recreatePackageList(
+                callingUid, userId, getInstalledPackagesBody(flags, userId, callingUid));
     }
 
     protected ParceledListSlice<PackageInfo> getInstalledPackagesBody(long flags, int userId,
@@ -2632,25 +2710,17 @@ public class ComputerEngine implements Computer {
         final String packageName = ps.getPackageName();
         if (packageName == null) return false;
 
-        // if the target and caller are the same application, skip
         if (isCallerSameApp(packageName, callingUid)
-                // if the caller is system, root, shell, or updated system app, skip
                 || isCallerSystem(callingUid)
-                // if the caller is the current default home, skip
                 || isCallerHome(callingUid, userId)) {
             return false;
         }
-        // if the target is hidden app, do filter
+
         if (ps.getUserStateOrDefault(userId).isHidden()) {
             return true;
         }
-        // if the target is included in Settings.Secure.HIDE_APPLIST, do filter
-        if (com.android.internal.util.alpha.HideAppListUtils.shouldHideAppList(
-                mContext, packageName)) {
-            return true;
-        }
 
-        return false;
+        return shouldHidePackageForCaller(callingUid, userId, packageName);
     }
 
     /**
@@ -4851,7 +4921,7 @@ public class ComputerEngine implements Computer {
             }
         }
 
-        return QuickSwitchService.recreateApplicationList(userId, list);
+        return recreateApplicationList(callingUid, userId, list);
     }
 
     @Nullable

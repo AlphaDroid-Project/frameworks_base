@@ -2,114 +2,107 @@ package com.android.internal.util.alpha;
 
 import android.content.ContentResolver;
 import android.content.Context;
-import android.os.SystemProperties;
 import android.provider.Settings;
+import android.text.TextUtils;
 
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
-public class HideAppListUtils {
-    enum Action {
-        ADD,
-        REMOVE,
-        SET
+public final class HideAppListUtils {
+
+    private HideAppListUtils() {
     }
 
-    private static boolean isBootCompleted() {
-        return SystemProperties.getBoolean("sys.boot_completed", false);
-    }
-
-    public static boolean shouldHideAppList(Context context, String packageName) {
-        return shouldHideAppList(context.getContentResolver(), packageName);
-    }
-
-    public static boolean shouldHideAppList(ContentResolver cr, String packageName) {
-        if (cr == null || packageName == null || !isBootCompleted()) {
-            return false;
-        }
-
-        Set<String> apps = getApps(cr);
-        if (apps.isEmpty()) {
-            return false;
-        }
-
-        return apps.contains(packageName);
-    }
-
-    public static Set<String> getApps(Context context) {
+    public static Set<String> getAppsForUser(Context context, int userId) {
         if (context == null) {
             return new HashSet<>();
         }
-
-        return getApps(context.getContentResolver());
+        return getAppsForUser(context.getContentResolver(), userId);
     }
 
-    public static Set<String> getApps(ContentResolver cr) {
-        if (cr == null) {
+    public static Set<String> getAppsForUser(ContentResolver cr, int userId) {
+        if (cr == null || userId < 0) {
             return new HashSet<>();
         }
 
-        String apps = "";
+        final String apps;
         try {
-            apps = Settings.Secure.getString(cr, Settings.Secure.HIDE_APPLIST);
+            apps = Settings.Secure.getStringForUser(
+                    cr, Settings.Secure.HIDE_APPLIST, userId);
         } catch (IllegalStateException e) {
             return new HashSet<>();
         }
-        if (apps != null && !apps.isEmpty() && !apps.equals(",")) {
-            return new HashSet<>(Arrays.asList(apps.split(",")));
+
+        if (TextUtils.isEmpty(apps) || ",".equals(apps)) {
+            return new HashSet<>();
         }
 
-        return new HashSet<>();
+        return new HashSet<>(Arrays.asList(apps.split(",")));
     }
 
-    private static void putAppsForUser(
-            Context context, String packageName, int userId, Action action) {
-        if (context == null || userId < 0) {
+    public static boolean containsForUser(Context context, String packageName, int userId) {
+        if (context == null || TextUtils.isEmpty(packageName) || userId < 0) {
+            return false;
+        }
+        return containsForUser(context.getContentResolver(), packageName, userId);
+    }
+
+    public static boolean containsForUser(ContentResolver cr, String packageName, int userId) {
+        if (cr == null || TextUtils.isEmpty(packageName) || userId < 0) {
+            return false;
+        }
+        return getAppsForUser(cr, userId).contains(packageName);
+    }
+
+    public static void addAppForUser(Context context, String packageName, int userId) {
+        if (context == null || TextUtils.isEmpty(packageName) || userId < 0) {
             return;
         }
 
-        final Set<String> apps = getApps(context);
-        switch (action) {
-            case ADD:
-                apps.add(packageName);
-                break;
-            case REMOVE:
-                apps.remove(packageName);
-                break;
-            case SET:
-                // Don't change
-                break;
+        final Set<String> apps = getAppsForUser(context, userId);
+        if (apps.add(packageName)) {
+            putAppsForUser(context, apps, userId);
+        }
+    }
+
+    public static void removeAppForUser(Context context, String packageName, int userId) {
+        if (context == null || TextUtils.isEmpty(packageName) || userId < 0) {
+            return;
         }
 
+        final Set<String> apps = getAppsForUser(context, userId);
+        if (apps.remove(packageName)) {
+            putAppsForUser(context, apps, userId);
+        }
+    }
+
+    public static void setAppsForUser(Context context, Set<String> apps, int userId) {
+        if (context == null || userId < 0) {
+            return;
+        }
+        putAppsForUser(context, apps != null ? apps : new HashSet<>(), userId);
+    }
+
+    public static boolean removePackageForUser(Context context, String packageName, int userId) {
+        if (context == null || TextUtils.isEmpty(packageName) || userId < 0) {
+            return false;
+        }
+
+        final Set<String> apps = getAppsForUser(context, userId);
+        if (!apps.remove(packageName)) {
+            return false;
+        }
+
+        putAppsForUser(context, apps, userId);
+        return true;
+    }
+
+    private static void putAppsForUser(Context context, Set<String> apps, int userId) {
         Settings.Secure.putStringForUser(
                 context.getContentResolver(),
                 Settings.Secure.HIDE_APPLIST,
                 String.join(",", apps),
                 userId);
-    }
-
-    public void addApp(Context mContext, String packageName, int userId) {
-        if (mContext == null || packageName == null || userId < 0) {
-            return;
-        }
-
-        putAppsForUser(mContext, packageName, userId, Action.ADD);
-    }
-
-    public void removeApp(Context mContext, String packageName, int userId) {
-        if (mContext == null || packageName == null || userId < 0) {
-            return;
-        }
-
-        putAppsForUser(mContext, packageName, userId, Action.REMOVE);
-    }
-
-    public void setApps(Context mContext, int userId) {
-        if (mContext == null || userId < 0) {
-            return;
-        }
-
-        putAppsForUser(mContext, null, userId, Action.SET);
     }
 }
