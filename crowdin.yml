@@ -1,5 +1,5 @@
 files:
-  - source: /core/res/res/values/cr_strings.xml
+  - source: /core/res/res/values/alpha_strings.xml
     translation: /core/res/res/values-%android_code%/%original_file_name%
-  - source: /packages/SystemUI/res/values/cr_strings.xml
+  - source: /packages/SystemUI/res/values/alpha_strings.xml
     translation: /packages/SystemUI/res/values-%android_code%/%original_file_name%
