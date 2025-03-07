@@ -6990,6 +6990,38 @@ public final class Settings {
         public static final String MAX_VISIBLE_NOTIFICATION_ICONS = "max_visible_notification_icons";
 
         /**
+         * Depth wallpaper image URI
+         * @hide
+         */
+        public static final String DEPTH_WALLPAPER_IMAGE_URI = "depth_wallpaper_subject_image_uri";
+
+        /**
+         * Depth wallpaper
+         * 0 - disabled
+         * 1 - enabled
+         * @hide
+         */
+        public static final String DEPTH_WALLPAPER_ENABLED = "depth_wallpaper_enabled";
+
+        /**
+         * Depth wallpaper opacity
+         * @hide
+         */
+        public static final String DEPTH_WALLPAPER_OPACITY = "depth_wallpaper_opacity";
+
+        /**
+         * Depth wallpaper horizontal offset
+         * @hide
+         */
+        public static final String DEPTH_WALLPAPER_OFFSET_X = "depth_wallpaper_offset_x";
+
+        /**
+         * Depth wallpaper vertical offset
+         * @hide
+         */
+        public static final String DEPTH_WALLPAPER_OFFSET_Y = "depth_wallpaper_offset_y";
+
+        /**
          * Keys we no longer back up under the current schema, but want to continue to
          * process when restoring historical backup datasets.
          *
@@ -13649,8 +13681,8 @@ public final class Settings {
          * @hide
          */
         public static final String SHOW_MEDIA_SQUIGGLE_ANIMATION = "show_media_squiggle_animation";
-        
-                /**
+
+        /**
          * Whether to enable Sleep Mode
          * @hide
          */

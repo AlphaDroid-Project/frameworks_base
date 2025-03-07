@@ -82,6 +82,8 @@ import android.os.RemoteException;
 import android.os.StrictMode;
 import android.os.SystemProperties;
 import android.os.Trace;
+import android.os.UserHandle;
+import android.provider.Settings;
 import android.text.TextUtils;
 import android.util.ArrayMap;
 import android.util.ArraySet;
@@ -3031,17 +3033,27 @@ public class WallpaperManager {
     @Keep
     @TestApi
     public void setWallpaperZoomOut(@NonNull IBinder windowToken, float zoom) {
-        if (zoom < 0 || zoom > 1f) {
-            throw new IllegalArgumentException("zoom must be between 0 and 1: " + zoom);
+        final float mZoom = isDepthWallpaperEnabled() ? 1 : zoom;
+        if (mZoom < 0 || mZoom > 1f) {
+            throw new IllegalArgumentException("zoom must be between 0 and 1: " + mZoom);
         }
         if (windowToken == null) {
             throw new IllegalArgumentException("windowToken must not be null");
         }
         try {
-            WindowManagerGlobal.getWindowSession().setWallpaperZoomOut(windowToken, zoom);
+            WindowManagerGlobal.getWindowSession().setWallpaperZoomOut(windowToken, mZoom);
         } catch (RemoteException e) {
             throw e.rethrowFromSystemServer();
         }
+    }
+
+    private boolean isDepthWallpaperEnabled() {
+        ContentResolver resolver = mContext.getContentResolver();
+        boolean depthWallpaperEnabled = Settings.System.getIntForUser(resolver,
+                Settings.System.DEPTH_WALLPAPER_ENABLED, 0, UserHandle.USER_CURRENT) == 1;
+        String depthWallpaperUri = Settings.System.getStringForUser(resolver,
+                Settings.System.DEPTH_WALLPAPER_IMAGE_URI, UserHandle.USER_CURRENT);
+        return depthWallpaperEnabled && depthWallpaperUri != null && !depthWallpaperUri.isEmpty();
     }
 
     /**

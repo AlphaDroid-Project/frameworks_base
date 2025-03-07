@@ -20,6 +20,16 @@ import static android.app.WallpaperManager.FLAG_LOCK;
 import static android.app.WallpaperManager.FLAG_SYSTEM;
 import static android.app.WallpaperManager.SetWallpaperFlags;
 
+import static com.android.internal.util.alpha.AlphaConstants.WALLPAPER_BLUR_TARGET_PROP;
+import static com.android.internal.util.alpha.AlphaConstants.WALLPAPER_BLUR_FILTER_PROP;
+import static com.android.internal.util.alpha.AlphaConstants.WALLPAPER_DIM_TARGET_PROP;
+import static com.android.internal.util.alpha.AlphaConstants.WALLPAPER_DIM_LEVEL_PROP;
+import static com.android.internal.util.alpha.AlphaConstants.WALLPAPER_TARGET_DISABLED;
+import static com.android.internal.util.alpha.AlphaConstants.WALLPAPER_TARGET_BOTH;
+import static com.android.internal.util.alpha.AlphaConstants.WALLPAPER_TARGET_LOCKSCREEN;
+import static com.android.internal.util.alpha.AlphaConstants.WALLPAPER_TARGET_HOMESCREEN;
+import static com.android.internal.util.alpha.AlphaConstants.FROSTED_BLUR;
+import static com.android.internal.util.alpha.AlphaConstants.GLASS_BLUR;
 import static com.android.systemui.Flags.fixImageWallpaperCrashSurfaceAlreadyReleased;
 import static com.android.window.flags.Flags.multiCrop;
 import static com.android.window.flags.Flags.offloadColorExtraction;
@@ -33,10 +43,12 @@ import android.graphics.Canvas;
 import android.graphics.RecordingCanvas;
 import android.graphics.Rect;
 import android.graphics.RectF;
+import android.graphics.Paint;
 import android.hardware.display.DisplayManager;
 import android.hardware.display.DisplayManager.DisplayListener;
 import android.os.HandlerThread;
 import android.os.Looper;
+import android.os.SystemProperties;
 import android.os.Trace;
 import android.service.wallpaper.WallpaperService;
 import android.util.Log;
@@ -323,6 +335,36 @@ public class ImageWallpaper extends WallpaperService {
             if (canvas != null) {
                 Rect dest = mSurfaceHolder.getSurfaceFrame();
                 try {
+
+                    int blurTarget = SystemProperties.getInt(WALLPAPER_BLUR_TARGET_PROP, 0);
+                    if (blurTarget == WALLPAPER_TARGET_BOTH
+                            || (blurTarget == WALLPAPER_TARGET_LOCKSCREEN && isLockScreenWallpaper())
+                            || (blurTarget == WALLPAPER_TARGET_HOMESCREEN && !isLockScreenWallpaper())) {
+                        int blurFilter = SystemProperties.getInt(WALLPAPER_BLUR_FILTER_PROP, 0);
+                        int userBlurRadius = 0;
+                        switch (blurFilter) {
+                            case FROSTED_BLUR:
+                                userBlurRadius = 200;
+                                break;
+                            case GLASS_BLUR:
+                                userBlurRadius = 25;
+                                break;
+                            default:
+                                break;
+                        }
+                        if (userBlurRadius > 0) {
+                            bitmap = WallpaperUtils.getBlurredBitmap(bitmap, userBlurRadius, getDisplayContext());
+                        }
+                    }
+                    int dimTarget = SystemProperties.getInt(WALLPAPER_DIM_TARGET_PROP, 0);
+                    if (dimTarget == WALLPAPER_TARGET_BOTH
+                            || (dimTarget == WALLPAPER_TARGET_LOCKSCREEN && isLockScreenWallpaper())
+                            || (dimTarget == WALLPAPER_TARGET_HOMESCREEN && !isLockScreenWallpaper())) {
+                        int dimLevel = SystemProperties.getInt(WALLPAPER_DIM_LEVEL_PROP, 0);
+                        if (dimLevel > 0) {
+                            bitmap = WallpaperUtils.getDimmedBitmap(bitmap, dimLevel);
+                        }
+                    }
                     canvas.drawBitmap(bitmap, null, dest, null);
                     mDrawn = true;
                 } finally {
@@ -330,6 +372,10 @@ public class ImageWallpaper extends WallpaperService {
                 }
             }
             Trace.endSection();
+        }
+
+        private boolean isLockScreenWallpaper() {
+		        return (this.getWallpaperFlags() & FLAG_LOCK) == FLAG_LOCK;
         }
 
         @VisibleForTesting

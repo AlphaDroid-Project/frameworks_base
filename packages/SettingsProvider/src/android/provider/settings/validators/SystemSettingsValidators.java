@@ -24,6 +24,7 @@ import static android.provider.settings.validators.SettingsValidators.FONT_SCALE
 import static android.provider.settings.validators.SettingsValidators.LENIENT_IP_ADDRESS_VALIDATOR;
 import static android.provider.settings.validators.SettingsValidators.NON_NEGATIVE_FLOAT_VALIDATOR;
 import static android.provider.settings.validators.SettingsValidators.NON_NEGATIVE_INTEGER_VALIDATOR;
+import static android.provider.settings.validators.SettingsValidators.PERCENTAGE_INTEGER_VALIDATOR;
 import static android.provider.settings.validators.SettingsValidators.URI_VALIDATOR;
 import static android.provider.settings.validators.SettingsValidators.VIBRATION_INTENSITY_VALIDATOR;
 import static android.view.PointerIcon.DEFAULT_POINTER_SCALE;
@@ -263,5 +264,10 @@ public class SystemSettingsValidators {
         VALIDATORS.put(System.NOTIFICATION_COOLDOWN_ALL, BOOLEAN_VALIDATOR);
         VALIDATORS.put(System.NOTIFICATION_COOLDOWN_VIBRATE_UNLOCKED, BOOLEAN_VALIDATOR);
         VALIDATORS.put(System.MAX_VISIBLE_NOTIFICATION_ICONS, NON_NEGATIVE_INTEGER_VALIDATOR);
+        VALIDATORS.put(System.DEPTH_WALLPAPER_IMAGE_URI, URI_VALIDATOR);
+        VALIDATORS.put(System.DEPTH_WALLPAPER_ENABLED, BOOLEAN_VALIDATOR);
+        VALIDATORS.put(System.DEPTH_WALLPAPER_OPACITY, PERCENTAGE_INTEGER_VALIDATOR);
+        VALIDATORS.put(System.DEPTH_WALLPAPER_OFFSET_X, ANY_INTEGER_VALIDATOR);
+        VALIDATORS.put(System.DEPTH_WALLPAPER_OFFSET_Y, ANY_INTEGER_VALIDATOR);
     }
 }
