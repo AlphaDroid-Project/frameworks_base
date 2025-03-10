@@ -139,19 +139,15 @@ public final class QuickSwitchService extends SystemService {
         // handle relatives
         if (defaultLauncher.equals(LAUNCHER3)) {
             enabledPackages.addAll(WALLPAPER_PICKER_PACKAGES);
-            disabledPackages.addAll(WALLPAPER_PICKER_GOOGLE_PACKAGES);
-            disabledPackages.addAll(NEXUS_LAUNCHER_OVERLAYS);
-            disabledPackages.add(LAWNCHAIR_OVERLAY);
+            disabledPackages.addAll(getDisabledLauncherPackages(LAUNCHER3));
         } else if (defaultLauncher.equals(LAWNCHAIR)) {
             enabledPackages.add(LAWNCHAIR_OVERLAY);
             enabledPackages.addAll(WALLPAPER_PICKER_PACKAGES);
-            disabledPackages.addAll(WALLPAPER_PICKER_GOOGLE_PACKAGES);
-            disabledPackages.addAll(NEXUS_LAUNCHER_OVERLAYS);
+            disabledPackages.addAll(getDisabledLauncherPackages(LAWNCHAIR));
         } else if (defaultLauncher.equals(NEXUS_LAUNCHER)) {
             enabledPackages.addAll(WALLPAPER_PICKER_GOOGLE_PACKAGES);
             enabledPackages.addAll(NEXUS_LAUNCHER_OVERLAYS);
-            disabledPackages.addAll(WALLPAPER_PICKER_PACKAGES);
-            disabledPackages.add(LAWNCHAIR_OVERLAY);
+            disabledPackages.addAll(getDisabledLauncherPackages(NEXUS_LAUNCHER));
         }
 
         for (String pkg : disabledPackages) {
