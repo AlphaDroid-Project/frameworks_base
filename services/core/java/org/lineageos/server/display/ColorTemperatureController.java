@@ -20,12 +20,12 @@ import android.util.Range;
 import android.util.Slog;
 import android.view.animation.AccelerateDecelerateInterpolator;
 
-import org.lineageos.server.display.TwilightTracker.TwilightState;
-
 import lineageos.hardware.LineageHardwareManager;
 import lineageos.hardware.LiveDisplayManager;
 import android.provider.Settings;
 import lineageos.util.ColorUtils;
+
+import org.lineageos.server.display.TwilightTracker.TwilightState;
 
 import java.io.PrintWriter;
 import java.util.BitSet;

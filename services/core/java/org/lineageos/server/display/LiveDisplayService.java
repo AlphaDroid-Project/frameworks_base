@@ -29,16 +29,16 @@ import android.view.Display;
 import com.android.server.LocalServices;
 import com.android.server.ServiceThread;
 
-import org.lineageos.server.LineageSystemService;
-import org.lineageos.server.common.UserContentObserver;
-import org.lineageos.server.display.TwilightTracker.TwilightListener;
-import org.lineageos.server.display.TwilightTracker.TwilightState;
-
 import lineageos.app.LineageContextConstants;
 import lineageos.hardware.HSIC;
 import lineageos.hardware.ILiveDisplayService;
 import lineageos.hardware.LiveDisplayConfig;
 import android.provider.Settings;
+
+import org.lineageos.server.LineageSystemService;
+import org.lineageos.server.common.UserContentObserver;
+import org.lineageos.server.display.TwilightTracker.TwilightListener;
+import org.lineageos.server.display.TwilightTracker.TwilightState;
 
 import java.io.FileDescriptor;
 import java.io.PrintWriter;

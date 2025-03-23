@@ -8,6 +8,7 @@ package org.lineageos.server;
 import static android.provider.Settings.Secure.POWER_MENU_ACTIONS;
 import static android.provider.Settings.Secure.getStringForUser;
 import static android.provider.Settings.Secure.putStringForUser;
+
 import static org.lineageos.internal.util.PowerMenuConstants.GLOBAL_ACTION_KEY_BUGREPORT;
 
 import android.content.ContentResolver;
@@ -19,10 +20,10 @@ import android.os.IBinder;
 import android.os.UserHandle;
 import android.provider.Settings;
 
-import org.lineageos.internal.util.PowerMenuConstants;
-
 import lineageos.app.ILineageGlobalActions;
 import lineageos.app.LineageContextConstants;
+
+import org.lineageos.internal.util.PowerMenuConstants;
 
 import java.util.ArrayList;
 import java.util.Arrays;

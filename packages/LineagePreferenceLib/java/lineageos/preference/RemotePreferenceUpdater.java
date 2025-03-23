@@ -12,9 +12,9 @@ import android.os.Bundle;
 import android.os.UserHandle;
 import android.util.Log;
 
-import java.util.Objects;
-
 import android.Manifest;
+
+import java.util.Objects;
 
 /**
  * Base class for remote summary providers.
