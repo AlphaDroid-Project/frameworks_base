@@ -151,13 +151,13 @@ public class QSPanel extends LinearLayout {
                         && mIsAutomaticBrightnessAvailable) {
                     updateViewVisibilityForTuningValue(mAutoBrightnessView,
                             Settings.Secure.getString(mContext.getContentResolver(),
-                                    Settings.Secure.QS_SHOW_AUTO_BRIGHTNESS));
+                                    Settings.Secure.QS_SHOW_AUTO_BRIGHTNESS), false);
                 } else if (Settings.Secure.getUriFor(
                             Settings.Secure.QS_SHOW_BRIGHTNESS_SLIDER).equals(uri)
                         && mBrightnessView != null) {
                     updateViewVisibilityForTuningValue(mBrightnessView,
                             Settings.Secure.getString(mContext.getContentResolver(),
-                                    Settings.Secure.QS_SHOW_BRIGHTNESS_SLIDER));
+                                    Settings.Secure.QS_SHOW_BRIGHTNESS_SLIDER), true);
                 }
             }
         };
@@ -384,8 +384,10 @@ public class QSPanel extends LinearLayout {
         return TAG;
     }
 
-    private void updateViewVisibilityForTuningValue(View view, @Nullable String newValue) {
-        view.setVisibility(TunerService.parseIntegerSwitch(newValue, true) ? VISIBLE : GONE);
+    private void updateViewVisibilityForTuningValue(View view, @Nullable String newValue,
+            boolean defaultValue) {
+        view.setVisibility(
+                TunerService.parseIntegerSwitch(newValue, defaultValue) ? VISIBLE : GONE);
     }
 
 
