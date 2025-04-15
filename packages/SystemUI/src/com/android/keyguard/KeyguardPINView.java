@@ -278,12 +278,9 @@ public class KeyguardPINView extends KeyguardPinBasedInputView {
                 new View[]{
                         null, mEcaView, null
                 }};
-        updatePinScrambling();
     }
 
-    private void updatePinScrambling() {
-        final boolean scramblePin = Settings.System.getInt(getContext().getContentResolver(),
-                Settings.System.LOCKSCREEN_PIN_SCRAMBLE_LAYOUT, 0) == 1;
+    protected void updatePinScrambling(boolean scramblePin) {
         if (scramblePin || scramblePin != mScramblePin) {
             mScramblePin = scramblePin;
             if (scramblePin) {
@@ -320,7 +317,6 @@ public class KeyguardPINView extends KeyguardPinBasedInputView {
 
     @Override
     public void startAppearAnimation() {
-        updatePinScrambling();
         setAlpha(1f);
         setTranslationY(0);
         if (mAppearAnimator.isRunning()) {
