@@ -8,7 +8,6 @@ package org.lineageos.internal.util;
 import android.app.KeyguardManager;
 import android.content.Context;
 import android.os.UserHandle;
-
 import android.provider.Settings;
 
 public final class PowerMenuUtils {

@@ -5,21 +5,6 @@
      SPDX-License-Identifier: Apache-2.0
 -->
 <resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
-    <string name="permlab_modifyProfiles">સિસ્ટમ પ્રોફાઇલ્સમાં ફેરફાર કરો</string>
-    <string name="permdesc_modifyProfiles">ઍપને સિસ્ટમ પ્રોફાઇલ્સમાં ફેરફાર કરવાની પરવાનગી આપે છે.</string>
-    <string name="permlab_useHardwareFramework">હાર્ડવેર ફ્રેમવર્કનો ઉપયોગ કરો</string>
-    <string name="profileNameDefault">ડિફોલ્ટ</string>
-    <string name="profileNameWork">કાર્યાલય</string>
-    <string name="profileNameHome">ઘર</string>
-    <string name="profileNameSilent">શાંત</string>
-    <string name="profileNameNight">રાત્રિ</string>
-    <string name="profileNameAutomobile">ઓટોમોબાઇલ</string>
-    <string name="profileGroupPhone">ફોન</string>
-    <string name="profileGroupCalendar">કૅલેન્ડર</string>
-    <string name="profileGroupGmail">Gmail</string>
-    <string name="profileGroupEmail">ઇમેઇલ</string>
-    <string name="profileGroupSMS">SMS</string>
-    <string name="wildcardProfile">અન્ય</string>
     <string name="live_display_auto">સ્વચલિત</string>
     <string name="live_display_auto_summary">સૂર્યોદય અને સૂર્યાસ્ત પછી સ્ક્રીનના રંગ તાપમાનને સ્વયંચાલિત રીતે સમાયોજિત કરો</string>
     <string name="live_display_off">બંધ</string>

@@ -5,12 +5,6 @@
      SPDX-License-Identifier: Apache-2.0
 -->
 <resources>
-    <java-symbol type="drawable" name="ic_launcher_lineageos" />
-
-    <!-- Profiles -->
-    <java-symbol type="xml" name="profile_default" />
-    <java-symbol type="string" name="wildcardProfile" />
-
     <!-- Proximity check on screen on -->
     <java-symbol type="bool" name="config_proximityCheckOnWake" />
 
@@ -64,12 +58,6 @@
     <!-- On-device lights (LED) capabilities -->
     <java-symbol type="integer" name="config_deviceLightCapabilities" />
 
-    <!-- External Lineage specific core services -->
-    <java-symbol type="array" name="config_externalLineageServices" />
-
-    <!-- Lineage system server -->
-    <java-symbol type="string" name="config_externalSystemServer" />
-
     <!-- Device keyhandlers -->
     <java-symbol type="array" name="config_deviceKeyHandlerLibs" />
     <java-symbol type="array" name="config_deviceKeyHandlerClasses" />
@@ -95,13 +83,6 @@
     <!-- Notification light mappings -->
     <java-symbol type="array" name="notification_light_package_mapping" />
 
-    <!-- About device info screen -->
-    <java-symbol type="string" name="build_date" />
-    <java-symbol type="string" name="lineage_api_level" />
-    <java-symbol type="string" name="lineage_updates" />
-    <java-symbol type="string" name="lineage_version" />
-    <java-symbol type="string" name="lineage_vendor_security_patch" />
-
     <!-- General purpose use "unknown" string -->
     <java-symbol type="string" name="unknown" />
 
@@ -111,7 +92,6 @@
 
     <!-- Back kill -->
     <java-symbol type="string" name="app_killed_message" />
-    <java-symbol type="integer" name="config_backKillTimeout" />
 
     <!-- Power menu -->
     <java-symbol type="array" name="config_restartActionsList" />
@@ -128,25 +108,6 @@
     <java-symbol type="string" name="megabytespersecond_short" />
     <java-symbol type="string" name="kilobytespersecond_compact" />
     <java-symbol type="string" name="megabytespersecond_compact" />
-
-    <java-symbol type="array" name="config_vendorPlatformSignatures" />
-
-    <!-- Colors -->
-    <java-symbol type="color" name="color_error" />
-
-    <!-- Trust interface -->
-    <java-symbol type="bool" name="config_trustLegacyEncryption" />
-    <java-symbol type="drawable" name="ic_trust" />
-    <java-symbol type="drawable" name="ic_trust_notification_manage" />
-    <java-symbol type="drawable" name="ic_warning" />
-    <java-symbol type="string" name="trust_feature_name" />
-    <java-symbol type="string" name="trust_notification_channel" />
-    <java-symbol type="string" name="trust_notification_title_security" />
-    <java-symbol type="string" name="trust_notification_content_selinux" />
-    <java-symbol type="string" name="trust_notification_content_keys" />
-    <java-symbol type="string" name="trust_notification_title_onboarding" />
-    <java-symbol type="string" name="trust_notification_content_onboarding" />
-    <java-symbol type="string" name="trust_notification_action_manage" />
 
     <!-- Full screen aspect ratio -->
     <java-symbol type="bool" name="config_haveHigherAspectRatioScreen" />

@@ -5,27 +5,9 @@
      SPDX-License-Identifier: Apache-2.0
 -->
 <resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
-    <string name="lineageos_system_label">Anagraw n LineageOS</string>
-    <string name="permlab_modifyProfiles">snifel imaɣnuyen unagraw</string>
-    <string name="permdesc_modifyProfiles">Sireg asnas ad-isnifel imaɣnuyen unagraw.</string>
-    <string name="profileNameDefault">Prédéfini(e)</string>
-    <string name="profileNameWork">Axeddim</string>
-    <string name="profileNameHome">Asebter agejdan</string>
-    <string name="profileNameSilent">Ulac sut</string>
-    <string name="profileNameNight">Iḍ</string>
-    <string name="profileNameAutomobile">Takeṛṛust</string>
-    <string name="profileGroupPhone">Tiliɣri</string>
-    <string name="profileGroupCalendar">Tasmektit</string>
-    <string name="profileGroupEmail">Imayl</string>
-    <string name="wildcardProfile">Wayeḍ</string>
     <string name="live_display_auto">Awurman</string>
     <string name="live_display_off">Insa</string>
     <string name="live_display_day">Ass</string>
     <string name="live_display_night">Iḍ</string>
-    <string name="build_date">Azemz n usefsu</string>
-    <string name="lineage_api_level">Aswir n LineageOS API</string>
-    <string name="lineage_updates">Lqem n LineageOS</string>
-    <string name="lineage_version">Lqem n LineageOS</string>
     <string name="unknown">Arussin</string>
-    <string name="trust_feature_name">Trust</string>
 </resources>

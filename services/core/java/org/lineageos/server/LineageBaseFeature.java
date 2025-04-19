@@ -10,7 +10,6 @@ import android.content.Context;
 import android.net.Uri;
 import android.os.Handler;
 import android.os.UserHandle;
-
 import android.provider.Settings;
 
 import org.lineageos.server.common.UserContentObserver;

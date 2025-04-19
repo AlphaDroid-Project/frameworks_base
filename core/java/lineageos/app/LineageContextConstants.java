@@ -23,18 +23,6 @@ public final class LineageContextConstants {
 
     /**
      * Use with {@link android.content.Context#getSystemService} to retrieve a
-     * {@link lineageos.app.ProfileManager} for informing the user of
-     * background events.
-     *
-     * @see android.content.Context#getSystemService
-     * @see lineageos.app.ProfileManager
-     *
-     * @hide
-     */
-    public static final String LINEAGE_PROFILE_SERVICE = "profile";
-
-    /**
-     * Use with {@link android.content.Context#getSystemService} to retrieve a
      * {@link lineageos.hardware.LineageHardwareManager} to manage the extended
      * hardware features of the device.
      *
@@ -51,17 +39,6 @@ public final class LineageContextConstants {
      * @hide
      */
     public static final String LINEAGE_LIVEDISPLAY_SERVICE = "lineagelivedisplay";
-
-    /**
-     * Use with {@link android.content.Context#getSystemService} to retrieve a
-     * {@link lineageos.trust.TrustInterface} to access the Trust interface.
-     *
-     * @see android.content.Context#getSystemService
-     * @see lineageos.trust.TrustInterface
-     *
-     * @hide
-     */
-    public static final String LINEAGE_TRUST_INTERFACE = "lineagetrust";
 
     /**
      * Use with {@link android.content.Context#getSystemService} to retrieve a
@@ -82,48 +59,23 @@ public final class LineageContextConstants {
     public static final String LINEAGE_GLOBAL_ACTIONS_SERVICE = "lineageglobalactions";
 
     /**
-     * Features supported by the Lineage SDK.
+     * Lineage features
      */
     public static class Features {
         /**
          * Feature for {@link PackageManager#getSystemAvailableFeatures} and
          * {@link PackageManager#hasSystemFeature}: The device includes the hardware abstraction
-         * framework service utilized by the lineage sdk.
+         * framework service.
          */
         @SdkConstant(SdkConstant.SdkConstantType.FEATURE)
         public static final String HARDWARE_ABSTRACTION = "org.lineageos.hardware";
 
         /**
          * Feature for {@link PackageManager#getSystemAvailableFeatures} and
-         * {@link PackageManager#hasSystemFeature}: The device includes the lineage profiles service
-         * utilized by the lineage sdk.
-         */
-        @SdkConstant(SdkConstant.SdkConstantType.FEATURE)
-        public static final String PROFILES = "org.lineageos.profiles";
-
-        /**
-         * Feature for {@link PackageManager#getSystemAvailableFeatures} and
-         * {@link PackageManager#hasSystemFeature}: The device includes the LiveDisplay service
-         * utilized by the lineage sdk.
+         * {@link PackageManager#hasSystemFeature}: The device includes the LiveDisplay service.
          */
         @SdkConstant(SdkConstant.SdkConstantType.FEATURE)
         public static final String LIVEDISPLAY = "org.lineageos.livedisplay";
-
-        /**
-         * Feature for {@link PackageManager#getSystemAvailableFeatures} and
-         * {@link PackageManager#hasSystemFeature}: The device includes the lineage trust service
-         * utilized by the lineage sdk.
-         */
-        @SdkConstant(SdkConstant.SdkConstantType.FEATURE)
-        public static final String TRUST = "org.lineageos.trust";
-
-        /**
-         * Feature for {@link PackageManager#getSystemAvailableFeatures} and
-         * {@link PackageManager#hasSystemFeature}: The device includes the lineage settings service
-         * utilized by the lineage sdk.
-         */
-        @SdkConstant(SdkConstant.SdkConstantType.FEATURE)
-        public static final String SETTINGS = "org.lineageos.settings";
 
         /**
          * Feature for {@link PackageManager#getSystemAvailableFeatures} and
@@ -136,7 +88,7 @@ public final class LineageContextConstants {
         /**
          * Feature for {@link PackageManager#getSystemAvailableFeatures} and
          * {@link PackageManager#hasSystemFeature}: The device includes the lineage health
-         * service utilized by the lineage sdk and LineageParts.
+         * service.
          */
         @SdkConstant(SdkConstant.SdkConstantType.FEATURE)
         public static final String HEALTH = "org.lineageos.health";

@@ -5,21 +5,6 @@
      SPDX-License-Identifier: Apache-2.0
 -->
 <resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
-    <string name="permlab_modifyProfiles">verander stelsel profiele</string>
-    <string name="permdesc_modifyProfiles">Laat \'n toep toe om stelsel profiele te verander.</string>
-    <string name="permlab_useHardwareFramework">gebruik hardeware raamwerk</string>
-    <string name="profileNameDefault">Normaal</string>
-    <string name="profileNameWork">Werk</string>
-    <string name="profileNameHome">Tuis</string>
-    <string name="profileNameSilent">Stil</string>
-    <string name="profileNameNight">Nag</string>
-    <string name="profileNameAutomobile">Motor</string>
-    <string name="profileGroupPhone">Foon</string>
-    <string name="profileGroupCalendar">Kalender</string>
-    <string name="profileGroupGmail">Gmail</string>
-    <string name="profileGroupEmail">Epos</string>
-    <string name="profileGroupSMS">SMS</string>
-    <string name="wildcardProfile">Ander</string>
     <string name="live_display_auto">Outomaties</string>
     <string name="live_display_auto_summary">Kleurtemperatuur van die skerm sal outomaties aanpas na sononder en sonop</string>
     <string name="live_display_off">Af</string>
@@ -41,8 +26,4 @@
     <string name="accessibility_quick_settings_live_display_changed_day">LiveDisplay verander na dag modus.</string>
     <string name="accessibility_quick_settings_live_display_changed_night">LiveDisplay verander na nag modus.</string>
     <string name="accessibility_quick_settings_live_display_changed_outdoor">LiveDisplay verander na buitelug modus.</string>
-    <string name="permlab_manageLiveDisplay">bestuur LiveDisplay instellings</string>
-    <string name="permdesc_manageLiveDisplay">Laat \'n toep toe om gevorderde skerm instellings te konfigureer.</string>
-    <string name="permlab_manageRemotePrefs">bestuur afgeleë opsies</string>
-    <string name="permdesc_manageRemotePrefs">Laat \'n toepassing toe om afgeleë opsies te bestuur</string>
 </resources>

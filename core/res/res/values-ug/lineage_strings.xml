@@ -5,21 +5,6 @@
      SPDX-License-Identifier: Apache-2.0
 -->
 <resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
-    <string name="permlab_modifyProfiles">سىستېما سەپلەنمىسىنى ئۆزگەرتىش</string>
-    <string name="permdesc_modifyProfiles">ئەپنىڭ سىستېما سەپلەنمىسىنى ئۆزگەرتىشىگە يول قويۇش.</string>
-    <string name="permlab_useHardwareFramework">قاتتىق دىتال جازىسىنى ئىشلىتىش</string>
-    <string name="profileNameDefault">كۆڭۈلدىكى</string>
-    <string name="profileNameWork">ئىش</string>
-    <string name="profileNameHome">باش ئېكران</string>
-    <string name="profileNameSilent">ئۈنسىز</string>
-    <string name="profileNameNight">كېچە</string>
-    <string name="profileNameAutomobile">ئاپتوموبىل</string>
-    <string name="profileGroupPhone">تېلېفون</string>
-    <string name="profileGroupCalendar">كالېندار</string>
-    <string name="profileGroupGmail">Gmail</string>
-    <string name="profileGroupEmail">ئېلخەت</string>
-    <string name="profileGroupSMS">قىسقا ئۇچۇر</string>
-    <string name="wildcardProfile">باشقا</string>
     <string name="live_display_auto">ئاپتوماتېك</string>
     <string name="live_display_auto_summary">كۈن چىققان ۋە كۈن پاتقاندىن كېيىن ئېكران رەڭ تېمپېراتورىسىنى ئۆزلۈكىدىن تەڭشەيدۇ</string>
     <string name="live_display_off">تاقاق</string>

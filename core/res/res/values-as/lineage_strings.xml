@@ -5,21 +5,6 @@
      SPDX-License-Identifier: Apache-2.0
 -->
 <resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
-    <string name="permlab_modifyProfiles">ছিষ্টেম প্ৰ\'ফাইল সংশোধন কৰক</string>
-    <string name="permdesc_modifyProfiles">এটা এপ্প্‌ক ছিষ্টেম প্ৰ\'ফাইল সংশোধন কৰিবলৈ অনুমতি দিয়ে</string>
-    <string name="permlab_useHardwareFramework">হাৰ্ডৱেৰ ফ্ৰেমৱৰ্ক ব্যৱহাৰ কৰক</string>
-    <string name="profileNameDefault">ডিফল্ট</string>
-    <string name="profileNameWork">কৰ্ম</string>
-    <string name="profileNameHome">হোম</string>
-    <string name="profileNameSilent">ছাইলেণ্ট</string>
-    <string name="profileNameNight">নাইট</string>
-    <string name="profileNameAutomobile">অট\'ম\'বাইল</string>
-    <string name="profileGroupPhone">ফোন</string>
-    <string name="profileGroupCalendar">কেলেণ্ডাৰ</string>
-    <string name="profileGroupGmail">জিমেইল</string>
-    <string name="profileGroupEmail">ইমেইল</string>
-    <string name="profileGroupSMS">SMS</string>
-    <string name="wildcardProfile">অন্যান্য</string>
     <string name="live_display_auto">স্বয়ংক্ৰিয়</string>
     <string name="live_display_auto_summary">সূৰ্যাস্ত আৰু সূৰ্যোদয়ৰ পাছত স্বয়ংক্ৰিয়ভাবে স্ক্ৰীণৰ ৰং তাপমাত্ৰা মিলাওক।</string>
     <string name="live_display_off">অফ</string>

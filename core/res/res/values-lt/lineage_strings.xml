@@ -5,20 +5,5 @@
      SPDX-License-Identifier: Apache-2.0
 -->
 <resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
-    <string name="permlab_modifyProfiles">keisti sistemos profilius</string>
-    <string name="permdesc_modifyProfiles">Leidžia programai keisti sistemos profilius.</string>
-    <string name="permlab_useHardwareFramework">naudoti aparatinės įrangos sistemą</string>
-    <string name="profileNameDefault">Numatytasis</string>
-    <string name="profileNameWork">Darbas</string>
-    <string name="profileNameHome">Namai</string>
-    <string name="profileNameSilent">Tylus</string>
-    <string name="profileNameNight">Naktis</string>
-    <string name="profileNameAutomobile">Automobilis</string>
-    <string name="profileGroupPhone">Telefonas</string>
-    <string name="profileGroupCalendar">Kalendorius</string>
-    <string name="profileGroupGmail">Gmail</string>
-    <string name="profileGroupEmail">El. paštas</string>
-    <string name="profileGroupSMS">SMS</string>
-    <string name="wildcardProfile">Kita</string>
     <string name="live_display_night">Naktis</string>
 </resources>

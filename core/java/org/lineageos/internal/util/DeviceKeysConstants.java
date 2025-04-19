@@ -13,7 +13,7 @@ import android.provider.Settings;
 public class DeviceKeysConstants {
     // Available custom actions to perform on a key press.
     // Must match values for KEY_HOME_LONG_PRESS_ACTION in:
-    //   sdk/src/java/lineageos/providers/LineageSettings.java
+    // core/java/android/provider/Settings.java
     public enum Action {
         NOTHING,
         MENU,
