@@ -24,18 +24,18 @@ import android.os.PowerManagerInternal;
 import android.os.PowerSaveState;
 import android.os.Process;
 import android.os.UserHandle;
+import android.provider.Settings;
 import android.view.Display;
 
 import com.android.server.LocalServices;
 import com.android.server.ServiceThread;
+import com.android.server.SystemService;
 
 import lineageos.app.LineageContextConstants;
 import lineageos.hardware.HSIC;
 import lineageos.hardware.ILiveDisplayService;
 import lineageos.hardware.LiveDisplayConfig;
-import android.provider.Settings;
 
-import org.lineageos.server.LineageSystemService;
 import org.lineageos.server.common.UserContentObserver;
 import org.lineageos.server.display.TwilightTracker.TwilightListener;
 import org.lineageos.server.display.TwilightTracker.TwilightState;
@@ -57,7 +57,7 @@ import java.util.Locale;
  * and calibration. It interacts with LineageHardwareService to relay
  * changes down to the lower layers.
  */
-public class LiveDisplayService extends LineageSystemService {
+public class LiveDisplayService extends SystemService {
 
     private static final String TAG = "LiveDisplay";
 
@@ -118,16 +118,6 @@ public class LiveDisplayService extends LineageSystemService {
         mHandler = new Handler(mHandlerThread.getLooper());
 
         mTwilightTracker = new TwilightTracker(context);
-    }
-
-    @Override
-    public String getFeatureDeclaration() {
-        return LineageContextConstants.Features.LIVEDISPLAY;
-    }
-
-    @Override
-    public boolean isCoreService() {
-        return false;
     }
 
     @Override
@@ -530,7 +520,7 @@ public class LiveDisplayService extends LineageSystemService {
         }
         if (counter == 0) {
             //show the notification and don't come back here
-            final Intent intent = new Intent(LineageSettings.ACTION_LIVEDISPLAY_SETTINGS);
+            final Intent intent = new Intent(Settings.ACTION_LIVEDISPLAY_SETTINGS);
             PendingIntent result = PendingIntent.getActivity(mContext, 0, intent,
                     PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_UPDATE_CURRENT);
             Notification.Builder builder = new Notification.Builder(mContext)

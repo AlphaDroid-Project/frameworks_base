@@ -16,13 +16,14 @@ import android.util.Log;
 
 import com.android.server.LocalServices;
 import com.android.server.display.color.DisplayTransformManager;
+import com.android.server.SystemService;
 
 import lineageos.app.LineageContextConstants;
 import lineageos.hardware.ILineageHardwareService;
 import lineageos.hardware.LineageHardwareManager;
 
 /** @hide */
-public class LineageHardwareService extends LineageSystemService {
+public class LineageHardwareService extends SystemService {
 
     private static final boolean DEBUG = true;
     private static final String TAG = LineageHardwareService.class.getSimpleName();
@@ -165,11 +166,6 @@ public class LineageHardwareService extends LineageSystemService {
         super(context);
         mContext = context;
         mLineageHwImpl = getImpl(context);
-    }
-
-    @Override
-    public String getFeatureDeclaration() {
-        return LineageContextConstants.Features.HARDWARE_ABSTRACTION;
     }
 
     @Override

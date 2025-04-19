@@ -72,4 +72,18 @@ public class Intent {
      */
     public static final String ACTION_INITIALIZE_LIVEDISPLAY =
             "lineageos.intent.action.INITIALIZE_LIVEDISPLAY";
+
+    /**
+     * Broadcast action: cancel charging control notification
+     * @hide
+     */
+    public static final String ACTION_CHARGING_CONTROL_CANCEL_ONCE =
+            "lineageos.intent.action.CHARGING_CONTROL_CANCEL_ONCE";
+
+    /**
+     * Broadcast action: update twilight state
+     * @hide
+     */
+    public static final String ACTION_UPDATE_TWILIGHT_STATE =
+            "lineageos.intent.action.UPDATE_TWILIGHT_STATE";
 }

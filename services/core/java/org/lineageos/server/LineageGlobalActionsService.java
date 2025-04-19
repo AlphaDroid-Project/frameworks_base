@@ -24,6 +24,8 @@ import android.os.IBinder;
 import android.os.UserHandle;
 import android.provider.Settings;
 
+import com.android.server.SystemService;
+
 import lineageos.app.ILineageGlobalActions;
 import lineageos.app.LineageContextConstants;
 
@@ -36,7 +38,7 @@ import java.util.List;
 /**
  * @hide
  */
-public class LineageGlobalActionsService extends LineageSystemService {
+public class LineageGlobalActionsService extends SystemService {
 
     private static final String TAG = "LineageGlobalActions";
 
@@ -57,8 +59,7 @@ public class LineageGlobalActionsService extends LineageSystemService {
 
     private class GlobalActionsSettingsObserver extends ContentObserver {
 
-        private final Uri BUGREPORT_URI =
-                Settings.Global.getUriFor(Settings.Global.BUGREPORT_IN_POWER_MENU);
+        private final Uri BUGREPORT_URI = getUriFor(BUGREPORT_IN_POWER_MENU);
 
         public GlobalActionsSettingsObserver(Context context, Handler handler) {
             super(handler);
@@ -120,11 +121,6 @@ public class LineageGlobalActionsService extends LineageSystemService {
 
         String s = String.join("|", actions);
         putStringForUser(mContentResolver, POWER_MENU_ACTIONS, s, UserHandle.USER_CURRENT);
-    }
-
-    @Override
-    public String getFeatureDeclaration() {
-        return LineageContextConstants.Features.GLOBAL_ACTIONS;
     }
 
     @Override

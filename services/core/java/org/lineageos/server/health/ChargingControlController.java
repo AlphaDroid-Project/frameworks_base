@@ -52,6 +52,8 @@ public class ChargingControlController extends LineageHealthFeature {
     private int mDefaultStartTime;
     private int mDefaultTargetTime;
 
+    private boolean mSupported;
+
     // Settings uris
     private final Uri MODE_URI = Settings.System.getUriFor(
             Settings.System.CHARGING_CONTROL_MODE);
@@ -101,6 +103,9 @@ public class ChargingControlController extends LineageHealthFeature {
         mDefaultLimit = mContext.getResources().getInteger(
                 R.integer.config_defaultChargingControlLimit);
 
+        mSupported = mContext.getResources().getBoolean(
+                R.bool.config_supportsChargingControl);
+
         // Set up charging control providers
         mDeadline = new Deadline(mChargingControl, mContext);
         mLimit = new Limit(mChargingControl, mContext);
@@ -122,7 +127,7 @@ public class ChargingControlController extends LineageHealthFeature {
 
     @Override
     public boolean isSupported() {
-        return mChargingControl != null;
+        return mSupported && mChargingControl != null;
     }
 
     public boolean isEnabled() {

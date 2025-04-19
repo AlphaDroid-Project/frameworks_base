@@ -15,6 +15,8 @@
     <bool name="config_dt2sGestureAvailable">true</bool>
     <bool name="config_dt2sGestureEnabledByDefault">true</bool>
 
+    <!-- LiveDisplay service -->
+    <bool name="config_supportsLiveDisplay">true</bool>
     <!-- Default values for LiveDisplay -->
     <bool name="config_enableLiveDisplay">true</bool>
     <integer name="config_dayColorTemperature">6500</integer>
@@ -302,6 +304,9 @@
     <!-- Whether device implements proximity sensor based checks to prevent
          accidental unlocks when the screen is off. -->
     <bool name="config_proximityCheckOnFpsUnlock">false</bool>
+
+    <!-- LineageHealth interface service -->
+    <bool name="config_supportsChargingControl">true</bool>
 
     <!-- Whether charging control should be enabled by default -->
     <bool name="config_chargingControlEnabled">false</bool>

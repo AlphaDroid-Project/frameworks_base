@@ -5,7 +5,11 @@
 
 package org.lineageos.server.health;
 
+import static android.provider.Settings.ACTION_CHARGING_CONTROL_SETTINGS;
+
 import static org.lineageos.server.health.Util.msToString;
+
+import static lineageos.content.Intent.ACTION_CHARGING_CONTROL_CANCEL_ONCE;
 
 import android.app.Notification;
 import android.app.NotificationChannel;
@@ -24,12 +28,7 @@ public class ChargingControlNotification {
     private final NotificationManager mNotificationManager;
     private final Context mContext;
 
-    private static final String INTENT_PARTS =
-            "android.settings.CHARGING_CONTROL_SETTINGS";
-
     private static final int CHARGING_CONTROL_NOTIFICATION_ID = 1000;
-    private static final String ACTION_CHARGING_CONTROL_CANCEL_ONCE =
-            "lineageos.intent.action.CHARGING_CONTROL_CANCEL_ONCE";
     private static final String CHARGING_CONTROL_CHANNEL_ID = "LineageHealthChargingControl";
 
     private final ChargingControlController mChargingControlController;
@@ -125,7 +124,7 @@ public class ChargingControlNotification {
             return;
         }
 
-        Intent mainIntent = new Intent(INTENT_PARTS);
+        Intent mainIntent = new Intent(ACTION_CHARGING_CONTROL_SETTINGS);
         mainIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         PendingIntent mainPendingIntent = PendingIntent.getActivity(mContext, 0, mainIntent,
                 PendingIntent.FLAG_IMMUTABLE);
@@ -165,7 +164,7 @@ public class ChargingControlNotification {
                     limit);
         }
 
-        Intent mainIntent = new Intent(INTENT_PARTS);
+        Intent mainIntent = new Intent(ACTION_CHARGING_CONTROL_SETTINGS);
         mainIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         PendingIntent mainPendingIntent = PendingIntent.getActivity(mContext, 0, mainIntent,
                 PendingIntent.FLAG_IMMUTABLE);

@@ -13,11 +13,10 @@ import android.os.Process;
 import android.util.Log;
 
 import com.android.server.ServiceThread;
+import com.android.server.SystemService;
 
 import lineageos.app.LineageContextConstants;
 import lineageos.health.IHealthInterface;
-
-import org.lineageos.server.LineageSystemService;
 
 import vendor.lineage.health.ChargingControlSupportedMode;
 
@@ -26,7 +25,7 @@ import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.List;
 
-public class HealthInterfaceService extends LineageSystemService {
+public class HealthInterfaceService extends SystemService {
 
     private static final String TAG = "LineageHealth";
     private final Context mContext;
@@ -45,16 +44,6 @@ public class HealthInterfaceService extends LineageSystemService {
         mHandlerThread = new ServiceThread(TAG, Process.THREAD_PRIORITY_DEFAULT, false);
         mHandlerThread.start();
         mHandler = new Handler(mHandlerThread.getLooper());
-    }
-
-    @Override
-    public String getFeatureDeclaration() {
-        return LineageContextConstants.Features.HEALTH;
-    }
-
-    @Override
-    public boolean isCoreService() {
-        return false;
     }
 
     @Override
