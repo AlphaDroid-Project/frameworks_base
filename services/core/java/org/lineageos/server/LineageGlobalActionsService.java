@@ -1,13 +1,17 @@
 /*
  * SPDX-FileCopyrightText: 2021-2024 The LineageOS Project
+ * SPDX-FileCopyrightText: 2023-2025 AlphaDroid
  * SPDX-License-Identifier: Apache-2.0
  */
 
 package org.lineageos.server;
 
+import static android.provider.Settings.Secure.BUGREPORT_IN_POWER_MENU;
 import static android.provider.Settings.Secure.POWER_MENU_ACTIONS;
+import static android.provider.Settings.Secure.getInt;
 import static android.provider.Settings.Secure.getStringForUser;
 import static android.provider.Settings.Secure.putStringForUser;
+import static android.provider.Settings.Secure.getUriFor;
 
 import static org.lineageos.internal.util.PowerMenuConstants.GLOBAL_ACTION_KEY_BUGREPORT;
 
@@ -70,8 +74,8 @@ public class LineageGlobalActionsService extends LineageSystemService {
 
         @Override
         public void onChange(boolean selfChange) {
-            updateUserConfigInternal(Settings.Global.getInt(mContentResolver,
-                    Settings.Global.BUGREPORT_IN_POWER_MENU, 0) == 1,
+            updateUserConfigInternal(
+                    getInt(mContentResolver, BUGREPORT_IN_POWER_MENU, 0) == 1,
                     GLOBAL_ACTION_KEY_BUGREPORT);
         }
     };
