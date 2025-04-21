@@ -1,5 +1,7 @@
 /*
  * Copyright (C) 2019 The Android Open Source Project
+ * Copyright (C) 2015-2016 The CyanogenMod Project
+ * Copyright (C) 2017-2023 The LineageOS Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,14 +18,17 @@
 
 package android.provider.settings.validators;
 
+import static android.provider.settings.validators.SettingsValidators.ACTION_INTEGER_VALIDATOR;
 import static android.provider.settings.validators.SettingsValidators.ANY_INTEGER_VALIDATOR;
 import static android.provider.settings.validators.SettingsValidators.ANY_STRING_VALIDATOR;
 import static android.provider.settings.validators.SettingsValidators.BOOLEAN_VALIDATOR;
+import static android.provider.settings.validators.SettingsValidators.BRIGHTNESS_INTEGER_VALIDATOR;
 import static android.provider.settings.validators.SettingsValidators.COMPONENT_NAME_VALIDATOR;
 import static android.provider.settings.validators.SettingsValidators.FONT_SCALE_VALIDATOR;
 import static android.provider.settings.validators.SettingsValidators.LENIENT_IP_ADDRESS_VALIDATOR;
 import static android.provider.settings.validators.SettingsValidators.NON_NEGATIVE_FLOAT_VALIDATOR;
 import static android.provider.settings.validators.SettingsValidators.NON_NEGATIVE_INTEGER_VALIDATOR;
+import static android.provider.settings.validators.SettingsValidators.TRI_STATE_VALIDATOR;
 import static android.provider.settings.validators.SettingsValidators.URI_VALIDATOR;
 import static android.provider.settings.validators.SettingsValidators.VIBRATION_INTENSITY_VALIDATOR;
 import static android.view.PointerIcon.DEFAULT_POINTER_SCALE;
@@ -39,6 +44,7 @@ import android.content.ComponentName;
 import android.hardware.display.ColorDisplayManager;
 import android.os.BatteryManager;
 import android.provider.Settings.System;
+import android.text.TextUtils;
 import android.util.ArrayMap;
 
 import java.util.Map;
@@ -86,7 +92,7 @@ public class SystemSettingsValidators {
                 });
         VALIDATORS.put(System.END_BUTTON_BEHAVIOR, new InclusiveIntegerRangeValidator(0, 3));
         VALIDATORS.put(System.WIFI_USE_STATIC_IP, BOOLEAN_VALIDATOR);
-        VALIDATORS.put(System.BLUETOOTH_DISCOVERABILITY, new InclusiveIntegerRangeValidator(0, 2));
+        VALIDATORS.put(System.BLUETOOTH_DISCOVERABILITY, TRI_STATE_VALIDATOR);
         VALIDATORS.put(System.BLUETOOTH_DISCOVERABILITY_TIMEOUT, NON_NEGATIVE_INTEGER_VALIDATOR);
         VALIDATORS.put(
                 System.NEXT_ALARM_FORMATTED,
@@ -268,5 +274,194 @@ public class SystemSettingsValidators {
         VALIDATORS.put(System.NOTIFICATION_COOLDOWN_ALL, BOOLEAN_VALIDATOR);
         VALIDATORS.put(System.NOTIFICATION_COOLDOWN_VIBRATE_UNLOCKED, BOOLEAN_VALIDATOR);
         VALIDATORS.put(System.PREFERRED_REGION, ANY_STRING_VALIDATOR);
+        VALIDATORS.put(System.HIGH_TOUCH_SENSITIVITY_ENABLE, BOOLEAN_VALIDATOR);
+        VALIDATORS.put(System.HIGH_TOUCH_POLLING_RATE_ENABLE, BOOLEAN_VALIDATOR);
+        VALIDATORS.put(System.STATUS_BAR_CLOCK, new InclusiveIntegerRangeValidator(0,3));
+        VALIDATORS.put(System.STATUS_BAR_CLOCK_AUTO_HIDE_LAUNCHER, BOOLEAN_VALIDATOR);
+        VALIDATORS.put(System.ZEN_ALLOW_LIGHTS, BOOLEAN_VALIDATOR);
+        VALIDATORS.put(System.STATUS_BAR_AM_PM, TRI_STATE_VALIDATOR);
+        VALIDATORS.put(System.STATUS_BAR_BATTERY_STYLE, NON_NEGATIVE_INTEGER_VALIDATOR);
+        VALIDATORS.put(System.STATUS_BAR_SHOW_BATTERY_PERCENT, TRI_STATE_VALIDATOR);
+        VALIDATORS.put(System.INCREASING_RING, BOOLEAN_VALIDATOR);
+        VALIDATORS.put(System.INCREASING_RING_START_VOLUME, new InclusiveFloatRangeValidator(0, 1));
+        VALIDATORS.put(System.INCREASING_RING_RAMP_UP_TIME,
+                new InclusiveIntegerRangeValidator(5, 60));
+        VALIDATORS.put(
+                System.NAV_BUTTONS,
+                new DelimitedListValidator(new String[] {
+                        "empty", "home", "back", "search", "recent", "menu0", "menu1",
+                        "menu2", "dpad_left", "dpad_right"}, "|", true));
+        VALIDATORS.put(System.NAVIGATION_BAR_MENU_ARROW_KEYS, BOOLEAN_VALIDATOR);
+        VALIDATORS.put(System.NAVIGATION_BAR_HINT, BOOLEAN_VALIDATOR);
+        VALIDATORS.put(System.KEY_HOME_LONG_PRESS_ACTION, ACTION_INTEGER_VALIDATOR);
+        VALIDATORS.put(System.KEY_HOME_DOUBLE_TAP_ACTION, ACTION_INTEGER_VALIDATOR);
+        VALIDATORS.put(System.KEY_BACK_LONG_PRESS_ACTION, ACTION_INTEGER_VALIDATOR);
+        VALIDATORS.put(System.BACK_WAKE_SCREEN, BOOLEAN_VALIDATOR);
+        VALIDATORS.put(System.VOLUME_UP_AND_DOWN_MUTE, BOOLEAN_VALIDATOR);
+        VALIDATORS.put(System.MENU_WAKE_SCREEN, BOOLEAN_VALIDATOR);
+        VALIDATORS.put(System.VOLUME_ANSWER_CALL, BOOLEAN_VALIDATOR);
+        VALIDATORS.put(System.VOLUME_WAKE_SCREEN, BOOLEAN_VALIDATOR);
+        VALIDATORS.put(System.KEY_MENU_ACTION, ACTION_INTEGER_VALIDATOR);
+        VALIDATORS.put(System.KEY_MENU_LONG_PRESS_ACTION, ACTION_INTEGER_VALIDATOR);
+        VALIDATORS.put(System.KEY_ASSIST_ACTION, ACTION_INTEGER_VALIDATOR);
+        VALIDATORS.put(System.KEY_ASSIST_LONG_PRESS_ACTION, ACTION_INTEGER_VALIDATOR);
+        VALIDATORS.put(System.KEY_APP_SWITCH_ACTION, ACTION_INTEGER_VALIDATOR);
+        VALIDATORS.put(System.KEY_APP_SWITCH_DOUBLE_TAP_ACTION, ACTION_INTEGER_VALIDATOR);
+        VALIDATORS.put(System.KEY_APP_SWITCH_LONG_PRESS_ACTION, ACTION_INTEGER_VALIDATOR);
+        VALIDATORS.put(System.KEY_CORNER_LONG_SWIPE_ACTION, ACTION_INTEGER_VALIDATOR);
+        VALIDATORS.put(System.KEY_EDGE_LONG_SWIPE_ACTION, ACTION_INTEGER_VALIDATOR);
+        VALIDATORS.put(System.KEY_THREE_FINGERS_SWIPE_ACTION, ACTION_INTEGER_VALIDATOR);
+        VALIDATORS.put(System.HOME_WAKE_SCREEN, BOOLEAN_VALIDATOR);
+        VALIDATORS.put(System.ASSIST_WAKE_SCREEN, BOOLEAN_VALIDATOR);
+        VALIDATORS.put(System.APP_SWITCH_WAKE_SCREEN, BOOLEAN_VALIDATOR);
+        VALIDATORS.put(System.CAMERA_WAKE_SCREEN, BOOLEAN_VALIDATOR);
+        VALIDATORS.put(System.CAMERA_SLEEP_ON_RELEASE, BOOLEAN_VALIDATOR);
+        VALIDATORS.put(System.CAMERA_LAUNCH, BOOLEAN_VALIDATOR);
+        VALIDATORS.put(System.SWAP_VOLUME_KEYS_ON_ROTATION,
+                new InclusiveIntegerRangeValidator(0,2));
+        VALIDATORS.put(System.TORCH_LONG_PRESS_POWER_GESTURE, BOOLEAN_VALIDATOR);
+        VALIDATORS.put(System.TORCH_LONG_PRESS_POWER_TIMEOUT,
+                new InclusiveIntegerRangeValidator(0, 3600));
+        VALIDATORS.put(System.BUTTON_BACKLIGHT_ONLY_WHEN_PRESSED, BOOLEAN_VALIDATOR);
+        VALIDATORS.put(System.CHARGING_CONTROL_ENABLED, BOOLEAN_VALIDATOR);
+        VALIDATORS.put(System.CHARGING_CONTROL_MODE, new InclusiveIntegerRangeValidator(1, 3));
+        VALIDATORS.put(System.CHARGING_CONTROL_START_TIME,
+                new InclusiveIntegerRangeValidator(0, 86400));
+        VALIDATORS.put(System.CHARGING_CONTROL_TARGET_TIME,
+                new InclusiveIntegerRangeValidator(0, 86400));
+        VALIDATORS.put(System.CHARGING_CONTROL_LIMIT, new InclusiveIntegerRangeValidator(60, 100));
+        VALIDATORS.put(System.BATTERY_LIGHT_ENABLED, BOOLEAN_VALIDATOR);
+        VALIDATORS.put(System.BATTERY_LIGHT_FULL_CHARGE_DISABLED, BOOLEAN_VALIDATOR);
+        VALIDATORS.put(System.BATTERY_LIGHT_PULSE, BOOLEAN_VALIDATOR);
+        VALIDATORS.put(System.BATTERY_LIGHT_LOW_COLOR, ANY_INTEGER_VALIDATOR);
+        VALIDATORS.put(System.BATTERY_LIGHT_MEDIUM_COLOR, ANY_INTEGER_VALIDATOR);
+        VALIDATORS.put(System.BATTERY_LIGHT_FULL_COLOR, ANY_INTEGER_VALIDATOR);
+        VALIDATORS.put(System.BATTERY_LIGHT_BRIGHTNESS_LEVEL, BRIGHTNESS_INTEGER_VALIDATOR);
+        VALIDATORS.put(System.BATTERY_LIGHT_BRIGHTNESS_LEVEL_ZEN, BRIGHTNESS_INTEGER_VALIDATOR);
+        VALIDATORS.put(System.ENABLE_MWI_NOTIFICATION, BOOLEAN_VALIDATOR);
+        VALIDATORS.put(System.PROXIMITY_ON_WAKE, BOOLEAN_VALIDATOR);
+        VALIDATORS.put(System.DISPLAY_TEMPERATURE_DAY,
+                new InclusiveIntegerRangeValidator(0, 100000));
+        VALIDATORS.put(System.DISPLAY_TEMPERATURE_NIGHT,
+                new InclusiveIntegerRangeValidator(0, 100000));
+        VALIDATORS.put(System.DISPLAY_TEMPERATURE_MODE, new InclusiveIntegerRangeValidator(0, 4));
+        VALIDATORS.put(System.DISPLAY_AUTO_OUTDOOR_MODE, BOOLEAN_VALIDATOR);
+        VALIDATORS.put(System.DISPLAY_ANTI_FLICKER, BOOLEAN_VALIDATOR);
+        VALIDATORS.put(System.DISPLAY_READING_MODE, BOOLEAN_VALIDATOR);
+        VALIDATORS.put(System.DISPLAY_CABC, BOOLEAN_VALIDATOR);
+        VALIDATORS.put(System.DISPLAY_COLOR_ENHANCE, BOOLEAN_VALIDATOR);
+        VALIDATORS.put(System.LIVE_DISPLAY_HINTED, new InclusiveIntegerRangeValidator(-3, 1));
+        VALIDATORS.put(System.DISPLAY_AUTO_CONTRAST, BOOLEAN_VALIDATOR);
+        VALIDATORS.put(
+                System.DISPLAY_COLOR_ADJUSTMENT,
+                new Validator() {
+                    @Override
+                    public boolean validate(@Nullable String value) {
+                        String[] colorAdjustment = value == null ?
+                                null : value.split(" ");
+                        if (colorAdjustment != null && colorAdjustment.length != 3) {
+                            return false;
+                        }
+                        Validator floatValidator = new InclusiveFloatRangeValidator(0, 1);
+                        return colorAdjustment == null ||
+                                floatValidator.validate(colorAdjustment[0]) &&
+                                floatValidator.validate(colorAdjustment[1]) &&
+                                floatValidator.validate(colorAdjustment[2]);
+                    }
+                });
+        VALIDATORS.put(System.DISPLAY_TEMPERATURE_MODE, new InclusiveIntegerRangeValidator(0, 4));
+        VALIDATORS.put(System.DOUBLE_TAP_SLEEP_GESTURE, BOOLEAN_VALIDATOR);
+        VALIDATORS.put(System.NAVBAR_LEFT_IN_LANDSCAPE, BOOLEAN_VALIDATOR);
+        VALIDATORS.put(System.STATUS_BAR_QUICK_QS_PULLDOWN,
+                new InclusiveIntegerRangeValidator(0, 3));
+        VALIDATORS.put(System.LOCKSCREEN_ROTATION, BOOLEAN_VALIDATOR);
+        VALIDATORS.put(System.QS_SHOW_BRIGHTNESS_SLIDER, new InclusiveIntegerRangeValidator(0, 3));
+        VALIDATORS.put(System.VOLBTN_MUSIC_CONTROLS, BOOLEAN_VALIDATOR);
+        VALIDATORS.put(System.CALL_RECORDING_FORMAT, new InclusiveIntegerRangeValidator(0, 1));
+        VALIDATORS.put(System.VOLUME_KEY_CURSOR_CONTROL, TRI_STATE_VALIDATOR);
+        VALIDATORS.put(System.LOCKSCREEN_PIN_SCRAMBLE_LAYOUT, BOOLEAN_VALIDATOR);
+        VALIDATORS.put(System.NOTIFICATION_LIGHT_BRIGHTNESS_LEVEL, BRIGHTNESS_INTEGER_VALIDATOR);
+        VALIDATORS.put(System.NOTIFICATION_LIGHT_BRIGHTNESS_LEVEL_ZEN, BRIGHTNESS_INTEGER_VALIDATOR);
+        VALIDATORS.put(System.NOTIFICATION_LIGHT_SCREEN_ON, BOOLEAN_VALIDATOR);
+        VALIDATORS.put(System.NOTIFICATION_LIGHT_PULSE_DEFAULT_COLOR, ANY_INTEGER_VALIDATOR);
+        VALIDATORS.put(System.NOTIFICATION_LIGHT_PULSE_DEFAULT_LED_ON, BOOLEAN_VALIDATOR);
+        VALIDATORS.put(System.NOTIFICATION_LIGHT_PULSE_DEFAULT_LED_OFF, BOOLEAN_VALIDATOR);
+        VALIDATORS.put(System.NOTIFICATION_LIGHT_PULSE_CALL_COLOR, ANY_INTEGER_VALIDATOR);
+        VALIDATORS.put(System.NOTIFICATION_LIGHT_PULSE_CALL_LED_ON, NON_NEGATIVE_INTEGER_VALIDATOR);
+        VALIDATORS.put(System.NOTIFICATION_LIGHT_PULSE_CALL_LED_OFF,
+                NON_NEGATIVE_INTEGER_VALIDATOR);
+        VALIDATORS.put(System.NOTIFICATION_LIGHT_PULSE_VMAIL_COLOR, ANY_INTEGER_VALIDATOR);
+        VALIDATORS.put(System.NOTIFICATION_LIGHT_PULSE_VMAIL_LED_ON,
+                NON_NEGATIVE_INTEGER_VALIDATOR);
+        VALIDATORS.put(System.NOTIFICATION_LIGHT_PULSE_VMAIL_LED_OFF,
+                NON_NEGATIVE_INTEGER_VALIDATOR);
+        VALIDATORS.put(System.NOTIFICATION_LIGHT_PULSE_CUSTOM_ENABLE, BOOLEAN_VALIDATOR);
+        VALIDATORS.put(
+                System.NOTIFICATION_LIGHT_PULSE_CUSTOM_VALUES,
+                new Validator() {
+                    @Override
+                    public boolean validate(String value) {
+                        if (TextUtils.isEmpty(value)) {
+                            return true;
+                        }
+                        for (String packageValuesString : value.split("\\|")) {
+                            String[] packageValues = packageValuesString.split("=");
+                            if (packageValues.length != 2) {
+                                return false;
+                            }
+                            String packageName = packageValues[0];
+                            if (TextUtils.isEmpty(packageName)) {
+                                return false;
+                            }
+                            String[] values = packageValues[1].split(";");
+                            if (values.length != 3) {
+                                return false;
+                            }
+                            try {
+                                // values[0] is LED color
+                                if (!(new InclusiveFloatRangeValidator(0, 1)).validate(values[0])) {
+                                    return false;
+                                }
+                                // values[1] is the LED on time and should be non-negative
+                                if (!NON_NEGATIVE_INTEGER_VALIDATOR.validate(values[1])) {
+                                    return false;
+                                }
+                                // values[1] is the LED off time and should be non-negative
+                                if (!NON_NEGATIVE_INTEGER_VALIDATOR.validate(values[2])) {
+                                    return false;
+                                }
+                            } catch (NumberFormatException e) {
+                                return false;
+                            }
+                        }
+                        // if we make it all the way through then the data is considered valid
+                        return true;
+                    }
+                });
+        VALIDATORS.put(System.NOTIFICATION_LIGHT_COLOR_AUTO, BOOLEAN_VALIDATOR);
+        VALIDATORS.put(System.NOTIFICATION_LIGHT_PULSE_OVERRIDE, BOOLEAN_VALIDATOR);
+        VALIDATORS.put(System.AUTO_BRIGHTNESS_ONE_SHOT, BOOLEAN_VALIDATOR);
+        VALIDATORS.put(System.TOUCHSCREEN_GESTURE_HAPTIC_FEEDBACK, BOOLEAN_VALIDATOR);
+        VALIDATORS.put(
+                System.DISPLAY_PICTURE_ADJUSTMENT,
+                new Validator() {
+                    @Override
+                    public boolean validate(String value) {
+                        if (TextUtils.isEmpty(value)) {
+                            return true;
+                        }
+                        final String[] sp = TextUtils.split(value, ",");
+                        for (String s : sp) {
+                            final String[] sp2 = TextUtils.split(s, ":");
+                            if (sp2.length != 2) {
+                                return false;
+                            }
+                        }
+                        return true;
+                    }
+                });
+        VALIDATORS.put(System.FORCE_SHOW_NAVBAR, BOOLEAN_VALIDATOR);
+        VALIDATORS.put(System.CLICK_PARTIAL_SCREENSHOT, BOOLEAN_VALIDATOR);
+        VALIDATORS.put(System.ENABLE_TASKBAR, BOOLEAN_VALIDATOR);
     }
 }

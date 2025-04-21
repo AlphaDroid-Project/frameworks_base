@@ -1,5 +1,7 @@
 /*
  * Copyright (C) 2006 The Android Open Source Project
+ * Copyright (C) 2015-2016 The CyanogenMod Project
+ * Copyright (C) 2017-2023 The LineageOS Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -1133,6 +1135,15 @@ public final class Settings {
     @SdkConstant(SdkConstantType.ACTIVITY_INTENT_ACTION)
     public static final String ACTION_AUTO_ROTATE_SETTINGS =
             "android.settings.AUTO_ROTATE_SETTINGS";
+
+    /**
+     * Activity Action: Show advanced Rotation settings.
+     *
+     * @hide
+     */
+    @SdkConstant(SdkConstantType.ACTIVITY_INTENT_ACTION)
+    public static final String ACTION_ADVANCED_ROTATION_SETTINGS =
+            "android.settings.ADVANCED_ROTATION_SETTINGS";
 
     /**
      * Activity Action: Show settings to allow configuration of Night display.
@@ -2978,6 +2989,31 @@ public final class Settings {
     public static final String ACTION_PRIVATE_DNS_SETTING =
             "com.android.settings.PRIVATE_DNS_SETTINGS";
 
+    /**
+     * Activity action: Show charging control settings
+     * <p>
+     * Input: Nothing.
+     * <p>
+     * Output: Nothing.
+     *
+     * @hide
+     */
+    public static final String ACTION_CHARGING_CONTROL_SETTINGS =
+            "android.settings.CHARGING_CONTROL_SETTINGS";
+
+    /**
+     * Activity action: Show LiveDisplay settings
+     * <p>
+     * Input: Nothing.
+     * <p>
+     * Output: Nothing.
+     *
+     * @hide
+     */
+    @SdkConstant(SdkConstantType.ACTIVITY_INTENT_ACTION)
+    public static final String ACTION_LIVEDISPLAY_SETTINGS =
+            "android.settings.LIVEDISPLAY_SETTINGS";
+
     // End of Intent actions for Settings
 
     /**
@@ -4312,6 +4348,19 @@ public final class Settings {
          */
         public static String getString(ContentResolver resolver, String name) {
             return getStringForUser(resolver, name, resolver.getUserId());
+        }
+
+        /**
+         * Look up a name in the database.
+         * @param resolver to access the database with
+         * @param name to look up in the table
+         * @param def Value to return if the setting is not defined.
+         * @return the corresponding value, or null if not present
+         * @hide
+         */
+        public static String getString(ContentResolver resolver, String name, String def) {
+            String str = getStringForUser(resolver, name, resolver.getUserId());
+            return str == null ? def : str;
         }
 
         /** @hide */
@@ -6503,12 +6552,724 @@ public final class Settings {
         @Readable
         public static final String VOLUME_KEY_CURSOR_CONTROL = "volume_key_cursor_control";
 
+        /** Lineage Settings start */
+
+        /**
+         * Whether the HighTouchPollingRate is activated or not.
+         * 0 = off, 1 = on
+         * @hide
+         */
+        public static final String HIGH_TOUCH_POLLING_RATE_ENABLE = "high_touch_polling_rate_enable";
+
+        /**
+         * Whether the HighTouchSensitivity is activated or not.
+         * 0 = off, 1 = on
+         * @hide
+         */
+        public static final String HIGH_TOUCH_SENSITIVITY_ENABLE = "high_touch_sensitivity_enable";
+
+        /**
+         * Whether the notification light will be allowed when in zen mode during downtime
+         * @hide
+         */
+        public static final String ZEN_ALLOW_LIGHTS = "allow_lights";
+
+        /**
+         * Display style of AM/PM next to clock in status bar
+         * 0: Normal display (Eclair stock)
+         * 1: Small display (Froyo stock)
+         * 2: No display (Gingerbread/ICS stock)
+         * default: 2
+         * @hide
+         */
+        public static final String STATUS_BAR_AM_PM = "status_bar_am_pm";
+
+        /**
+         * Whether the phone ringtone should be played in an increasing manner
+         * 0 = 0ff, 1 = on
+         * @hide
+         */
+        public static final String INCREASING_RING = "increasing_ring";
+
+        /**
+         * Start volume fraction for increasing ring volume
+         * @hide
+         */
+        public static final String INCREASING_RING_START_VOLUME = "increasing_ring_start_vol";
+
+        /**
+         * Ramp up time (seconds) for increasing ring
+         * @hide
+         */
+        public static final String INCREASING_RING_RAMP_UP_TIME = "increasing_ring_ramp_up_time";
+
+        /**
+         * Navigation controls to Use
+         * @hide
+         */
+        public static final String NAV_BUTTONS = "nav_buttons";
+
+        /**
+         * boolean value. toggles using arrow key locations on nav bar
+         * as left and right dpad keys
+         * @hide
+         */
+        public static final String NAVIGATION_BAR_MENU_ARROW_KEYS = "navigation_bar_menu_arrow_keys";
+
+        /**
+         * boolean value. toggles swipe up hint in gestural nav mode
+         * @hide
+         */
+        public static final String NAVIGATION_BAR_HINT = "navigation_bar_hint";
+
+        /**
+         * Action to perform when the home key is long-pressed.
+         * (Default can be configured via config_longPressOnHomeBehavior)
+         * 0 - Nothing
+         * 1 - Menu
+         * 2 - App-switch
+         * 3 - Search
+         * 4 - Voice search
+         * 5 - In-app search
+         * 6 - Launch Camera
+         * 7 - Action Sleep
+         * 8 - Last app
+         * 9 - Toggle split screen
+         * 10 - Kill foreground app
+         * 11 - Torch
+         * 12 - Screenshot
+         * 13 - Volume Panel
+         * 14 - Clear All Notifications
+         * 15 - Notifications
+         * 16 - Toggle Qs Panel
+         * 17 - Ringer Modes
+         * @hide
+         */
+        public static final String KEY_HOME_LONG_PRESS_ACTION = "key_home_long_press_action";
+
+        /**
+         * Action to perform when the home key is double-tapped.
+         * (Default can be configured via config_doubleTapOnHomeBehavior)
+         * (See KEY_HOME_LONG_PRESS_ACTION for valid values)
+         * @hide
+         */
+        public static final String KEY_HOME_DOUBLE_TAP_ACTION = "key_home_double_tap_action";
+
+        /**
+         * Action to perform when the back key is long-pressed.
+         * (Default can be configured via config_longPressOnBackBehavior)
+         * (See KEY_HOME_LONG_PRESS_ACTION for valid values)
+         * @hide
+         */
+        public static final String KEY_BACK_LONG_PRESS_ACTION = "key_back_long_press_action";
+
+        /**
+         * Whether to wake the screen with the back key, the value is boolean.
+         * 0 = 0ff, 1 = on
+         * @hide
+         */
+        public static final String BACK_WAKE_SCREEN = "back_wake_screen";
+
+        /**
+         * Wether to mute audio by pressing the volume up and down keys simultneously on Android TV,
+         * the value is boolean.
+         * 0 = 0ff, 1 = on
+         * @hide
+         */
+        public static final String VOLUME_UP_AND_DOWN_MUTE = "volume_up_and_down_mute";
+
+        /**
+         * Whether to wake the screen with the menu key, the value is boolean.
+         * 0 = 0ff, 1 = on
+         * @hide
+         */
+        public static final String MENU_WAKE_SCREEN = "menu_wake_screen";
+
+        /**
+         * Whether to answer the call with the volume keys, the value is boolean.
+         * 0 = 0ff, 1 = on
+         * @hide
+         */
+        public static final String VOLUME_ANSWER_CALL = "volume_answer_call";
+
+        /**
+         * Whether to wake the screen with the volume keys, the value is boolean.
+         * 0 = 0ff, 1 = on
+         * @hide
+         */
+        public static final String VOLUME_WAKE_SCREEN = "volume_wake_screen";
+
+        /**
+         * Action to perform when the menu key is pressed. (Default is 1)
+         * (See KEY_HOME_LONG_PRESS_ACTION for valid values)
+         * @hide
+         */
+        public static final String KEY_MENU_ACTION = "key_menu_action";
+
+        /**
+         * Action to perform when the menu key is long-pressed.
+         * (Default is 0 on devices with a search key, 3 on devices without)
+         * (See KEY_HOME_LONG_PRESS_ACTION for valid values)
+         * @hide
+         */
+        public static final String KEY_MENU_LONG_PRESS_ACTION = "key_menu_long_press_action";
+
+        /**
+         * Action to perform when the assistant (search) key is pressed. (Default is 3)
+         * (See KEY_HOME_LONG_PRESS_ACTION for valid values)
+         * @hide
+         */
+        public static final String KEY_ASSIST_ACTION = "key_assist_action";
+
+        /**
+         * Action to perform when the assistant (search) key is long-pressed. (Default is 4)
+         * (See KEY_HOME_LONG_PRESS_ACTION for valid values)
+         * @hide
+         */
+        public static final String KEY_ASSIST_LONG_PRESS_ACTION = "key_assist_long_press_action";
+
+        /**
+         * Action to perform when the app switch key is pressed. (Default is 2)
+         * (See KEY_HOME_LONG_PRESS_ACTION for valid values)
+         * @hide
+         */
+        public static final String KEY_APP_SWITCH_ACTION = "key_app_switch_action";
+
+        /**
+         * Action to perform when the app switch key is double-tapped. (Default is 8)
+         * (See KEY_HOME_LONG_PRESS_ACTION for valid values)
+         * @hide
+         */
+        public static final String KEY_APP_SWITCH_DOUBLE_TAP_ACTION = "key_app_switch_double_tap_action";
+
+        /**
+         * Action to perform when the app switch key is long-pressed. (Default is 0)
+         * (See KEY_HOME_LONG_PRESS_ACTION for valid values)
+         * @hide
+         */
+        public static final String KEY_APP_SWITCH_LONG_PRESS_ACTION = "key_app_switch_long_press_action";
+
+        /**
+         * Action to perform when the screen corner is long-swiped. (Default is 3)
+         * (See KEY_HOME_LONG_PRESS_ACTION for valid values)
+         * @hide
+         */
+        public static final String KEY_CORNER_LONG_SWIPE_ACTION = "key_corner_long_swipe_action";
+
+        /**
+         * Action to perform when the screen edge is long-swiped. (Default is 0)
+         * (See KEY_HOME_LONG_PRESS_ACTION for valid values)
+         * @hide
+         */
+        public static final String KEY_EDGE_LONG_SWIPE_ACTION = "key_edge_long_swipe_action";
+
+        /**
+         * Action to perform when three fingers swipe action is detected. (Default is 0)
+         * (See KEY_HOME_LONG_PRESS_ACTION for valid values)
+         * @hide
+         */
+        public static final String KEY_THREE_FINGERS_SWIPE_ACTION = "key_three_fingers_swipe_action";
+
+        /**
+         * Whether to wake the screen with the home key, the value is boolean.
+         * 0 = 0ff, 1 = on
+         * @hide
+         */
+        public static final String HOME_WAKE_SCREEN = "home_wake_screen";
+
+        /**
+         * Whether to wake the screen with the assist key, the value is boolean.
+         * 0 = 0ff, 1 = on
+         * @hide
+         */
+        public static final String ASSIST_WAKE_SCREEN = "assist_wake_screen";
+
+        /**
+         * Whether to wake the screen with the app switch key, the value is boolean.
+         * 0 = 0ff, 1 = on
+         * @hide
+         */
+        public static final String APP_SWITCH_WAKE_SCREEN = "app_switch_wake_screen";
+
+        /**
+         * Whether to wake the screen with the camera key half-press.
+         * 0 = 0ff, 1 = on
+         * @hide
+         */
+        public static final String CAMERA_WAKE_SCREEN = "camera_wake_screen";
+
+        /**
+         * Whether or not to send device back to sleep if Camera button is released ("Peek")
+         * 0 = 0ff, 1 = on
+         * @hide
+         */
+        public static final String CAMERA_SLEEP_ON_RELEASE = "camera_sleep_on_release";
+
+        /**
+         * Whether to launch secure camera app when key is longpressed
+         * 0 = 0ff, 1 = on
+         * @hide
+         */
+        public static final String CAMERA_LAUNCH = "camera_launch";
+
+        /**
+         * Swap volume buttons when the screen is rotated
+         * 0 - Disabled
+         * 1 - Enabled (screen is rotated by 90 or 180 degrees: phone, hybrid)
+         * 2 - Enabled (screen is rotated by 180 or 270 degrees: tablet)
+         * @hide
+         */
+        public static final String SWAP_VOLUME_KEYS_ON_ROTATION = "swap_volume_keys_on_rotation";
+
+        /**
+         * Activate torchlight when power button is
+         * long-pressed while the display is off
+         * The value is boolean (1 or 0).
+         * @hide
+         */
+        public static final String TORCH_LONG_PRESS_POWER_GESTURE =
+                "torch_long_press_power_gesture";
+
+        /**
+         * When the torch has been turned on by long press on power,
+         * automatically turn off after a configurable number of seconds.
+         * The value is an integer number of seconds in the range 0-3600.
+         * 0 means never automatically turn off.
+         * @hide
+         */
+        public static final String TORCH_LONG_PRESS_POWER_TIMEOUT =
+                "torch_long_press_power_timeout";
+
+        /**
+         * Whether the button backlight is only lit when pressed (and not when screen is touched)
+         * The value is boolean (1 or 0).
+         * @hide
+         */
+        public static final String BUTTON_BACKLIGHT_ONLY_WHEN_PRESSED =
+                "button_backlight_only_when_pressed";
+
+        /**
+         * Whether charging control should be enabled.
+         * The value is boolean (1 or 0).
+         * @hide
+         */
+        public static final String CHARGING_CONTROL_ENABLED = "charging_control_enabled";
+
+        /**
+         * Charging control mode, one of AUTO (1; default), CUSTOM (2), or LIMIT (3).
+         * @hide
+         */
+        public static final String CHARGING_CONTROL_MODE = "charging_control_mode";
+
+        /**
+         * Time when charging control is automatically activated in CUSTOM mode.
+         * The value is represented as seconds from midnight.
+         * @hide
+         */
+        public static final String CHARGING_CONTROL_START_TIME = "charging_control_start_time";
+
+        /**
+         * Target time when battery is fully charged in CUSTOM mode.
+         * The value is represented as seconds from midnight.
+         * @hide
+         */
+        public static final String CHARGING_CONTROL_TARGET_TIME = "charging_control_target_time";
+
+        /**
+         * Limit to stop charging.
+         * @hide
+         */
+        public static final String CHARGING_CONTROL_LIMIT = "charging_control_charging_limit";
+
+        /**
+         * Whether the battery light should be enabled (if hardware supports it)
+         * The value is boolean (1 or 0).
+         * @hide
+         */
+        public static final String BATTERY_LIGHT_ENABLED = "battery_light_enabled";
+
+        /**
+         * Whether the battery LED should be disabled when the battery is fully charged.
+         * The value is boolean (1 or 0).
+         * @hide
+         */
+        public static final String BATTERY_LIGHT_FULL_CHARGE_DISABLED =
+                "battery_light_full_charge_disabled";
+
+        /**
+         * Whether the battery LED should repeatedly flash when the battery is low
+         * on charge. The value is boolean (1 or 0).
+         * @hide
+         */
+        public static final String BATTERY_LIGHT_PULSE = "battery_light_pulse";
+
+        /**
+         * What color to use for the battery LED while charging - low
+         * @hide
+         */
+        public static final String BATTERY_LIGHT_LOW_COLOR = "battery_light_low_color";
+
+        /**
+         * What color to use for the battery LED while charging - medium
+         * @hide
+         */
+        public static final String BATTERY_LIGHT_MEDIUM_COLOR = "battery_light_medium_color";
+
+        /**
+         * What color to use for the battery LED while charging - full
+         * @hide
+         */
+        public static final String BATTERY_LIGHT_FULL_COLOR = "battery_light_full_color";
+
+        /**
+         * What color to use for the battery LED while charging - really full
+         * @hide
+         */
+        public static final String BATTERY_LIGHT_REALLY_FULL_COLOR = "battery_light_really_full_color";
+
+        /**
+         * Contains the battery light maximum brightness to use.
+         * Values range from 1 to 255
+         * @hide
+         */
+        public static final String BATTERY_LIGHT_BRIGHTNESS_LEVEL =
+                "battery_light_brightness_level";
+
+        /**
+         * Contains the battery light maximum brightness to use when Do Not
+         * Disturb is active.
+         * Values range from 1 to 255
+         * @hide
+         */
+        public static final String BATTERY_LIGHT_BRIGHTNESS_LEVEL_ZEN =
+                "battery_light_brightness_level_zen";
+
+        /**
+         * Sprint MWI Quirk: Show message wait indicator notifications
+         * @hide
+         */
+        public static final String ENABLE_MWI_NOTIFICATION = "enable_mwi_notification";
+
+        /**
+         * Check the proximity sensor during wakeup
+         * 0 = 0ff, 1 = on
+         * @hide
+         */
+        public static final String PROXIMITY_ON_WAKE = "proximity_on_wake";
+
+        /**
+         * Color temperature of the display during the day
+         * @hide
+         */
+        public static final String DISPLAY_TEMPERATURE_DAY = "display_temperature_day";
+
+        /**
+         * Color temperature of the display at night
+         * @hide
+         */
+        public static final String DISPLAY_TEMPERATURE_NIGHT = "display_temperature_night";
+
+        /**
+         * Display color temperature adjustment mode, one of DAY (default), NIGHT, or AUTO.
+         * @hide
+         */
+        public static final String DISPLAY_TEMPERATURE_MODE = "display_temperature_mode";
+
+        /**
+         * Automatic outdoor mode
+         * 0 = 0ff, 1 = on
+         * @hide
+         */
+        public static final String DISPLAY_AUTO_OUTDOOR_MODE = "display_auto_outdoor_mode";
+
+        /**
+         * Anti flicker
+         * 0 = 0ff, 1 = on
+         * @hide
+         */
+        public static final String DISPLAY_ANTI_FLICKER = "display_anti_flicker";
+
+        /**
+         * Reader mode
+         * 0 = 0ff, 1 = on
+         * @hide
+         */
+        public static final String DISPLAY_READING_MODE = "display_reading_mode";
+
+        /**
+         * Use display power saving features such as CABC or CABL
+         * 0 = 0ff, 1 = on
+         * @hide
+         */
+        public static final String DISPLAY_CABC = "display_low_power";
+
+        /**
+         * Use color enhancement feature of display
+         * 0 = 0ff, 1 = on
+         * @hide
+         */
+        public static final String DISPLAY_COLOR_ENHANCE = "display_color_enhance";
+
+        /**
+         * Use auto contrast optimization feature of display
+         * 0 = 0ff, 1 = on
+         * @hide
+         */
+        public static final String DISPLAY_AUTO_CONTRAST = "display_auto_contrast";
+
+        /**
+         * Manual display color adjustments (RGB values as floats, separated by spaces)
+         * @hide
+         */
+        public static final String DISPLAY_COLOR_ADJUSTMENT = "display_color_adjustment";
+
+        /**
+         * The current custom picture adjustment values as a delimited string
+         * @hide
+         */
+        public static final String DISPLAY_PICTURE_ADJUSTMENT = "display_picture_adjustment";
+
+       /**
+         * Did we tell about how they can stop breaking their eyes?
+         * @hide
+         */
+        public static final String LIVE_DISPLAY_HINTED = "live_display_hinted";
+
+        /**
+         *  Enable statusbar double tap gesture on to put device to sleep
+         *  0 = 0ff, 1 = on
+         * @hide
+         */
+        public static final String DOUBLE_TAP_SLEEP_GESTURE = "double_tap_sleep_gesture";
+
+        /**
+         * Whether navigation bar is placed on the left side in landscape mode
+         * 0 = 0ff, 1 = on
+         * @hide
+         */
+        public static final String NAVBAR_LEFT_IN_LANDSCAPE = "navigation_bar_left";
+
+        /**
+         * Whether to scramble a pin unlock layout
+         * 0 = 0ff, 1 = on
+         * @hide
+         */
+        public static final String LOCKSCREEN_PIN_SCRAMBLE_LAYOUT =
+                "lockscreen_scramble_pin_layout";
+
+        /**
+         * Whether keyguard will rotate to landscape mode
+         * 0 = false, 1 = true
+         * @hide
+         */
+        public static final String LOCKSCREEN_ROTATION = "lockscreen_rotation";
+
+        /**
+         * Whether to allow one finger quick settings expansion on the side of the statusbar.
+         * 0 = 0ff, 1 = right, 2 = left
+         * @hide
+         */
+        public static final String STATUS_BAR_QUICK_QS_PULLDOWN = "qs_quick_pulldown";
+
+        /**
+         * Whether to show the brightness slider in quick settings panel.
+         * 0 = Never, 1 = show when expanded, 2 = show always
+         * @hide
+         */
+        public static final String QS_SHOW_BRIGHTNESS_SLIDER = "qs_show_brightness_slider";
+
+        /**
+         * Whether or not volume button music controls should be enabled to seek media tracks
+         * 0 = 0ff, 1 = on
+         * @hide
+         */
+        public static final String VOLBTN_MUSIC_CONTROLS = "volbtn_music_controls";
+
+        /**
+         * Call recording format value
+         * 0: AMR_WB
+         * 1: MPEG_4
+         * Default: 0
+         * @hide
+         */
+        public static final String CALL_RECORDING_FORMAT = "call_recording_format";
+
+        /**
+         * Contains the notifications light maximum brightness to use.
+         * Values range from 1 to 255
+         * @hide
+         */
+        public static final String NOTIFICATION_LIGHT_BRIGHTNESS_LEVEL =
+                "notification_light_brightness_level";
+
+        /**
+         * Contains the notifications light maximum brightness to use when Do Not
+         * Disturb is active.
+         * Values range from 1 to 255
+         * @hide
+         */
+        public static final String NOTIFICATION_LIGHT_BRIGHTNESS_LEVEL_ZEN =
+                "notification_light_brightness_level_zen";
+
+        /**
+         * Whether to allow notifications with the screen on or DayDreams.
+         * The value is boolean (1 or 0). Default will always be false.
+         * @hide
+         */
+        public static final String NOTIFICATION_LIGHT_SCREEN_ON =
+                "notification_light_screen_on_enable";
+
+        /**
+         * What color to use for the notification LED by default
+         * @hide
+         */
+        public static final String NOTIFICATION_LIGHT_PULSE_DEFAULT_COLOR =
+                "notification_light_pulse_default_color";
+
+        /**
+         * How long to flash the notification LED by default
+         * @hide
+         */
+        public static final String NOTIFICATION_LIGHT_PULSE_DEFAULT_LED_ON =
+                "notification_light_pulse_default_led_on";
+
+        /**
+         * How long to wait between flashes for the notification LED by default
+         * @hide
+         */
+        public static final String NOTIFICATION_LIGHT_PULSE_DEFAULT_LED_OFF =
+                "notification_light_pulse_default_led_off";
+
+        /**
+         * What color to use for the missed call notification LED
+         * @hide
+         */
+        public static final String NOTIFICATION_LIGHT_PULSE_CALL_COLOR =
+                "notification_light_pulse_call_color";
+
+        /**
+         * How long to flash the missed call notification LED
+         * @hide
+         */
+        public static final String NOTIFICATION_LIGHT_PULSE_CALL_LED_ON =
+                "notification_light_pulse_call_led_on";
+
+        /**
+         * How long to wait between flashes for the missed call notification LED
+         * @hide
+         */
+        public static final String NOTIFICATION_LIGHT_PULSE_CALL_LED_OFF =
+                "notification_light_pulse_call_led_off";
+
+        /**
+         * What color to use for the voicemail notification LED
+         * @hide
+         */
+        public static final String NOTIFICATION_LIGHT_PULSE_VMAIL_COLOR =
+                "notification_light_pulse_vmail_color";
+
+        /**
+         * How long to flash the voicemail notification LED
+         * @hide
+         */
+        public static final String NOTIFICATION_LIGHT_PULSE_VMAIL_LED_ON =
+                "notification_light_pulse_vmail_led_on";
+
+        /**
+         * How long to wait between flashes for the voicemail notification LED
+         * @hide
+         */
+        public static final String NOTIFICATION_LIGHT_PULSE_VMAIL_LED_OFF =
+                "notification_light_pulse_vmail_led_off";
+
+        /**
+         * Whether to use the custom LED values for the notification pulse LED.
+         * 0 = 0ff, 1 = on
+         * @hide
+         */
+        public static final String NOTIFICATION_LIGHT_PULSE_CUSTOM_ENABLE =
+                "notification_light_pulse_custom_enable";
+
+        /**
+         * Which custom LED values to use for the notification pulse LED.
+         * @hide
+         */
+        public static final String NOTIFICATION_LIGHT_PULSE_CUSTOM_VALUES =
+                "notification_light_pulse_custom_values";
+
+        /**
+         * Whether we automatically generate notification LED colors or just
+         * use the boring default.
+         *
+         * @hide
+         */
+        public static final String NOTIFICATION_LIGHT_COLOR_AUTO =
+                "notification_light_color_auto";
+
+        /**
+         * Whether to use the default LED values for all apps
+         * 0 = 0ff, 1 = on
+         * @hide
+         */
+        public static final String NOTIFICATION_LIGHT_PULSE_OVERRIDE = "notification_light_pulse_override";
+
+        /**
+         * Whether auto brightness is applied one shot when screen is turned on
+         * @hide
+         */
+        public static final String AUTO_BRIGHTNESS_ONE_SHOT = "auto_brightness_one_shot";
+
+        /**
+         * Whether or not to vibrate when a touchscreen gesture is detected
+         * @hide
+         */
+        public static final String TOUCHSCREEN_GESTURE_HAPTIC_FEEDBACK =
+                "touchscreen_gesture_haptic_feedback";
+
+        /**
+         * Force show navigation bar setting.
+         * @hide
+         */
+        public static final String FORCE_SHOW_NAVBAR = "force_show_navbar";
+
+        /**
+         * Whether to take partial screenshot with volume down + power click.
+         * @hide
+         */
+        public static final String CLICK_PARTIAL_SCREENSHOT = "click_partial_screenshot";
+
+        /**
+         * Whether to enable taskbar.
+         * @hide
+         */
+        public static final String ENABLE_TASKBAR = "enable_taskbar";
+
+        /** Lineage Settings end */
+
         /**
          * IMPORTANT: If you add a new public settings you also have to add it to
          * PUBLIC_SETTINGS below. If the new setting is hidden you have to add
          * it to PRIVATE_SETTINGS below. Also add a validator that can validate
          * the setting value. See an example above.
          */
+
+        /**
+         * Whether to show the clock in the right or left position or show it in the center
+         * 0: show the clock in the right position (LTR)
+         * 1: show the clock in the center
+         * 2: show the clock in the left position (LTR)
+         * 3: hide the clock
+         * default: 0
+         * @hide
+         */
+        public static final String STATUS_BAR_CLOCK = "status_bar_clock";
+
+        /**
+         * Whether to hide clock when launcher is visible
+         * default: false
+         * @hide
+         */
+        public static final String STATUS_BAR_CLOCK_AUTO_HIDE_LAUNCHER = "status_bar_clock_auto_hide_launcher";
 
         /**
          * Whether to show seconds next to clock in status bar
@@ -6572,17 +7333,25 @@ public final class Settings {
 
         /**
          * Battery style
+         * 0: portrait
+         * 1: circle
+         * 2: dotted circle
+         * 3: full circle
+         * 4: text
+         * 5: hidden
+         * 6: rlandscape
+         * 7: landscape
          * @hide
          */
         public static final String STATUS_BAR_BATTERY_STYLE = "status_bar_battery_style";
 
         /**
-          * Statusbar Battery %
-          * 0: Hide the battery percentage
-          * 1: Display the battery percentage inside the icon
-          * 2: Display the battery percentage next to Icon
-          * @hide
-          */
+         * Statusbar Battery %
+         * 0: Hide the battery percentage
+         * 1: Display the battery percentage inside the icon
+         * 2: Display the battery percentage next to Icon
+         * @hide
+         */
         public static final String STATUS_BAR_SHOW_BATTERY_PERCENT = "status_bar_show_battery_percent";
 
         /**
@@ -7958,6 +8727,19 @@ public final class Settings {
          */
         public static String getString(ContentResolver resolver, String name) {
             return getStringForUser(resolver, name, resolver.getUserId());
+        }
+
+        /**
+         * Look up a name in the database.
+         * @param resolver to access the database with
+         * @param name to look up in the table
+         * @param def Value to return if the setting is not defined.
+         * @return the corresponding value, or null if not present
+         * @hide
+         */
+        public static String getString(ContentResolver resolver, String name, String def) {
+            String str = getStringForUser(resolver, name, resolver.getUserId());
+            return str == null ? def : str;
         }
 
         /** @hide */
@@ -13943,6 +14725,162 @@ public final class Settings {
         @Readable
         public static final String STYLUS_POINTER_ICON_ENABLED = "stylus_pointer_icon_enabled";
 
+        /** Lineage Settings start */
+
+        /**
+         * The time in ms to keep the button backlight on after pressing a button.
+         * A value of 0 will keep the buttons on for as long as the screen is on.
+         * @hide
+         */
+        public static final String BUTTON_BACKLIGHT_TIMEOUT = "button_backlight_timeout";
+
+        /**
+         * The button brightness to be used while the screen is on or after a button press,
+         * depending on the value of {@link BUTTON_BACKLIGHT_TIMEOUT}.
+         * Valid value range is between 0 and {@link PowerManager#getMaximumButtonBrightness()}
+         * @hide
+         */
+        public static final String BUTTON_BRIGHTNESS = "button_brightness";
+
+        /**
+         * The keyboard brightness to be used while the screen is on.
+         * Valid value range is between 0 and {@link PowerManager#getMaximumKeyboardBrightness()}
+         * @hide
+         */
+        public static final String KEYBOARD_BRIGHTNESS = "keyboard_brightness";
+
+        /**
+         * String to contain power menu actions
+         * @hide
+         */
+        public static final String POWER_MENU_ACTIONS = "power_menu_actions";
+
+        /**
+         * Whether to show the brightness slider in quick settings panel.
+         * @hide
+         */
+        public static final String QS_SHOW_BRIGHTNESS_SLIDER = "qs_show_brightness_slider";
+
+        /**
+         * Whether to show the auto brightness icon in quick settings panel.
+         * @hide
+         */
+        public static final String QS_SHOW_AUTO_BRIGHTNESS = "qs_show_auto_brightness";
+
+        /**
+         * Whether to show the brightness slider in quick settings panel.
+         * 0 = Top, 1 = Bottom
+         */
+        public static final String QS_BRIGHTNESS_SLIDER_POSITION = "qs_brightness_slider_position";
+
+        /**
+         * What happens when the user presses the Home button when the
+         * phone is ringing.
+         * 1 - Nothing happens. (Default behavior)
+         * 2 - The Home button answer the current call.
+         *
+         * @hide
+         */
+        public static final String RING_HOME_BUTTON_BEHAVIOR = "ring_home_button_behavior";
+
+        /**
+         * RING_HOME_BUTTON_BEHAVIOR value for "do nothing".
+         * @hide
+         */
+        public static final int RING_HOME_BUTTON_BEHAVIOR_DO_NOTHING = 0x1;
+
+        /**
+         * RING_HOME_BUTTON_BEHAVIOR value for "answer".
+         * @hide
+         */
+        public static final int RING_HOME_BUTTON_BEHAVIOR_ANSWER = 0x2;
+
+        /**
+         * RING_HOME_BUTTON_BEHAVIOR default value.
+         * @hide
+         */
+        public static final int RING_HOME_BUTTON_BEHAVIOR_DEFAULT =
+                RING_HOME_BUTTON_BEHAVIOR_DO_NOTHING;
+
+        /**
+         * Whether to include options in power menu for rebooting into recovery or bootloader
+         * @hide
+         */
+        public static final String ADVANCED_REBOOT = "advanced_reboot";
+
+        /**
+         * Whether keyguard will direct show security view (0 = false, 1 = true)
+         * @hide
+         */
+        public static final String LOCK_PASS_TO_SECURITY_VIEW = "lock_screen_pass_to_security_view";
+
+        /**
+         * Whether touch hovering is enabled on supported hardware
+         * @hide
+         */
+        public static final String FEATURE_TOUCH_HOVERING = "feature_touch_hovering";
+
+        /**
+         * Network traffic indicator mode
+         * 0 = Don't show network traffic indicator
+         * 1 = Display up-stream traffic only
+         * 2 = Display down-stream traffic only
+         * 3 = Display both up- and down-stream traffic
+         * @hide
+         */
+        public static final String NETWORK_TRAFFIC_MODE = "network_traffic_mode";
+
+        /**
+         * Network traffic indicator position
+         * 0 = Start side
+         * 1 = Center
+         * 2 = End side
+         * @hide
+         */
+        public static final String NETWORK_TRAFFIC_POSITION = "network_traffic_position";
+
+        /**
+         * Whether or not to hide the network traffic indicator when there is no activity
+         * @hide
+         */
+        public static final String NETWORK_TRAFFIC_AUTOHIDE = "network_traffic_autohide";
+
+        /**
+         * Measurement unit preference for network traffic
+         * 0 = kBit/s
+         * 1 = MBit/s
+         * 2 = kByte/s
+         * 3 = MByte/s
+         * 4 = automatic kByte/s or MByte/s
+         * @hide
+         */
+        public static final String NETWORK_TRAFFIC_UNITS = "network_traffic_units";
+
+        /**
+         * How to show measurement units in the network traffic indiciator
+         * 0 = off
+         * 1 = on
+         * 2 = compact
+         * @hide
+         */
+        public static final String NETWORK_TRAFFIC_SHOW_UNITS = "network_traffic_show_units";
+
+        /**
+         * Whether volume panel should appear on the left (or right).
+         * 0 = false (on the right)
+         * 1 = true (on the left)
+         * @hide
+         */
+        public static final String VOLUME_PANEL_ON_LEFT = "volume_panel_on_left";
+
+        /** Lineage Settings end */
+
+        /**
+         * Whether to show advanced reboot on secured lockscreen
+         * @hide
+         */
+        public static final String ADVANCED_REBOOT_SECURED = "advanced_reboot_secured";
+
         /**
          * These entries are considered common between the personal and the managed profile,
          * since the managed profile doesn't get to change them.
@@ -14074,7 +15012,7 @@ public final class Settings {
         public static final String CONTEXTUAL_SEARCH_PACKAGE = "contextual_search_package";
 
         /**
-         * Inetger property which determines whether advanced protection is on or not.
+         * Integer property which determines whether advanced protection is on or not.
          * @hide
          */
         public static final String ADVANCED_PROTECTION_MODE = "advanced_protection_mode";
@@ -19320,6 +20258,13 @@ public final class Settings {
         public static final String BLUETOOTH_OFF_TIMEOUT = "bluetooth_off_timeout";
 
         /**
+         * Whether to wake the display when plugging or unplugging the charger
+         * 0 = off, 1 = on
+         * @hide
+         */
+        public static final String WAKE_WHEN_PLUGGED_OR_UNPLUGGED = "wake_when_plugged_or_unplugged";
+
+        /**
          * Keys we no longer back up under the current schema, but want to continue to
          * process when restoring historical backup datasets.
          *
@@ -19404,6 +20349,19 @@ public final class Settings {
          */
         public static String getString(ContentResolver resolver, String name) {
             return getStringForUser(resolver, name, resolver.getUserId());
+        }
+
+        /**
+         * Look up a name in the database.
+         * @param resolver to access the database with
+         * @param name to look up in the table
+         * @param def Value to return if the setting is not defined.
+         * @return the corresponding value, or null if not present
+         * @hide
+         */
+        public static String getString(ContentResolver resolver, String name, String def) {
+            String str = getStringForUser(resolver, name, resolver.getUserId());
+            return str == null ? def : str;
         }
 
         /** @hide */

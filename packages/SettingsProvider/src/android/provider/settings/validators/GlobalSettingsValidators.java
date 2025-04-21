@@ -31,6 +31,7 @@ import static android.provider.settings.validators.SettingsValidators.NON_NEGATI
 import static android.provider.settings.validators.SettingsValidators.NON_NEGATIVE_INTEGER_VALIDATOR;
 import static android.provider.settings.validators.SettingsValidators.PACKAGE_NAME_VALIDATOR;
 import static android.provider.settings.validators.SettingsValidators.PERCENTAGE_INTEGER_VALIDATOR;
+import static android.provider.settings.validators.SettingsValidators.TRI_STATE_VALIDATOR;
 import static android.view.Display.HdrCapabilities.HDR_TYPES;
 import static android.view.Display.HdrCapabilities.HDR_TYPE_DOLBY_VISION;
 import static android.view.Display.HdrCapabilities.HDR_TYPE_HDR10;
@@ -182,11 +183,11 @@ public class GlobalSettingsValidators {
         VALIDATORS.put(Global.POWER_BUTTON_LONG_PRESS, new InclusiveIntegerRangeValidator(0, 6));
         VALIDATORS.put(
                 Global.POWER_BUTTON_VERY_LONG_PRESS, new InclusiveIntegerRangeValidator(0, 1));
-        VALIDATORS.put(Global.KEY_CHORD_POWER_VOLUME_UP, new InclusiveIntegerRangeValidator(0, 2));
+        VALIDATORS.put(Global.KEY_CHORD_POWER_VOLUME_UP, TRI_STATE_VALIDATOR);
         VALIDATORS.put(
                 Global.STEM_PRIMARY_BUTTON_SHORT_PRESS, new InclusiveIntegerRangeValidator(0, 1));
         VALIDATORS.put(
-                Global.STEM_PRIMARY_BUTTON_DOUBLE_PRESS, new InclusiveIntegerRangeValidator(0, 2));
+                Global.STEM_PRIMARY_BUTTON_DOUBLE_PRESS, TRI_STATE_VALIDATOR);
         VALIDATORS.put(
                 Global.STEM_PRIMARY_BUTTON_TRIPLE_PRESS, new InclusiveIntegerRangeValidator(0, 1));
         VALIDATORS.put(
@@ -473,5 +474,6 @@ public class GlobalSettingsValidators {
                                 String.valueOf(
                                         Global.Wearable.STATUS_TRAY_CONFIGURATION_SYSTEM_HIDDEN)
                         }));
+        VALIDATORS.put(Global.WAKE_WHEN_PLUGGED_OR_UNPLUGGED, BOOLEAN_VALIDATOR);
     }
 }

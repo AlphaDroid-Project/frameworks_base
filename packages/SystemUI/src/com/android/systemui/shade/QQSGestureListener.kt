@@ -27,7 +27,6 @@ import com.android.systemui.plugins.FalsingManager
 import com.android.systemui.plugins.statusbar.StatusBarStateController
 import com.android.systemui.statusbar.StatusBarState
 import com.android.systemui.statusbar.phone.CentralSurfaces
-import android.provider.Settings
 import javax.inject.Inject
 
 @SysUISingleton
@@ -48,11 +47,11 @@ class QQSGestureListener @Inject constructor(
             override fun onChange(selfChange: Boolean) {
                 doubleTapToSleepEnabled = Settings.System.getInt(
                         context.contentResolver, Settings.System.DOUBLE_TAP_SLEEP_GESTURE,
-                        if (context.resources.getBoolean(org.lineageos.server.
+                        if (context.resources.getBoolean(com.android.internal.
                                 R.bool.config_dt2sGestureEnabledByDefault)) 1 else 0) != 0
                 lockscreenDT2SEnabled = Settings.System.getInt(
                         context.contentResolver, Settings.System.DOUBLE_TAP_SLEEP_LOCKSCREEN,
-                        if (context.resources.getBoolean(org.lineageos.server.
+                        if (context.resources.getBoolean(com.android.internal.
                                 R.bool.config_dt2sGestureEnabledByDefault)) 1 else 0) != 0
             }
         }

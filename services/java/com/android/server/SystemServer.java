@@ -328,6 +328,11 @@ import java.util.TreeSet;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Future;
 
+import org.lineageos.server.LineageGlobalActionsService;
+import org.lineageos.server.LineageHardwareService;
+import org.lineageos.server.display.LiveDisplayService;
+import org.lineageos.server.health.HealthInterfaceService;
+
 /**
  * Entry point to {@code system_server}.
  */
@@ -2989,6 +2994,30 @@ public final class SystemServer implements Dumpable {
             mSystemServiceManager.startService(DynamicInstrumentationManagerService.class);
             t.traceEnd();
         }
+
+        // LineageHardware
+        t.traceBegin("StartLineageHardwareService");
+        mSystemServiceManager.startService(LineageHardwareService.class);
+        t.traceEnd();
+
+        // LiveDisplay
+        if(context.getResources().getBoolean(R.bool.config_supportsLiveDisplay)) {
+            t.traceBegin("StartLiveDisplayService");
+            mSystemServiceManager.startService(LiveDisplayService.class);
+            t.traceEnd();
+        }
+
+        // Lineage Health service
+        if(context.getResources().getBoolean(R.bool.config_supportsChargingControl)) {
+            t.traceBegin("StartHealthService");
+            mSystemServiceManager.startService(HealthInterfaceService.class);
+            t.traceEnd();
+        }
+
+        // Lineage global actions
+        t.traceBegin("StartLineageGlobalActionsService");
+        mSystemServiceManager.startService(LineageGlobalActionsService.class);
+        t.traceEnd();
 
         // It is now time to start up the app processes...
 

@@ -7445,6 +7445,9 @@ message MetricsEvent {
     // Add new aosp constants above this line.
     // END OF AOSP CONSTANTS
 
+    // Lineage
+    LINEAGE = 3000;
+
     // Alpha Settings
     ALPHA = 4000;
   }

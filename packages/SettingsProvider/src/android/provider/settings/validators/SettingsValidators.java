@@ -38,6 +38,9 @@ public class SettingsValidators {
     public static final Validator BOOLEAN_VALIDATOR =
             new DiscreteValueValidator(new String[] {"0", "1"});
 
+    public static final Validator TRI_STATE_VALIDATOR =
+            new DiscreteValueValidator(new String[] {"0", "1", "2"});
+
     public static final Validator ANY_STRING_VALIDATOR = new Validator() {
         @Override
         public boolean validate(@Nullable String value) {
@@ -219,6 +222,12 @@ public class SettingsValidators {
 
     static final Validator PERCENTAGE_INTEGER_VALIDATOR =
             new InclusiveIntegerRangeValidator(0, 100);
+
+    static final Validator BRIGHTNESS_INTEGER_VALIDATOR =
+            new InclusiveIntegerRangeValidator(1, 255);
+
+    static final Validator ACTION_INTEGER_VALIDATOR =
+            new InclusiveIntegerRangeValidator(0, 17);
 
     static final Validator VIBRATION_INTENSITY_VALIDATOR = new InclusiveIntegerRangeValidator(0, 3);
 

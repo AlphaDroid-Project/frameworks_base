@@ -862,6 +862,16 @@
     <!-- Used for long press power torch feature - automatic turn off on timeout -->
     <protected-broadcast android:name="com.android.server.policy.PhoneWindowManager.ACTION_TORCH_OFF" />
 
+    <!-- LineageHealth -->
+    <protected-broadcast android:name="lineageos.intent.action.CHARGING_CONTROL_CANCEL_ONCE" />
+
+    <!-- LineageHardware -->
+    <protected-broadcast android:name="lineageos.intent.action.INITIALIZE_LINEAGE_HARDWARE" />
+
+    <!-- Live display -->
+    <protected-broadcast android:name="lineageos.intent.action.UPDATE_TWILIGHT_STATE" />
+    <protected-broadcast android:name="lineageos.intent.action.INITIALIZE_LIVEDISPLAY" />
+
     <!-- GameSpace -->
     <protected-broadcast android:name="io.chaldeaprjkt.gamespace.action.GAME_START" />
     <protected-broadcast android:name="io.chaldeaprjkt.gamespace.action.GAME_STOP" />
@@ -8829,6 +8839,18 @@
     <permission android:name="android.permission.ACCESS_TEXT_CLASSIFIER_BY_TYPE"
         android:protectionLevel="signature|role"
         android:featureFlag="android.permission.flags.text_classifier_choice_api_enabled"/>
+
+    <!-- @hide -->
+    <permission android:name="lineageos.permission.HARDWARE_ABSTRACTION_ACCESS"
+        android:protectionLevel="signature|privileged" />
+
+    <!-- @hide -->
+    <permission android:name="lineageos.permission.MANAGE_LIVEDISPLAY"
+        android:protectionLevel="signature|privileged" />
+
+    <!-- @hide -->
+    <permission android:name="lineageos.permission.MANAGE_REMOTE_PREFERENCES"
+        android:protectionLevel="signature|privileged" />
 
     <!-- Allows an application to manage app lock
          @hide -->

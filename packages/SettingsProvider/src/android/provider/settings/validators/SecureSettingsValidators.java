@@ -1,5 +1,7 @@
 /*
  * Copyright (C) 2019 The Android Open Source Project
+ * Copyright (C) 2015-2016 The CyanogenMod Project
+ * Copyright (C) 2017-2023 The LineageOS Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,6 +37,7 @@ import static android.provider.settings.validators.SettingsValidators.NULLABLE_C
 import static android.provider.settings.validators.SettingsValidators.PACKAGE_NAME_VALIDATOR;
 import static android.provider.settings.validators.SettingsValidators.PERCENTAGE_INTEGER_VALIDATOR;
 import static android.provider.settings.validators.SettingsValidators.TILE_LIST_VALIDATOR;
+import static android.provider.settings.validators.SettingsValidators.TRI_STATE_VALIDATOR;
 import static android.provider.settings.validators.SettingsValidators.TTS_LIST_VALIDATOR;
 
 import android.provider.Settings.Secure;
@@ -96,9 +99,7 @@ public class SecureSettingsValidators {
         VALIDATORS.put(Secure.ACCESSIBILITY_CAPTIONING_LOCALE, LOCALE_VALIDATOR);
         VALIDATORS.put(Secure.ACCESSIBILITY_CAPTIONING_BACKGROUND_COLOR, ANY_INTEGER_VALIDATOR);
         VALIDATORS.put(Secure.ACCESSIBILITY_CAPTIONING_FOREGROUND_COLOR, ANY_INTEGER_VALIDATOR);
-        VALIDATORS.put(
-                Secure.ACCESSIBILITY_CAPTIONING_EDGE_TYPE,
-                new DiscreteValueValidator(new String[] {"0", "1", "2"}));
+        VALIDATORS.put(Secure.ACCESSIBILITY_CAPTIONING_EDGE_TYPE, TRI_STATE_VALIDATOR);
         VALIDATORS.put(Secure.ACCESSIBILITY_CAPTIONING_EDGE_COLOR, ANY_INTEGER_VALIDATOR);
         VALIDATORS.put(
                 Secure.ACCESSIBILITY_CAPTIONING_TYPEFACE,
@@ -151,9 +152,7 @@ public class SecureSettingsValidators {
                 new DiscreteValueValidator(new String[] {"1", "2"}));
         VALIDATORS.put(Secure.MINIMAL_POST_PROCESSING_ALLOWED, BOOLEAN_VALIDATOR);
         VALIDATORS.put(Secure.MIRROR_BUILT_IN_DISPLAY, BOOLEAN_VALIDATOR);
-        VALIDATORS.put(
-                Secure.MATCH_CONTENT_FRAME_RATE,
-                new DiscreteValueValidator(new String[] {"0", "1", "2"}));
+        VALIDATORS.put(Secure.MATCH_CONTENT_FRAME_RATE, TRI_STATE_VALIDATOR);
         VALIDATORS.put(Secure.NIGHT_DISPLAY_CUSTOM_START_TIME, NON_NEGATIVE_INTEGER_VALIDATOR);
         VALIDATORS.put(Secure.NIGHT_DISPLAY_CUSTOM_END_TIME, NON_NEGATIVE_INTEGER_VALIDATOR);
         VALIDATORS.put(Secure.NIGHT_DISPLAY_COLOR_TEMPERATURE, NON_NEGATIVE_INTEGER_VALIDATOR);
@@ -273,8 +272,7 @@ public class SecureSettingsValidators {
         VALIDATORS.put(Secure.THEME_CUSTOMIZATION_OVERLAY_PACKAGES, JSON_OBJECT_VALIDATOR);
         VALIDATORS.put(Secure.NAV_BAR_FORCE_VISIBLE, BOOLEAN_VALIDATOR);
         VALIDATORS.put(Secure.NAV_BAR_KIDS_MODE, BOOLEAN_VALIDATOR);
-        VALIDATORS.put(
-                Secure.NAVIGATION_MODE, new DiscreteValueValidator(new String[] {"0", "1", "2"}));
+        VALIDATORS.put(Secure.NAVIGATION_MODE, TRI_STATE_VALIDATOR);
         VALIDATORS.put(Secure.NAVIGATION_MODE_RESTORE,
                 new DiscreteValueValidator(new String[] {"-1", "0", "1", "2"}));
         VALIDATORS.put(Secure.BACK_GESTURE_INSET_SCALE_LEFT,
@@ -413,14 +411,10 @@ public class SecureSettingsValidators {
         VALIDATORS.put(Secure.LOCKSCREEN_SMARTSPACE_ENABLED, BOOLEAN_VALIDATOR);
         VALIDATORS.put(Secure.CONTEXTUAL_SCREEN_TIMEOUT_ENABLED, BOOLEAN_VALIDATOR);
         VALIDATORS.put(Secure.HINGE_ANGLE_LIDEVENT_ENABLED, BOOLEAN_VALIDATOR);
-        VALIDATORS.put(Secure.HEARING_AID_RINGTONE_ROUTING,
-                new DiscreteValueValidator(new String[] {"0", "1", "2"}));
-        VALIDATORS.put(Secure.HEARING_AID_CALL_ROUTING,
-                new DiscreteValueValidator(new String[] {"0", "1", "2"}));
-        VALIDATORS.put(Secure.HEARING_AID_MEDIA_ROUTING,
-                new DiscreteValueValidator(new String[] {"0", "1", "2"}));
-        VALIDATORS.put(Secure.HEARING_AID_NOTIFICATION_ROUTING,
-                new DiscreteValueValidator(new String[] {"0", "1", "2"}));
+        VALIDATORS.put(Secure.HEARING_AID_RINGTONE_ROUTING, TRI_STATE_VALIDATOR);
+        VALIDATORS.put(Secure.HEARING_AID_CALL_ROUTING, TRI_STATE_VALIDATOR);
+        VALIDATORS.put(Secure.HEARING_AID_MEDIA_ROUTING, TRI_STATE_VALIDATOR);
+        VALIDATORS.put(Secure.HEARING_AID_NOTIFICATION_ROUTING, TRI_STATE_VALIDATOR);
         VALIDATORS.put(Secure.ACCESSIBILITY_FONT_SCALING_HAS_BEEN_CHANGED, BOOLEAN_VALIDATOR);
         VALIDATORS.put(Secure.ACCESSIBILITY_DISPLAY_MAGNIFICATION_EDGE_HAPTIC_ENABLED,
                 BOOLEAN_VALIDATOR);
@@ -452,5 +446,16 @@ public class SecureSettingsValidators {
         VALIDATORS.put(Secure.MANDATORY_BIOMETRICS_REQUIREMENTS_SATISFIED,
                 new InclusiveIntegerRangeValidator(0, 1));
         VALIDATORS.put(Secure.ADVANCED_PROTECTION_MODE, BOOLEAN_VALIDATOR);
+        VALIDATORS.put(Secure.FEATURE_TOUCH_HOVERING, BOOLEAN_VALIDATOR);
+        VALIDATORS.put(Secure.QS_SHOW_BRIGHTNESS_SLIDER, new InclusiveIntegerRangeValidator(0, 2));
+        VALIDATORS.put(Secure.QS_SHOW_AUTO_BRIGHTNESS, BOOLEAN_VALIDATOR);
+        VALIDATORS.put(Secure.ADVANCED_REBOOT, BOOLEAN_VALIDATOR);
+        VALIDATORS.put(Secure.LOCK_PASS_TO_SECURITY_VIEW, BOOLEAN_VALIDATOR);
+        VALIDATORS.put(Secure.NETWORK_TRAFFIC_MODE, new InclusiveIntegerRangeValidator(0, 3));
+        VALIDATORS.put(Secure.NETWORK_TRAFFIC_POSITION, new InclusiveIntegerRangeValidator(0, 2));
+        VALIDATORS.put(Secure.NETWORK_TRAFFIC_AUTOHIDE, BOOLEAN_VALIDATOR);
+        VALIDATORS.put(Secure.NETWORK_TRAFFIC_UNITS, new InclusiveIntegerRangeValidator(0, 4));
+        VALIDATORS.put(Secure.NETWORK_TRAFFIC_SHOW_UNITS, new InclusiveIntegerRangeValidator(0, 2));
+        VALIDATORS.put(Secure.VOLUME_PANEL_ON_LEFT, BOOLEAN_VALIDATOR);
     }
 }
