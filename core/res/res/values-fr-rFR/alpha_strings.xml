@@ -17,8 +17,8 @@
 <resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
     <!-- Sleep Mode -->
     <string name="notification_channel_sleep">Mode veille</string>
-    <string name="sleep_mode_notification_title">Sleep mode enabled</string>
-    <string name="sleep_mode_notification_content">Tap to turn off sleep mode</string>
-    <string name="sleep_mode_enabled_toast">Sleep mode turned on</string>
-    <string name="sleep_mode_disabled_toast">Sleep mode turned off</string>
+    <string name="sleep_mode_notification_title">Mode veille activé</string>
+    <string name="sleep_mode_notification_content">Appuyez pour désactiver le mode veille</string>
+    <string name="sleep_mode_enabled_toast">Mode veille activé</string>
+    <string name="sleep_mode_disabled_toast">Mode veille désactivé</string>
 </resources>
