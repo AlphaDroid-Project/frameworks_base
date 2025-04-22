@@ -293,8 +293,6 @@ public class SecureSettings {
         Settings.Secure.ACCESSIBILITY_KEY_GESTURE_TARGETS,
         Settings.Secure.FEATURE_TOUCH_HOVERING, // Lineage Settings
         Settings.Secure.POWER_MENU_ACTIONS,
-        Settings.Secure.QS_SHOW_BRIGHTNESS_SLIDER,
-        Settings.Secure.QS_SHOW_AUTO_BRIGHTNESS,
         Settings.Secure.ADVANCED_REBOOT,
         Settings.Secure.LOCK_PASS_TO_SECURITY_VIEW,
         Settings.Secure.NETWORK_TRAFFIC_MODE,

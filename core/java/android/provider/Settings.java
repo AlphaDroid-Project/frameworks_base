@@ -7072,13 +7072,6 @@ public final class Settings {
         public static final String STATUS_BAR_QUICK_QS_PULLDOWN = "qs_quick_pulldown";
 
         /**
-         * Whether to show the brightness slider in quick settings panel.
-         * 0 = Never, 1 = show when expanded, 2 = show always
-         * @hide
-         */
-        public static final String QS_SHOW_BRIGHTNESS_SLIDER = "qs_show_brightness_slider";
-
-        /**
          * Whether or not volume button music controls should be enabled to seek media tracks
          * 0 = 0ff, 1 = on
          * @hide
@@ -7454,6 +7447,32 @@ public final class Settings {
          * @hide
          */
         public static final String DATA_DISABLED_ICON = "data_disabled_icon";
+
+        /**
+         * Whether to show the auto brightness icon in quick settings panel.
+         * @hide
+         */
+        public static final String QS_SHOW_AUTO_BRIGHTNESS = "qs_show_auto_brightness";
+
+        /**
+         * Whether to show the brightness slider in quick settings panel.
+         * 0 = Never, 1 = show when expanded, 2 = show always
+         * @hide
+         */
+        public static final String QS_SHOW_BRIGHTNESS_SLIDER = "qs_show_brightness_slider";
+
+        /**
+         * Whether to show the brightness slider in quick settings panel.
+         * 0 = Top, 1 = Bottom
+         * @hide
+         */
+        public static final String QS_BRIGHTNESS_SLIDER_POSITION = "qs_brightness_slider_position";
+
+        /**
+         * Whether to show the brightness percentage view in quick settings panel.
+         * @hide
+         */
+        public static final String QS_SHOW_BRIGHTNESS_PERCENTAGE = "qs_show_brightness_percentage";
 
         /**
          * Haptic feedback on brightness slider
@@ -8057,12 +8076,6 @@ public final class Settings {
          * @hide
          */
         public static final String MAX_VISIBLE_NOTIFICATION_ICONS = "max_visible_notification_icons";
-
-        /**
-         * Whether to show the brightness percentage view in quick settings panel.
-         * @hide
-         */
-        public static final String QS_SHOW_BRIGHTNESS_PERCENTAGE = "qs_show_brightness_percentage";
 
         /**
          * Keys we no longer back up under the current schema, but want to continue to
@@ -14785,24 +14798,6 @@ public final class Settings {
          * @hide
          */
         public static final String POWER_MENU_ACTIONS = "power_menu_actions";
-
-        /**
-         * Whether to show the brightness slider in quick settings panel.
-         * @hide
-         */
-        public static final String QS_SHOW_BRIGHTNESS_SLIDER = "qs_show_brightness_slider";
-
-        /**
-         * Whether to show the auto brightness icon in quick settings panel.
-         * @hide
-         */
-        public static final String QS_SHOW_AUTO_BRIGHTNESS = "qs_show_auto_brightness";
-
-        /**
-         * Whether to show the brightness slider in quick settings panel.
-         * 0 = Top, 1 = Bottom
-         */
-        public static final String QS_BRIGHTNESS_SLIDER_POSITION = "qs_brightness_slider_position";
 
         /**
          * What happens when the user presses the Home button when the

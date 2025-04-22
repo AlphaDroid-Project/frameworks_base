@@ -194,6 +194,7 @@ public class SystemSettings {
                 Settings.System.NAVBAR_LEFT_IN_LANDSCAPE,
                 Settings.System.STATUS_BAR_QUICK_QS_PULLDOWN,
                 Settings.System.LOCKSCREEN_ROTATION,
+                Settings.System.QS_SHOW_AUTO_BRIGHTNESS,
                 Settings.System.QS_SHOW_BRIGHTNESS_SLIDER,
                 Settings.System.VOLBTN_MUSIC_CONTROLS,
                 Settings.System.CALL_RECORDING_FORMAT,

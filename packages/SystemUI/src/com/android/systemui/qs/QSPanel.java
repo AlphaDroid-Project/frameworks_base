@@ -60,11 +60,11 @@ import java.util.List;
 public class QSPanel extends LinearLayout implements Tunable {
 
     public static final String QS_SHOW_AUTO_BRIGHTNESS =
-            "secure:" + Settings.Secure.QS_SHOW_AUTO_BRIGHTNESS;
+            "system:" + Settings.System.QS_SHOW_AUTO_BRIGHTNESS;
     public static final String QS_SHOW_BRIGHTNESS_SLIDER =
-            "secure:" + Settings.Secure.QS_SHOW_BRIGHTNESS_SLIDER;
+            "system:" + Settings.System.QS_SHOW_BRIGHTNESS_SLIDER;
     public static final String QS_BRIGHTNESS_SLIDER_POSITION =
-            "secure:" + Settings.Secure.QS_BRIGHTNESS_SLIDER_POSITION;
+            "system:" + Settings.System.QS_BRIGHTNESS_SLIDER_POSITION;
     public static final String QS_SHOW_BRIGHTNESS_PERCENTAGE =
             "system:" + Settings.System.QS_SHOW_BRIGHTNESS_PERCENTAGE;
     public static final String QS_TILE_VERTICAL_LAYOUT =

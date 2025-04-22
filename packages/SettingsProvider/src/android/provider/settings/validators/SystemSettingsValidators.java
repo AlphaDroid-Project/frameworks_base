@@ -376,6 +376,7 @@ public class SystemSettingsValidators {
                 new InclusiveIntegerRangeValidator(0, 3));
         VALIDATORS.put(System.LOCKSCREEN_ROTATION, BOOLEAN_VALIDATOR);
         VALIDATORS.put(System.QS_SHOW_BRIGHTNESS_SLIDER, new InclusiveIntegerRangeValidator(0, 3));
+        VALIDATORS.put(System.QS_SHOW_AUTO_BRIGHTNESS, BOOLEAN_VALIDATOR);
         VALIDATORS.put(System.VOLBTN_MUSIC_CONTROLS, BOOLEAN_VALIDATOR);
         VALIDATORS.put(System.CALL_RECORDING_FORMAT, new InclusiveIntegerRangeValidator(0, 1));
         VALIDATORS.put(System.VOLUME_KEY_CURSOR_CONTROL, TRI_STATE_VALIDATOR);

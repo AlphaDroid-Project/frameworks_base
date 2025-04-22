@@ -82,18 +82,18 @@ public class BrightnessMirrorController implements MirrorController {
 
         mIsAutomaticBrightnessAvailable = mBrightnessMirror.getContext().getResources().getBoolean(
                 com.android.internal.R.bool.config_automatic_brightness_available);
-        mShouldShowAutoBrightness = Settings.Secure.getInt(
+        mShouldShowAutoBrightness = Settings.System.getInt(
                 mBrightnessMirror.getContext().getContentResolver(),
-                Settings.Secure.QS_SHOW_AUTO_BRIGHTNESS, 0) != 0;
+                Settings.System.QS_SHOW_AUTO_BRIGHTNESS, 0) != 0;
         updateIcon();
         mBrightnessMirror.getContext().getContentResolver().registerContentObserver(
-                Settings.Secure.getUriFor(Settings.Secure.QS_SHOW_AUTO_BRIGHTNESS),
+                Settings.System.getUriFor(Settings.System.QS_SHOW_AUTO_BRIGHTNESS),
                 false, new ContentObserver(null) {
                     @Override
                     public void onChange(boolean selfChange) {
-                        mShouldShowAutoBrightness = Settings.Secure.getInt(
+                        mShouldShowAutoBrightness = Settings.System.getInt(
                                 mBrightnessMirror.getContext().getContentResolver(),
-                                Settings.Secure.QS_SHOW_AUTO_BRIGHTNESS, 0) != 0;
+                                Settings.System.QS_SHOW_AUTO_BRIGHTNESS, 0) != 0;
                         updateIcon();
                     }
                 });

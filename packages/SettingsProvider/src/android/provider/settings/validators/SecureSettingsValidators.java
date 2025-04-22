@@ -447,8 +447,6 @@ public class SecureSettingsValidators {
                 new InclusiveIntegerRangeValidator(0, 1));
         VALIDATORS.put(Secure.ADVANCED_PROTECTION_MODE, BOOLEAN_VALIDATOR);
         VALIDATORS.put(Secure.FEATURE_TOUCH_HOVERING, BOOLEAN_VALIDATOR);
-        VALIDATORS.put(Secure.QS_SHOW_BRIGHTNESS_SLIDER, new InclusiveIntegerRangeValidator(0, 2));
-        VALIDATORS.put(Secure.QS_SHOW_AUTO_BRIGHTNESS, BOOLEAN_VALIDATOR);
         VALIDATORS.put(Secure.ADVANCED_REBOOT, BOOLEAN_VALIDATOR);
         VALIDATORS.put(Secure.LOCK_PASS_TO_SECURITY_VIEW, BOOLEAN_VALIDATOR);
         VALIDATORS.put(Secure.NETWORK_TRAFFIC_MODE, new InclusiveIntegerRangeValidator(0, 3));
