@@ -49,7 +49,7 @@ public class ServiceThread extends HandlerThread {
         super.run();
     }
 
-    protected static Handler makeSharedHandler(Looper looper) {
+    public static Handler makeSharedHandler(Looper looper) {
         return new Handler(looper, /*callback=*/ null, /* async=*/ false, /* shared=*/ true);
     }
 }
