@@ -792,14 +792,10 @@ public class ThemeOverlayController implements CoreStartable, Dumpable {
             }
         }
 
-        boolean isBlackMode = (Settings.Secure.getIntForUser(
-                mContext.getContentResolver(), Settings.Secure.BERRY_BLACK_THEME,
-                0, currentUser) == 1) && isNightMode();
-
         // Compatibility with legacy themes, where full packages were defined, instead of just
         // colors.
         if (!categoryToPackage.containsKey(OVERLAY_CATEGORY_SYSTEM_PALETTE)
-                && mNeutralOverlay != null && !isBlackMode) {
+                && mNeutralOverlay != null) {
             categoryToPackage.put(OVERLAY_CATEGORY_SYSTEM_PALETTE,
                     mNeutralOverlay.getIdentifier());
         }
@@ -835,13 +831,9 @@ public class ThemeOverlayController implements CoreStartable, Dumpable {
 
         if (mNeedsOverlayCreation) {
             mNeedsOverlayCreation = false;
-            fOverlays = new FabricatedOverlay[isBlackMode ? 2 : 3];
-            int c = 0;
-            fOverlays[c++] = mSecondaryOverlay;
-            if (!isBlackMode) {
-                fOverlays[c++] = mNeutralOverlay;
-            }
-            fOverlays[c++] = mDynamicOverlay;
+            fOverlays = new FabricatedOverlay[]{
+                    mSecondaryOverlay, mNeutralOverlay, mDynamicOverlay
+            };
         }
 
         mThemeManager.applyCurrentUserOverlays(categoryToPackage, fOverlays, currentUser,
