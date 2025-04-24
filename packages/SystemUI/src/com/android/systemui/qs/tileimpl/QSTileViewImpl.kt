@@ -34,6 +34,8 @@ import android.graphics.drawable.GradientDrawable
 import android.graphics.drawable.LayerDrawable
 import android.graphics.drawable.RippleDrawable
 import android.os.Trace
+import android.os.UserHandle
+import android.provider.Settings
 import android.service.quicksettings.Tile
 import android.text.TextUtils
 import android.util.Log
@@ -201,7 +203,7 @@ constructor(
 
     private val singleAnimator: ValueAnimator =
         ValueAnimator().apply {
-            setDuration(QS_ANIM_LENGTH)
+            duration = QS_ANIM_LENGTH
             addUpdateListener { animation ->
                 setAllColors(
                     // These casts will throw an exception if some property is missing. We should
@@ -258,7 +260,6 @@ constructor(
         vertical = TileUtils.getQSTileVerticalLayout(context)
         labelHide = TileUtils.getQSTileLabelHide(context)
         forceHideCheveron = vertical || labelHide
-        labelSize = TileUtils.getQSTileLabelSize(context)
         importantForAccessibility = IMPORTANT_FOR_ACCESSIBILITY_YES
         clipChildren = false
         clipToPadding = false
@@ -266,7 +267,11 @@ constructor(
         background = createTileBackground()
         setColor(getBackgroundColorForState(QSTile.State.DEFAULT_STATE))
 
-        val iconSize = resources.getDimensionPixelSize(R.dimen.qs_icon_size)
+        val iconSize = context.resources.getDimensionPixelSize(R.dimen.qs_icon_size)
+
+        val padding = resources.getDimensionPixelSize(R.dimen.qs_tile_padding)
+        val startPadding = if (vertical) padding else resources.getDimensionPixelSize(R.dimen.qs_tile_start_padding)
+        setPaddingRelative(startPadding, padding, padding, padding)
         addView(icon, LayoutParams(iconSize, iconSize))
 
         val tunerService = Dependency.get(TunerService::class.java)
@@ -310,15 +315,21 @@ constructor(
     }
 
     fun updateResources() {
+        labelSize = TileUtils.getQSTileLabelSize(context)
         label.setTextSize(TypedValue.COMPLEX_UNIT_SP, labelSize)
         secondaryLabel.setTextSize(TypedValue.COMPLEX_UNIT_SP, labelSize)
 
+        updateDefaultResources()
+    }
+
+    fun updateDefaultResources() {
         val iconSize = context.resources.getDimensionPixelSize(R.dimen.qs_icon_size)
         icon.layoutParams.apply {
             height = iconSize
             width = iconSize
         }
 
+        vertical = TileUtils.getQSTileVerticalLayout(context)
         if (vertical) {
             orientation = LinearLayout.VERTICAL
             gravity = Gravity.CENTER_HORIZONTAL or Gravity.CENTER_VERTICAL
@@ -361,15 +372,12 @@ constructor(
                 as IgnorableChildLinearLayout
         label = labelContainer.requireViewById(R.id.tile_label)
         secondaryLabel = labelContainer.requireViewById(R.id.app_label)
-        if (collapsed) {
-            labelContainer.ignoreLastView = true
-            // Ideally, it'd be great if the parent could set this up when measuring just this child
-            // instead of the View class having to support this. However, due to the mysteries of
-            // LinearLayout's double measure pass, we cannot overwrite `measureChild` or any of its
-            // sibling methods to have special behavior for labelContainer.
-            labelContainer.forceUnspecifiedMeasure = true
-            secondaryLabel.alpha = 0f
+        labelContainer.invalidate()
+        labelContainer.apply {
+            ignoreLastView = collapsed
+                forceUnspecifiedMeasure = collapsed
         }
+        secondaryLabel.alpha = if (collapsed) 0f else 1f
         setLabelColor(getLabelColorForState(QSTile.State.DEFAULT_STATE))
         setSecondaryLabelColor(getSecondaryLabelColorForState(QSTile.State.DEFAULT_STATE))
 
@@ -582,13 +590,9 @@ constructor(
             }
     }
 
-    private fun getTileView(): View {
-        return if (isA11Style) getIconWithBackground() else this
-    }
-
     private fun init(click: OnClickListener?, longClick: OnLongClickListener?) {
         setOnClickListener {
-            setAnimationTile(getTileView())
+            setAnimationTile(this)
             click?.onClick(it)
         }
         onLongClickListener = longClick
@@ -806,13 +810,13 @@ constructor(
         }
         if (!Objects.equals(secondaryLabel.text, state.secondaryLabel)) {
             secondaryLabel.text = state.secondaryLabel
-            secondaryLabel.visibility =
-                if (TextUtils.isEmpty(state.secondaryLabel)) {
-                    GONE
-                } else {
-                    VISIBLE
-                }
         }
+        secondaryLabel.visibility =
+            if (TextUtils.isEmpty(state.secondaryLabel)) {
+                GONE
+            } else {
+                VISIBLE
+            }
 
         // Colors
         if (state.state != lastState || state.disabledByPolicy != lastDisabledByPolicy) {
