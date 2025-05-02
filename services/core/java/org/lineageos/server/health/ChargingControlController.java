@@ -429,8 +429,9 @@ public class ChargingControlController extends LineageHealthFeature {
             return;
         }
 
-        if (!isEnabled() || mIsControlCancelledOnce) {
+        if (!isEnabled() || mIsControlCancelledOnce || !mIsPowerConnected) {
             mCurrentProvider.disable();
+            mChargingNotification.cancel();
             return;
         }
 
