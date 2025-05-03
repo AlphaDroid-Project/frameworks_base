@@ -335,7 +335,7 @@ public class SystemSettingsValidators {
                 new InclusiveIntegerRangeValidator(0, 86400));
         VALIDATORS.put(System.CHARGING_CONTROL_TARGET_TIME,
                 new InclusiveIntegerRangeValidator(0, 86400));
-        VALIDATORS.put(System.CHARGING_CONTROL_LIMIT, new InclusiveIntegerRangeValidator(60, 100));
+        VALIDATORS.put(System.CHARGING_CONTROL_LIMIT, new InclusiveIntegerRangeValidator(10, 100));
         VALIDATORS.put(System.BATTERY_LIGHT_ENABLED, BOOLEAN_VALIDATOR);
         VALIDATORS.put(System.BATTERY_LIGHT_FULL_CHARGE_DISABLED, BOOLEAN_VALIDATOR);
         VALIDATORS.put(System.BATTERY_LIGHT_PULSE, BOOLEAN_VALIDATOR);
