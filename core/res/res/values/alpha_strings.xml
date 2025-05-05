@@ -6,4 +6,7 @@
 <resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
     <!-- Upload crash log -->
     <string name="url_copy_failed">An error occured while uploading the log</string>
+
+    <!-- Digital Wellbeing shorter title -->
+    <string name="digital_wellbeing_title">Digital Wellbeing</string>
 </resources>
