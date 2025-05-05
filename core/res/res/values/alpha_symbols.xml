@@ -32,4 +32,7 @@
     <!-- Launcher restart dialog -->
     <java-symbol type="string" name="launcher_restart_title"/>
     <java-symbol type="string" name="launcher_restart_message"/>
+
+    <!-- Digital Wellbeing shorter title -->
+    <java-symbol type="string" name="digital_wellbeing_title" />
 </resources>
