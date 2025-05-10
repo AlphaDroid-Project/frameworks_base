@@ -5,23 +5,25 @@
 -->
 <resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
     <!-- Upload crash log -->
-    <string name="url_copy_failed">An error occured while uploading the log</string>
+    <string name="url_copy_failed">上传日志时出现错误</string>
     <!-- Sleep Mode -->
     <string name="notification_channel_sleep">睡眠模式</string>
-    <string name="sleep_mode_notification_title">Sleep mode enabled</string>
-    <string name="sleep_mode_notification_content">Tap to turn off sleep mode</string>
-    <string name="sleep_mode_enabled_toast">Sleep mode turned on</string>
-    <string name="sleep_mode_disabled_toast">Sleep mode turned off</string>
+    <string name="sleep_mode_notification_title">睡眠模式已启用</string>
+    <string name="sleep_mode_notification_content">点击关闭睡眠模式</string>
+    <string name="sleep_mode_enabled_toast">睡眠模式已开启</string>
+    <string name="sleep_mode_disabled_toast">睡眠模式已关闭</string>
     <!-- Settings Restart -->
-    <string name="settings_restart_title">Settings restart required</string>
-    <string name="settings_restart_message">For all changes to take effect, a Settings app restart is required. Restart Settings app now?</string>
+    <string name="settings_restart_title">需要重启设置</string>
+    <string name="settings_restart_message">要使所有更改生效，需要重新启动“设置”应用。 立即重启设置？</string>
     <!-- System Reboot -->
-    <string name="system_restart_title">System restart required</string>
-    <string name="system_restart_message">For all the changes to take effect, a system restart is required. Perform system restart now?</string>
+    <string name="system_restart_title">需要重启系统</string>
+    <string name="system_restart_message">要使所有更改生效，需要重新启动系统。现在执行系统重启吗？</string>
     <!-- SystemUI Restart -->
     <string name="systemui_restart_title">需要重启系统界面</string>
-    <string name="systemui_restart_message">For all changes to take effect, a SystemUI restart is required. Restart SystemUI now?</string>
+    <string name="systemui_restart_message">要使所有更改生效，需要重新启动系统界面。现在重新启动系统界面吗？</string>
     <!-- Launcher Restart -->
-    <string name="launcher_restart_title">Launcher restart required</string>
-    <string name="launcher_restart_message">For all changes to take effect, a Launcher restart is required. Restart Launcher now?</string>
+    <string name="launcher_restart_title">需要重启系统桌面</string>
+    <string name="launcher_restart_message">要使所有更改生效，需要重新启动桌面。现在重新启动桌面吗？</string>
+    <!-- Digital Wellbeing shorter title -->
+    <string name="digital_wellbeing_title">Digital Wellbeing</string>
 </resources>
