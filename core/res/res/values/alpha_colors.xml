@@ -13,4 +13,6 @@
     <color name="alpha_color_primary_accent_dark">@android:color/system_accent1_400</color>
     <color name="alpha_color_secondary_accent_dark">@android:color/system_accent2_400</color>
     <color name="alpha_color_tertiary_accent_dark">@android:color/system_accent3_400</color>
+    <color name="alpha_surface_container_light">@android:color/system_neutral1_50</color>
+    <color name="alpha_surface_container_dark">@android:color/system_neutral1_900</color>
 </resources>

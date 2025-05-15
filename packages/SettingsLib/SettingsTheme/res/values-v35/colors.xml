@@ -97,9 +97,8 @@
     <color name="settingslib_materialColorOutlineVariant">@android:color/system_outline_variant_light</color>
     <color name="settingslib_materialColorOnPrimary">@android:color/system_on_primary_light</color>
     <color name="settingslib_materialColorOnSurface">@android:color/system_on_surface_light</color>
-    <color name="settingslib_materialColorSurfaceContainer">@android:color/system_surface_container_light</color>
+    <color name="settingslib_materialColorSurfaceContainer">@*android:color/alpha_surface_container_light</color>
     <color name="settingslib_materialColorPrimary">@android:color/system_primary_light</color>
     <color name="settingslib_materialColorSecondary">@android:color/system_secondary_light</color>
     <color name="settingslib_materialColorTertiary">@android:color/system_tertiary_light</color>
-    <color name="legacy_settingslib_materialColorSurfaceContainer">@android:color/system_neutral1_50</color>
 </resources>

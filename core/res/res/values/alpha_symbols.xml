@@ -11,6 +11,8 @@
     <java-symbol type="color" name="alpha_color_primary_accent_dark" />
     <java-symbol type="color" name="alpha_color_secondary_accent_dark" />
     <java-symbol type="color" name="alpha_color_tertiary_accent_dark" />
+    <java-symbol type="color" name="alpha_surface_container_light" />
+    <java-symbol type="color" name="alpha_surface_container_dark" />
 
     <!-- Sleep Mode -->
     <java-symbol type="drawable" name="ic_sleep" />
