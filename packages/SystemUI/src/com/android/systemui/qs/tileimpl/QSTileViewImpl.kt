@@ -155,31 +155,36 @@ constructor(
             Settings.System.QS_TILE_ANIMATION_INTERPOLATOR, 0, UserHandle.USER_CURRENT
         )
 
-    private val colorActive = Utils.getColorAttrDefaultColor(context, R.attr.shadeActive)
-    private val colorInactive = Utils.getColorAttrDefaultColor(context, R.attr.shadeInactive)
+    private val colorActive = Utils.getColorStateListDefaultColor(
+        context, R.color.qs_color_accent_primary)
+    private val colorInactive = Utils.getColorStateListDefaultColor(context,
+        R.color.qs_color_inactive)
     private val colorUnavailable = Utils.applyAlpha(UNAVAILABLE_ALPHA, colorInactive)
+
+    private val colorLabelActive = Utils.getColorStateListDefaultColor(context,
+        R.color.qs_color_text_active)
+    private val colorLabelInactive =
+        Utils.getColorStateListDefaultColor(context, R.color.qs_color_text_inactive)
+    private val colorLabelUnavailable = Utils.getColorStateListDefaultColor(context,
+        R.color.qs_color_text_unavailable)
+
+    private val colorSecondaryLabelActive =
+        Utils.getColorStateListDefaultColor(context, R.color.qs_color_text_active);
+    private val colorSecondaryLabelInactive =
+        Utils.getColorStateListDefaultColor(context, R.color.qs_color_text_inactive)
+    private val colorSecondaryLabelUnavailable = Utils.getColorStateListDefaultColor(context,
+        R.color.qs_color_text_unavailable)
 
     private val overlayColorActive =
         Utils.applyAlpha(
             /* alpha= */ 0.11f,
-            Utils.getColorAttrDefaultColor(context, R.attr.onShadeActive),
+            colorLabelActive,
         )
     private val overlayColorInactive =
         Utils.applyAlpha(
             /* alpha= */ 0.08f,
-            Utils.getColorAttrDefaultColor(context, R.attr.onShadeInactive),
+            colorLabelInactive,
         )
-
-    private val colorLabelActive = Utils.getColorAttrDefaultColor(context, R.attr.onShadeActive)
-    private val colorLabelInactive = Utils.getColorAttrDefaultColor(context, R.attr.onShadeInactive)
-    private val colorLabelUnavailable = Utils.getColorAttrDefaultColor(context, R.attr.outline)
-
-    private val colorSecondaryLabelActive =
-        Utils.getColorAttrDefaultColor(context, R.attr.onShadeActiveVariant)
-    private val colorSecondaryLabelInactive =
-        Utils.getColorAttrDefaultColor(context, R.attr.onShadeInactiveVariant)
-    private val colorSecondaryLabelUnavailable =
-        Utils.getColorAttrDefaultColor(context, R.attr.outline)
 
     private lateinit var label: TextView
     protected lateinit var secondaryLabel: TextView
@@ -197,6 +202,9 @@ constructor(
     private lateinit var backgroundDrawable: LayerDrawable
     protected lateinit var backgroundBaseDrawable: Drawable
     private lateinit var backgroundOverlayDrawable: Drawable
+
+    private var stateBackgroundLayer: LayerDrawable? = null
+    private var currentState: Int = 0
 
     private var backgroundColor: Int = 0
     private var backgroundOverlayColor: Int = 0
@@ -827,6 +835,7 @@ constructor(
                 state.disabledByPolicy,
                 getBackgroundColorForState(state.state, state.disabledByPolicy),
             )
+            currentState = state.state
             if (allowAnimations) {
                 singleAnimator.setValues(
                     colorValuesHolder(
@@ -911,8 +920,25 @@ constructor(
     }
 
     protected fun setColor(color: Int) {
-        backgroundBaseDrawable.mutate().setTint(color)
         backgroundColor = color
+        setStateLayer()
+    }
+
+    private fun setStateLayer() {
+        stateBackgroundLayer = when(currentState) {
+            Tile.STATE_ACTIVE -> mContext.getDrawable(
+                R.drawable.qs_tile_active_layer) as? LayerDrawable
+            Tile.STATE_INACTIVE -> mContext.getDrawable(
+                R.drawable.qs_tile_inactive_layer) as? LayerDrawable
+            else -> mContext.getDrawable(
+                R.drawable.qs_tile_unavailable_layer) as? LayerDrawable
+        }
+
+        if (stateBackgroundLayer != null) {
+            var ld = backgroundBaseDrawable.mutate() as LayerDrawable
+            ld.setDrawableByLayerId(
+                com.android.internal.R.id.qs_state_layer, stateBackgroundLayer)
+        }
     }
 
     private fun setLabelColor(color: Int) {
@@ -1170,13 +1196,13 @@ constructor(
                 getSecondaryLabelColorForState(Tile.STATE_ACTIVE),
                 getChevronColorForState(Tile.STATE_ACTIVE),
                 getOverlayColorForState(Tile.STATE_ACTIVE),
-                Utils.getColorAttrDefaultColor(context, R.attr.onShadeActive),
+                Utils.getColorStateListDefaultColor(context, R.color.qs_color_icon_active),
             )
         prepareForLaunch()
     }
 
     private fun changeCornerRadius(radius: Float) {
-        for (i in 0 until backgroundDrawable.numberOfLayers) {
+         for (i in 0 until backgroundDrawable.numberOfLayers) {
             val layer = backgroundDrawable.getDrawable(i)
             if (layer is GradientDrawable) {
                 layer.cornerRadius = radius

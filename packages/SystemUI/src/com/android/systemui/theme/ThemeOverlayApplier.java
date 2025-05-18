@@ -126,6 +126,14 @@ public class ThemeOverlayApplier implements Dumpable {
     @VisibleForTesting
     static final String OVERLAY_CATEGORY_ICON_WIFI =
             "android.theme.customization.wifi_icon";
+    static final String OVERLAY_CATEGORY_QS_STYLE =
+            "android.theme.customization.qs_style";
+    @VisibleForTesting
+    static final String OVERLAY_CATEGORY_BB_STYLE =
+            "android.theme.customization.bb_style";
+    @VisibleForTesting
+    static final String OVERLAY_CATEGORY_NF_STYLE =
+            "android.theme.customization.nf_style";
 
     @VisibleForTesting
     static final String OVERLAY_CATEGORY_UI_STYLE_ANDROID =
@@ -149,6 +157,9 @@ public class ThemeOverlayApplier implements Dumpable {
             OVERLAY_CATEGORY_ICON_ANDROID,
             OVERLAY_CATEGORY_ICON_SYSUI,
             OVERLAY_CATEGORY_ICON_SETTINGS,
+            OVERLAY_CATEGORY_QS_STYLE,
+            OVERLAY_CATEGORY_BB_STYLE,
+            OVERLAY_CATEGORY_NF_STYLE,
             OVERLAY_CATEGORY_ICON_SIGNAL,
             OVERLAY_CATEGORY_ICON_WIFI);
 
@@ -163,6 +174,9 @@ public class ThemeOverlayApplier implements Dumpable {
             OVERLAY_CATEGORY_UI_STYLE_ANDROID,
             OVERLAY_CATEGORY_ICON_ANDROID,
             OVERLAY_CATEGORY_ICON_SYSUI,
+            OVERLAY_CATEGORY_QS_STYLE,
+            OVERLAY_CATEGORY_BB_STYLE,
+            OVERLAY_CATEGORY_NF_STYLE,
             OVERLAY_CATEGORY_ICON_SIGNAL,
             OVERLAY_CATEGORY_ICON_WIFI);
 
@@ -216,6 +230,9 @@ public class ThemeOverlayApplier implements Dumpable {
         mCategoryToTargetPackage.put(OVERLAY_CATEGORY_ICON_ANDROID, ANDROID_PACKAGE);
         mCategoryToTargetPackage.put(OVERLAY_CATEGORY_ICON_SYSUI, SYSUI_PACKAGE);
         mCategoryToTargetPackage.put(OVERLAY_CATEGORY_ICON_SETTINGS, SETTINGS_PACKAGE);
+        mCategoryToTargetPackage.put(OVERLAY_CATEGORY_QS_STYLE, SYSUI_PACKAGE);
+        mCategoryToTargetPackage.put(OVERLAY_CATEGORY_BB_STYLE, SYSUI_PACKAGE);
+        mCategoryToTargetPackage.put(OVERLAY_CATEGORY_NF_STYLE, SYSUI_PACKAGE);
         mCategoryToTargetPackage.put(OVERLAY_CATEGORY_ICON_SIGNAL, SYSUI_PACKAGE);
         mCategoryToTargetPackage.put(OVERLAY_CATEGORY_ICON_WIFI, SYSUI_PACKAGE);
 

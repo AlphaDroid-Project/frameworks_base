@@ -37,4 +37,8 @@
 
     <!-- Digital Wellbeing shorter title -->
     <java-symbol type="string" name="digital_wellbeing_title" />
+
+    <!-- QS panel styles -->
+    <java-symbol type="id" name="qs_state_layer" />
+
 </resources>

@@ -48,8 +48,8 @@
             android:gravity="center"
             android:text="Text"
             android:textSize="13.5sp"
-            android:textColor="?attr/onShadeActive"
-            android:background="@drawable/bg_qs_brightness_auto_on"
+            android:textColor="@color/qs_color_button_brightness"
+            android:background="@drawable/brightness_bg"
             android:visibility="gone"
         />
 
@@ -59,8 +59,8 @@
             android:layout_height="wrap_content"
             android:layout_gravity="center_vertical"
             android:layout_marginStart="@dimen/qs_brightness_percentage_margin_left"
-            android:background="@drawable/bg_qs_brightness_auto_on"
-            android:src="@drawable/ic_qs_brightness_auto_off_new"
+            android:background="@drawable/brightness_bg"
+            android:src="@drawable/ic_qs_brightness_auto_off"
             android:contentDescription="@null"
             android:visibility="gone"
         />

@@ -459,10 +459,8 @@ public class FooterView extends StackScrollerDecorView {
      */
     public void updateColors() {
         Resources.Theme theme = mContext.getTheme();
-        final @ColorInt int onSurface = Utils.getColorAttrDefaultColor(mContext,
-                com.android.internal.R.attr.materialColorOnSurface);
-        // Same resource, separate drawables to prevent touch effects from showing on the wrong
-        // button.
+        int onSurface =
+                Utils.getColorStateListDefaultColor(mContext, R.color.nf_color_button_text);
         final Drawable clearAllBg = theme.getDrawable(R.drawable.notif_footer_btn_background);
         final Drawable settingsBg = theme.getDrawable(R.drawable.notif_footer_btn_background);
         final Drawable historyBg = NotifRedesignFooter.isEnabled()
