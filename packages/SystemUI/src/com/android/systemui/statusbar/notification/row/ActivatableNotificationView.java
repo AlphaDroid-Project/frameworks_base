@@ -123,8 +123,8 @@ public abstract class ActivatableNotificationView extends ExpandableOutlineView 
     }
 
     private void updateColors() {
-        mNormalColor = Utils.getColorAttrDefaultColor(mContext,
-                com.android.internal.R.attr.materialColorSurfaceContainerHigh);
+        mNormalColor = mContext.getColor(
+                R.color.qs_color_inactive);
         mTintedRippleColor = mContext.getColor(
                 R.color.notification_ripple_tinted_color);
         mNormalRippleColor = mContext.getColor(
@@ -265,7 +265,7 @@ public abstract class ActivatableNotificationView extends ExpandableOutlineView 
         mOverrideTint = color;
         mOverrideAmount = overrideAmount;
         int newColor = calculateBgColor();
-        setBackgroundTintColor(newColor);
+        // setBackgroundTintColor(newColor);
     }
 
     protected void updateBackgroundTint() {
@@ -280,7 +280,7 @@ public abstract class ActivatableNotificationView extends ExpandableOutlineView 
         mBackgroundNormal.setRippleColor(rippleColor);
         int color = calculateBgColor();
         if (!animated) {
-            setBackgroundTintColor(color);
+            // setBackgroundTintColor(color);
         } else if (color != mCurrentBackgroundTint) {
             mStartTint = mCurrentBackgroundTint;
             mTargetTint = color;
@@ -288,7 +288,7 @@ public abstract class ActivatableNotificationView extends ExpandableOutlineView 
             mBackgroundColorAnimator.addUpdateListener(animation -> {
                 int newColor = NotificationUtils.interpolateColors(mStartTint, mTargetTint,
                         animation.getAnimatedFraction());
-                setBackgroundTintColor(newColor);
+                // setBackgroundTintColor(newColor);
             });
             mBackgroundColorAnimator.setDuration(StackStateAnimator.ANIMATION_DURATION_STANDARD);
             mBackgroundColorAnimator.setInterpolator(Interpolators.LINEAR);

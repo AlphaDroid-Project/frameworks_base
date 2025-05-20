@@ -84,8 +84,8 @@ public class NotificationBackgroundView extends View implements Dumpable,
                 R.color.notification_state_color_light);
         mDarkColoredStatefulColors = getResources().getColorStateList(
                 R.color.notification_state_color_dark);
-        mNormalColor = Utils.getColorAttrDefaultColor(mContext,
-                com.android.internal.R.attr.materialColorSurfaceContainerHigh);
+        mNormalColor = mContext.getColor(
+                R.color.qs_color_inactive);
         mFocusOverlayStroke = getResources().getDimension(R.dimen.notification_focus_stroke_width);
     }
 
@@ -261,7 +261,7 @@ public class NotificationBackgroundView extends View implements Dumpable,
             if (mBackground != null) {
                 mBackground.mutate();
                 mBackground.setCallback(this);
-                setTint(mTintColor);
+                // setTint(mTintColor);
             }
             updateBackgroundRadii();
             invalidate();
