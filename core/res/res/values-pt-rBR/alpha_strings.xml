@@ -5,25 +5,25 @@
 -->
 <resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
     <!-- Upload crash log -->
-    <string name="url_copy_failed">An error occured while uploading the log</string>
+    <string name="url_copy_failed">Ocorreu um erro ao enviar o log</string>
     <!-- Sleep Mode -->
     <string name="notification_channel_sleep">Modo de suspensão</string>
-    <string name="sleep_mode_notification_title">Sleep mode enabled</string>
-    <string name="sleep_mode_notification_content">Tap to turn off sleep mode</string>
-    <string name="sleep_mode_enabled_toast">Sleep mode turned on</string>
-    <string name="sleep_mode_disabled_toast">Sleep mode turned off</string>
+    <string name="sleep_mode_notification_title">Modo de suspensão ativado</string>
+    <string name="sleep_mode_notification_content">Toque para desativar o modo de suspensão</string>
+    <string name="sleep_mode_enabled_toast">Modo de suspensão ativado</string>
+    <string name="sleep_mode_disabled_toast">O modo de suspensão foi desativado</string>
     <!-- Settings Restart -->
-    <string name="settings_restart_title">Settings restart required</string>
-    <string name="settings_restart_message">For all changes to take effect, a Settings app restart is required. Restart Settings app now?</string>
+    <string name="settings_restart_title">É necessário reiniciar as Configurações</string>
+    <string name="settings_restart_message">Para que todas as alterações entrem em vigor, é necessário reiniciar o aplicativo Configurações. Reiniciar o aplicativo Configurações agora?</string>
     <!-- System Reboot -->
-    <string name="system_restart_title">System restart required</string>
-    <string name="system_restart_message">For all the changes to take effect, a system restart is required. Perform system restart now?</string>
+    <string name="system_restart_title">É necessário reiniciar o sistema</string>
+    <string name="system_restart_message">Para que todas as alterações entrem em vigor, é necessário reiniciar o sistema. Reiniciar o sistema agora?</string>
     <!-- SystemUI Restart -->
     <string name="systemui_restart_title">É necessário reiniciar a Interface do Sistema</string>
-    <string name="systemui_restart_message">For all changes to take effect, a SystemUI restart is required. Restart SystemUI now?</string>
+    <string name="systemui_restart_message">Para que todas as alterações entrem em vigor, é necessário reiniciar o SystemUI. Reiniciar o SystemUI agora?</string>
     <!-- Launcher Restart -->
-    <string name="launcher_restart_title">Launcher restart required</string>
-    <string name="launcher_restart_message">For all changes to take effect, a Launcher restart is required. Restart Launcher now?</string>
+    <string name="launcher_restart_title">É necessário reiniciar o Launcher</string>
+    <string name="launcher_restart_message">Para que todas as alterações entrem em vigor, é necessário reiniciar o Launcher. Reiniciar o Launcher agora?</string>
     <!-- Digital Wellbeing shorter title -->
-    <string name="digital_wellbeing_title">Digital Wellbeing</string>
+    <string name="digital_wellbeing_title">Bem-estar digital</string>
 </resources>
