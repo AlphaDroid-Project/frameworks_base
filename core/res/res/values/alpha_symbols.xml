@@ -41,7 +41,4 @@
     <!-- QS panel styles -->
     <java-symbol type="id" name="qs_state_layer" />
 
-    <!-- KeyboxImitationHooks -->
-    <java-symbol type="array" name="config_certifiedKeybox" />
-
 </resources>

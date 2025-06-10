@@ -38,9 +38,9 @@ public final class PixelPropsUtils {
     private static final String DEVICE = "ro.product.device";
     private static final boolean DEBUG = Log.isLoggable(TAG, Log.DEBUG);
 
-    private static final String SPOOF_PIXEL_GAMES = "persist.sys.pixelprops.games";
-    private static final String SPOOF_PIXEL_GPHOTOS = "persist.sys.pixelprops.gphotos";
-    private static final String SPOOF_PIXEL_NETFLIX = "persist.sys.pixelprops.netflix";
+    private static final String SPOOF_PIXEL_GAMES = "persist.sys.pp.gam";
+    private static final String SPOOF_PIXEL_GPHOTOS = "persist.sys.pp.gph";
+    private static final String SPOOF_PIXEL_NETFLIX = "persist.sys.pp.nf";
 
     private static final Map<String, Object> propsToChangeGeneric;
     private static final Map<String, Object> propsToChangePixel9ProXL;
