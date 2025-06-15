@@ -5,25 +5,25 @@
 -->
 <resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
     <!-- Upload crash log -->
-    <string name="url_copy_failed">An error occured while uploading the log</string>
+    <string name="url_copy_failed">Terjadi kesalahan ketika mengunggah buku catatan</string>
     <!-- Sleep Mode -->
     <string name="notification_channel_sleep">Mode Tidur</string>
-    <string name="sleep_mode_notification_title">Sleep mode enabled</string>
-    <string name="sleep_mode_notification_content">Tap to turn off sleep mode</string>
-    <string name="sleep_mode_enabled_toast">Sleep mode turned on</string>
-    <string name="sleep_mode_disabled_toast">Sleep mode turned off</string>
+    <string name="sleep_mode_notification_title">Mode Hening diaktifkan</string>
+    <string name="sleep_mode_notification_content">Ketuk untuk menonaktifkan Mode Hening</string>
+    <string name="sleep_mode_enabled_toast">Mode Hening diaktifkan</string>
+    <string name="sleep_mode_disabled_toast">Mode Hening dinonaktifkan</string>
     <!-- Settings Restart -->
-    <string name="settings_restart_title">Settings restart required</string>
-    <string name="settings_restart_message">For all changes to take effect, a Settings app restart is required. Restart Settings app now?</string>
+    <string name="settings_restart_title">Setelan butuh dijalankan ulang</string>
+    <string name="settings_restart_message">Agar semua perubahan bisa terlihat, Setelan butuh dijalankan ulang. Jalankan ulang Setelan sekarang?</string>
     <!-- System Reboot -->
-    <string name="system_restart_title">System restart required</string>
-    <string name="system_restart_message">For all the changes to take effect, a system restart is required. Perform system restart now?</string>
+    <string name="system_restart_title">Penjalanan ulang sistem dibutuhkan</string>
+    <string name="system_restart_message">Agar semua perubahan bisa terlihat, sistem butuh dijalankan ulang. Jalankan ulang sistem sekarang?</string>
     <!-- SystemUI Restart -->
     <string name="systemui_restart_title">SystemUI restart required</string>
-    <string name="systemui_restart_message">For all changes to take effect, a SystemUI restart is required. Restart SystemUI now?</string>
+    <string name="systemui_restart_message">Agar semua perubahan bisa terlihat, SystemUI butuh dijalankan ulang. Jalankan ulang SystemUI sekarang?</string>
     <!-- Launcher Restart -->
-    <string name="launcher_restart_title">Launcher restart required</string>
-    <string name="launcher_restart_message">For all changes to take effect, a Launcher restart is required. Restart Launcher now?</string>
+    <string name="launcher_restart_title">Peluncur butuh dijalankan ulang</string>
+    <string name="launcher_restart_message">Agar semua perubahan bisa terlihat, Peluncur butuh dijalankan ulang. Jalankan ulang Peluncur sekarang?</string>
     <!-- Digital Wellbeing shorter title -->
-    <string name="digital_wellbeing_title">Digital Wellbeing</string>
+    <string name="digital_wellbeing_title">Kesejahteraan Digital</string>
 </resources>
