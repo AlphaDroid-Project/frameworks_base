@@ -2349,6 +2349,10 @@ public final class MessageQueue {
             return mMessage.when;
         }
 
+        boolean isRemovedFromStack() {
+            return mRemovedFromStackValue;
+        }
+
         boolean removeFromStack() {
             return sRemovedFromStack.compareAndSet(this, false, true);
         }
@@ -2662,10 +2666,16 @@ public final class MessageQueue {
         StateNode bottom = getStateNode(top);
 
         /*
-         * If the top node is a state node, there are no reachable messages. We should still
-         * wait for next to complete draining the stack.
+         * If the top node is a state node, there are no reachable messages.
+         * If it's anything other than Active, we can quit as we know that next() is not
+         * consuming items.
+         * If the top node is Active then we know that next() is currently consuming items.
+         * In that case we should wait next() has drained the stack.
          */
         if (top == bottom) {
+            if (bottom != sStackStateActive) {
+                return false;
+            }
             waitForDrainCompleted();
             return false;
         }
@@ -2693,7 +2703,7 @@ public final class MessageQueue {
                         }
                     }
                 } else {
-                    break;
+                    return true;
                 }
             }
 
@@ -2703,16 +2713,15 @@ public final class MessageQueue {
                 if (DEBUG) {
                     Log.d(TAG_C, "stackHasMessages next() is walking the stack, we must re-sample");
                 }
+                waitForDrainCompleted();
                 break;
             }
             if (!n.isMessageNode()) {
                 /* We reached the end of the stack */
-                break;
+                return found;
             }
             p = (MessageNode) n;
         }
-
-        waitForDrainCompleted();
 
         return found;
     }
