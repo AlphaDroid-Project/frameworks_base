@@ -5,25 +5,25 @@
 -->
 <resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
     <!-- Upload crash log -->
-    <string name="url_copy_failed">An error occured while uploading the log</string>
+    <string name="url_copy_failed">Произошла ошибка при загрузке лога</string>
     <!-- Sleep Mode -->
     <string name="notification_channel_sleep">Режим сна</string>
-    <string name="sleep_mode_notification_title">Sleep mode enabled</string>
-    <string name="sleep_mode_notification_content">Tap to turn off sleep mode</string>
-    <string name="sleep_mode_enabled_toast">Sleep mode turned on</string>
-    <string name="sleep_mode_disabled_toast">Sleep mode turned off</string>
+    <string name="sleep_mode_notification_title">Спящий режим включен</string>
+    <string name="sleep_mode_notification_content">Нажмите, чтобы выключить спящий режим</string>
+    <string name="sleep_mode_enabled_toast">Спящий режим включен</string>
+    <string name="sleep_mode_disabled_toast">Спящий режим выключен</string>
     <!-- Settings Restart -->
-    <string name="settings_restart_title">Settings restart required</string>
-    <string name="settings_restart_message">For all changes to take effect, a Settings app restart is required. Restart Settings app now?</string>
+    <string name="settings_restart_title">Требуется перезапуск настроек</string>
+    <string name="settings_restart_message">Чтобы все изменения вступили в силу, требуется перезапуск настроек. Перезапустить настройки сейчас?</string>
     <!-- System Reboot -->
-    <string name="system_restart_title">System restart required</string>
-    <string name="system_restart_message">For all the changes to take effect, a system restart is required. Perform system restart now?</string>
+    <string name="system_restart_title">Требуется перезагрузка системы</string>
+    <string name="system_restart_message">Чтобы все изменения вступили в силу, требуется перезагрузка системы. Перезапустить систему сейчас?</string>
     <!-- SystemUI Restart -->
     <string name="systemui_restart_title">Необходима перезагрузка интерфейса</string>
-    <string name="systemui_restart_message">For all changes to take effect, a SystemUI restart is required. Restart SystemUI now?</string>
+    <string name="systemui_restart_message">Чтобы все изменения вступили в силу, требуется перезагрузка пользовательского интерфейса. Перезагрузить интерфейс?</string>
     <!-- Launcher Restart -->
-    <string name="launcher_restart_title">Launcher restart required</string>
-    <string name="launcher_restart_message">For all changes to take effect, a Launcher restart is required. Restart Launcher now?</string>
+    <string name="launcher_restart_title">Требуется перезапуск лаунчера</string>
+    <string name="launcher_restart_message">Чтобы все изменения вступили в силу, требуется перезагрузка лаунчера. Перезапустить лаунчер сейчас?</string>
     <!-- Digital Wellbeing shorter title -->
-    <string name="digital_wellbeing_title">Digital Wellbeing</string>
+    <string name="digital_wellbeing_title">Цифровое благополучие</string>
 </resources>
