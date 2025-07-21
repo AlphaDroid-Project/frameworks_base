@@ -8,10 +8,10 @@
     <string name="url_copy_failed">An error occured while uploading the log</string>
     <!-- Sleep Mode -->
     <string name="notification_channel_sleep">Modo suspensión</string>
-    <string name="sleep_mode_notification_title">Sleep mode enabled</string>
-    <string name="sleep_mode_notification_content">Tap to turn off sleep mode</string>
-    <string name="sleep_mode_enabled_toast">Sleep mode turned on</string>
-    <string name="sleep_mode_disabled_toast">Sleep mode turned off</string>
+    <string name="sleep_mode_notification_title">Modo de suspensión activado</string>
+    <string name="sleep_mode_notification_content">Presione para apagar modo de suspensión</string>
+    <string name="sleep_mode_enabled_toast">Modo de suspensión encendido</string>
+    <string name="sleep_mode_disabled_toast">Modo de suspensión apagado</string>
     <!-- Settings Restart -->
     <string name="settings_restart_title">Settings restart required</string>
     <string name="settings_restart_message">For all changes to take effect, a Settings app restart is required. Restart Settings app now?</string>
