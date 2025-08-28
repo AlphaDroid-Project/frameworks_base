@@ -37,7 +37,6 @@ import com.android.systemui.qs.tiles.NfcTile
 import com.android.systemui.qs.tiles.OnTheGoTile
 import com.android.systemui.qs.tiles.PowerShareTile
 import com.android.systemui.qs.tiles.PreferredNetworkTile
-import com.android.systemui.qs.tiles.ProfilesTile
 import com.android.systemui.qs.tiles.ReadingModeTile
 import com.android.systemui.qs.tiles.RefreshRateTile
 import com.android.systemui.qs.tiles.ScreenshotTile
@@ -145,12 +144,6 @@ interface LineageModule {
     @IntoMap
     @StringKey(PreferredNetworkTile.TILE_SPEC)
     fun bindPreferredNetworkTile(preferredNetworkTile: PreferredNetworkTile): QSTileImpl<*>
-
-    /** Inject ProfilesTile into tileMap in QSModule */
-    @Binds
-    @IntoMap
-    @StringKey(ProfilesTile.TILE_SPEC)
-    fun bindProfilesTile(profilesTile: ProfilesTile): QSTileImpl<*>
 
     /** Inject ReadingModeTile into tileMap in QSModule */
     @Binds
@@ -446,21 +439,6 @@ interface LineageModule {
 
         @Provides
         @IntoMap
-        @StringKey(ProfilesTile.TILE_SPEC)
-        fun provideProfilesTileConfig(uiEventLogger: QsEventLogger): QSTileConfig {
-            return QSTileConfig(
-                tileSpec = TileSpec.create(ProfilesTile.TILE_SPEC),
-                uiConfig = QSTileUIConfig.Resource(
-                    iconRes = R.drawable.ic_qs_profiles,
-                    labelRes = R.string.quick_settings_profiles_label
-                ),
-                instanceId = uiEventLogger.getNewInstanceId(),
-                category = TileCategory.PRIVACY
-            )
-        }
-
-        @Provides
-        @IntoMap
         @StringKey(ReadingModeTile.TILE_SPEC)
         fun provideReadingModeTileConfig(uiEventLogger: QsEventLogger): QSTileConfig {
             return QSTileConfig(
@@ -623,7 +601,7 @@ interface LineageModule {
                 ),
                 instanceId = uiEventLogger.getNewInstanceId(),
                 category = TileCategory.CONNECTIVITY
-            )                       
+            )
         }
     }
 }
