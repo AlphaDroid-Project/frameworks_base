@@ -17,7 +17,7 @@ import com.android.app.tracing.namedRunnable
 import com.android.internal.jank.InteractionJankMonitor
 import com.android.internal.jank.InteractionJankMonitor.CUJ_SCREEN_OFF
 import com.android.internal.jank.InteractionJankMonitor.CUJ_SCREEN_OFF_SHOW_AOD
-import com.android.internal.util.crdroid.Utils.ambientAod
+import com.android.internal.util.alpha.Utils.ambientAod
 import com.android.systemui.DejankUtils
 import com.android.systemui.dagger.SysUISingleton
 import com.android.systemui.dagger.qualifiers.Main

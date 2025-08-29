@@ -58,7 +58,7 @@ import android.util.SparseArray;
 import com.android.internal.annotations.GuardedBy;
 import com.android.internal.annotations.VisibleForTesting;
 import com.android.internal.util.Preconditions;
-import com.android.internal.util.crdroid.FontController;
+import com.android.internal.util.alpha.FontController;
 import com.android.text.flags.Flags;
 
 import dalvik.annotation.optimization.CriticalNative;

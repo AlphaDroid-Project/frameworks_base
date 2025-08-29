@@ -29,7 +29,7 @@ import android.util.DisplayMetrics
 import androidx.annotation.VisibleForTesting
 import androidx.lifecycle.repeatOnLifecycle
 import com.android.app.animation.Interpolators
-import com.android.internal.util.crdroid.Utils.ambientAod
+import com.android.internal.util.alpha.Utils.ambientAod
 import com.android.keyguard.KeyguardUpdateMonitor
 import com.android.keyguard.KeyguardUpdateMonitorCallback
 import com.android.keyguard.logging.KeyguardLogger

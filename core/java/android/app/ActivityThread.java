@@ -249,7 +249,7 @@ import com.android.internal.policy.DecorView;
 import com.android.internal.util.ArrayUtils;
 import com.android.internal.util.FastPrintWriter;
 import com.android.internal.util.Preconditions;
-import com.android.internal.util.crdroid.FontController;
+import com.android.internal.util.alpha.FontController;
 import com.android.internal.util.function.pooled.PooledLambda;
 import com.android.org.conscrypt.TrustedCertificateStore;
 import com.android.server.am.MemInfoDumpProto;

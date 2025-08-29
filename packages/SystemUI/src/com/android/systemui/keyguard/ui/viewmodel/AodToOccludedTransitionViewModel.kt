@@ -17,7 +17,7 @@
 package com.android.systemui.keyguard.ui.viewmodel
 
 import android.util.MathUtils
-import com.android.internal.util.crdroid.Utils.ambientAod
+import com.android.internal.util.alpha.Utils.ambientAod
 import com.android.systemui.dagger.SysUISingleton
 import com.android.systemui.keyguard.domain.interactor.FromAodTransitionInteractor
 import com.android.systemui.keyguard.shared.model.Edge

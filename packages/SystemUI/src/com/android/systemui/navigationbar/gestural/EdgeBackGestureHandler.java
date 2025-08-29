@@ -81,7 +81,7 @@ import androidx.annotation.DimenRes;
 
 import com.android.internal.config.sysui.SystemUiDeviceConfigFlags;
 import com.android.internal.policy.GestureNavigationSettingsObserver;
-import com.android.internal.util.crdroid.Utils;
+import com.android.internal.util.alpha.Utils;
 import com.android.systemui.Dependency;
 import com.android.systemui.contextualeducation.GestureType;
 import com.android.systemui.dagger.qualifiers.Background;
@@ -622,8 +622,8 @@ public class EdgeBackGestureHandler implements PluginListener<NavigationEdgeBack
         if (mMLEnableWidth > mEdgeWidthLeft) mMLEnableWidth = mEdgeWidthLeft;
 
         mIsLongSwipeEnabled = Action.fromIntSafe(
-                LineageSettings.System.getIntForUser(mContext.getContentResolver(),
-                        LineageSettings.System.KEY_EDGE_LONG_SWIPE_ACTION,
+                Settings.System.getIntForUser(mContext.getContentResolver(),
+                        Settings.System.KEY_EDGE_LONG_SWIPE_ACTION,
                         Action.NOTHING.ordinal(), UserHandle.USER_CURRENT)) != Action.NOTHING;
         updateLongSwipeWidth();
 

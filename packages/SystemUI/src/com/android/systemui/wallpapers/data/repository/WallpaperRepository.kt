@@ -31,7 +31,7 @@ import android.provider.Settings
 import android.util.Log
 import android.view.View
 import com.android.internal.R
-import com.android.internal.util.crdroid.Utils.ambientAod
+import com.android.internal.util.alpha.Utils.ambientAod
 import com.android.systemui.broadcast.BroadcastDispatcher
 import com.android.systemui.common.ui.domain.interactor.ConfigurationInteractor
 import com.android.systemui.dagger.SysUISingleton

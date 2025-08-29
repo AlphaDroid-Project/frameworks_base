@@ -36,7 +36,7 @@ import android.view.animation.PathInterpolator
 import android.widget.TextView
 import com.android.app.animation.Interpolators
 import com.android.internal.annotations.VisibleForTesting
-import com.android.internal.util.crdroid.Utils.ambientAod
+import com.android.internal.util.alpha.Utils.ambientAod
 import com.android.systemui.animation.AxisDefinition
 import com.android.systemui.animation.GSFAxes
 import com.android.systemui.animation.TextAnimator

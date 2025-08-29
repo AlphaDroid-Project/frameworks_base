@@ -19,7 +19,7 @@ package com.android.systemui.keyguard
 
 import android.content.Context
 import com.android.internal.jank.InteractionJankMonitor
-import com.android.internal.util.crdroid.Utils.ambientAod
+import com.android.internal.util.alpha.Utils.ambientAod
 import com.android.systemui.CoreStartable
 import com.android.systemui.biometrics.ui.binder.DeviceEntryUnlockTrackerViewBinder
 import com.android.systemui.common.ui.ConfigurationState
