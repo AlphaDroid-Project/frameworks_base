@@ -19537,11 +19537,6 @@ public class ActivityManagerService extends IActivityManager.Stub
     }
 
     @Override
-    public boolean shouldForceCutoutFullscreen(String packageName) {
-        return mActivityTaskManager.shouldForceCutoutFullscreen(packageName);
-    }
-
-    @Override
     public void releaseMemory(int minAdj, int maxKillCount,
                               boolean includeUIProcesses, boolean skipCamera) {
         if (minAdj <= 0) return;
@@ -19604,7 +19599,7 @@ public class ActivityManagerService extends IActivityManager.Stub
 
     public static final class ProcessToKill {
         public int adj;
-        public String name; 
+        public String name;
         public int pid;
 
         public ProcessToKill(int pid, int adj, String name) {
