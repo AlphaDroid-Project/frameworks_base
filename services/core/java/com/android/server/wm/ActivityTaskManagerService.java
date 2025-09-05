@@ -286,8 +286,6 @@ import com.android.server.uri.UriGrantsManagerInternal;
 import com.android.server.wm.utils.WindowStyleCache;
 import com.android.wm.shell.Flags;
 
-import org.lineageos.internal.applications.LineageActivityManager;
-
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileDescriptor;
@@ -808,9 +806,6 @@ public class ActivityTaskManagerService extends IActivityTaskManager.Stub {
 
     private Set<Integer> mProfileOwnerUids = new ArraySet<Integer>();
 
-    // Lineage sdk activity related helper
-    private LineageActivityManager mLineageActivityManager;
-
     private SystemSensorManager mSystemSensorManager;
 
     private final class SettingObserver extends ContentObserver {
@@ -916,10 +911,6 @@ public class ActivityTaskManagerService extends IActivityTaskManager.Stub {
 
     public void installSystemProviders() {
         mSettingsObserver = new SettingObserver();
-
-        // LineageActivityManager depends on settings so we can initialize only
-        // after providers are available.
-        mLineageActivityManager = new LineageActivityManager(mContext);
 
         // Block sensor usage per app
         mSystemSensorManager = new SystemSensorManager(mContext, mContext.getMainLooper());
@@ -7686,9 +7677,5 @@ public class ActivityTaskManagerService extends IActivityTaskManager.Stub {
             sIsPip2ExperimentEnabled = Flags.enablePip2() && !isArc && !isTv;
         }
         return sIsPip2ExperimentEnabled;
-    }
-
-    public boolean shouldForceLongScreen(String packageName) {
-        return mLineageActivityManager.shouldForceLongScreen(packageName);
     }
 }
