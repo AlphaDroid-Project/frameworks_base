@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+     SPDX-FileCopyrightText: 2015 The CyanogenMod Project
+     SPDX-FileCopyrightText: 2017-2023 The LineageOS Project
+     SPDX-License-Identifier: Apache-2.0
+-->
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="live_display_auto">Awurman</string>
+    <string name="live_display_off">Insa</string>
+    <string name="live_display_day">Ass</string>
+    <string name="live_display_night">Iḍ</string>
+    <string name="unknown">Arussin</string>
+</resources>

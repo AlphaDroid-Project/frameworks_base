@@ -209,7 +209,7 @@ public class FingerprintProvider implements IBinder.DeathRecipient, ServiceProvi
         mBiometricHandlerProvider = biometricHandlerProvider;
 
         mCleanup = context.getResources().getBoolean(
-                org.lineageos.platform.internal.R.bool.config_cleanupUnusedFingerprints);
+                com.android.internal.R.bool.config_cleanupUnusedFingerprints);
 
         initAuthenticationBroadcastReceiver();
         initFingerprintDanglingBroadcastReceiver();

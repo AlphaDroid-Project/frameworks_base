@@ -128,8 +128,6 @@ import com.android.systemui.utils.PolicyRestriction
 import platform.test.motion.compose.values.MotionTestValueKey
 import platform.test.motion.compose.values.motionTestValues
 
-import lineageos.providers.LineageSettings
-
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 @VisibleForTesting
@@ -154,8 +152,8 @@ fun BrightnessSlider(
 
     val showAutoBrightness = remember {
         try {
-            LineageSettings.Secure.getIntForUser(
-                cr, LineageSettings.Secure.QS_SHOW_AUTO_BRIGHTNESS, 1, UserHandle.USER_CURRENT
+            Settings.Secure.getIntForUser(
+                cr, Settings.System.QS_SHOW_AUTO_BRIGHTNESS, 1, UserHandle.USER_CURRENT
             ) != 0
         } catch (_: Throwable) {
             false

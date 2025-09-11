@@ -114,8 +114,6 @@ import com.android.wm.shell.back.BackAnimation;
 import com.android.wm.shell.desktopmode.DesktopMode;
 import com.android.wm.shell.pip.Pip;
 
-import lineageos.providers.LineageSettings;
-
 import dagger.assisted.Assisted;
 import dagger.assisted.AssistedFactory;
 import dagger.assisted.AssistedInject;
@@ -149,11 +147,11 @@ public class EdgeBackGestureHandler implements PluginListener<NavigationEdgeBack
             "gestures.back_timeout", 250);
 
     private static final String KEY_EDGE_LONG_SWIPE_ACTION =
-            "lineagesystem:" + LineageSettings.System.KEY_EDGE_LONG_SWIPE_ACTION;
+            "system:" + Settings.System.KEY_EDGE_LONG_SWIPE_ACTION;
     private static final String BACK_GESTURE_HEIGHT =
             "system:" + Settings.System.BACK_GESTURE_HEIGHT;
     private static final String FORCE_SHOW_NAVBAR =
-            "lineagesystem:" + LineageSettings.System.FORCE_SHOW_NAVBAR;
+            "system:" + Settings.System.FORCE_SHOW_NAVBAR;
 
     private static final int MAX_NUM_LOGGED_PREDICTIONS = 10;
     private static final int MAX_NUM_LOGGED_GESTURES = 10;
@@ -605,8 +603,8 @@ public class EdgeBackGestureHandler implements PluginListener<NavigationEdgeBack
                 && mButtonForcedVisibleCallback != null) {
             mButtonForcedVisibleCallback.accept(mIsButtonForcedVisible);
         }
-        mNavbarVisible = LineageSettings.System.getIntForUser(mContext.getContentResolver(),
-                LineageSettings.System.FORCE_SHOW_NAVBAR, Utils.hasNavbarByDefault(mContext) ? 1 : 0,
+        mNavbarVisible = Settings.System.getIntForUser(mContext.getContentResolver(),
+                Settings.System.FORCE_SHOW_NAVBAR, Utils.hasNavbarByDefault(mContext) ? 1 : 0,
                 UserHandle.USER_CURRENT) != 0;
 
         final DisplayMetrics dm = res.getDisplayMetrics();

@@ -38,8 +38,6 @@ import com.android.systemui.shade.NotificationShadeWindowView;
 import com.android.systemui.shade.ShadeViewController;
 import com.android.systemui.statusbar.NotificationShadeDepthController;
 
-import lineageos.providers.LineageSettings;
-
 import java.util.Objects;
 import java.util.function.Consumer;
 
@@ -82,18 +80,18 @@ public class BrightnessMirrorController implements MirrorController {
 
         mIsAutomaticBrightnessAvailable = mBrightnessMirror.getContext().getResources().getBoolean(
                 com.android.internal.R.bool.config_automatic_brightness_available);
-        mShouldShowAutoBrightness = LineageSettings.Secure.getInt(
+        mShouldShowAutoBrightness = Settings.Secure.getInt(
                 mBrightnessMirror.getContext().getContentResolver(),
-                LineageSettings.Secure.QS_SHOW_AUTO_BRIGHTNESS, 1) != 0;
+                Settings.System.QS_SHOW_AUTO_BRIGHTNESS, 1) != 0;
         updateIcon();
         mBrightnessMirror.getContext().getContentResolver().registerContentObserver(
-                LineageSettings.Secure.getUriFor(LineageSettings.Secure.QS_SHOW_AUTO_BRIGHTNESS),
+                Settings.System.getUriFor(Settings.System.QS_SHOW_AUTO_BRIGHTNESS),
                 false, new ContentObserver(null) {
                     @Override
                     public void onChange(boolean selfChange) {
-                        mShouldShowAutoBrightness = LineageSettings.Secure.getInt(
+                        mShouldShowAutoBrightness = Settings.Secure.getInt(
                                 mBrightnessMirror.getContext().getContentResolver(),
-                                LineageSettings.Secure.QS_SHOW_AUTO_BRIGHTNESS, 1) != 0;
+                                Settings.System.QS_SHOW_AUTO_BRIGHTNESS, 1) != 0;
                         updateIcon();
                     }
                 });

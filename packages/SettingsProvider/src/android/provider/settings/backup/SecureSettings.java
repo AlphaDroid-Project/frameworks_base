@@ -1,5 +1,7 @@
 /*
  * Copyright (C) 2019 The Android Open Source Project
+ * Copyright (C) 2015-2016 The CyanogenMod Project
+ * Copyright (C) 2017-2023 The LineageOS Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -305,5 +307,15 @@ public class SecureSettings {
         Settings.Secure.SELECTED_SPELL_CHECKER,
         // SELECTED_SPELL_CHECKER_SUBTYPE needs to be restored after SELECTED_SPELL_CHECKER
         Settings.Secure.SELECTED_SPELL_CHECKER_SUBTYPE,
+        Settings.Secure.FEATURE_TOUCH_HOVERING, // Lineage Settings
+        Settings.Secure.POWER_MENU_ACTIONS,
+        Settings.Secure.ADVANCED_REBOOT,
+        Settings.Secure.LOCK_PASS_TO_SECURITY_VIEW,
+        Settings.Secure.NETWORK_TRAFFIC_MODE,
+        Settings.Secure.NETWORK_TRAFFIC_POSITION,
+        Settings.Secure.NETWORK_TRAFFIC_AUTOHIDE,
+        Settings.Secure.NETWORK_TRAFFIC_UNITS,
+        Settings.Secure.NETWORK_TRAFFIC_SHOW_UNITS,
+        Settings.Secure.VOLUME_PANEL_ON_LEFT,
     };
 }

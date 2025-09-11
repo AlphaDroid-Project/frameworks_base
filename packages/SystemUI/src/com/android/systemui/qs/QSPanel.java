@@ -27,6 +27,7 @@ import android.database.ContentObserver;
 import android.graphics.Rect;
 import android.net.Uri;
 import android.os.Bundle;
+import android.provider.Settings;
 import android.util.ArrayMap;
 import android.util.AttributeSet;
 import android.util.Log;
@@ -48,8 +49,6 @@ import com.android.systemui.scene.shared.flag.SceneContainerFlag;
 import com.android.systemui.settings.brightness.BrightnessSliderController;
 import com.android.systemui.tuner.TunerService;
 import com.android.systemui.tuner.TunerService.Tunable;
-
-import lineageos.providers.LineageSettings;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -146,18 +145,18 @@ public class QSPanel extends LinearLayout {
         mContentObserver = new ContentObserver(null) {
             @Override
             public void onChange(boolean selfChange, @Nullable Uri uri) {
-                if (LineageSettings.Secure.getUriFor(
-                            LineageSettings.Secure.QS_SHOW_AUTO_BRIGHTNESS).equals(uri)
+                if (Settings.Secure.getUriFor(
+                            Settings.System.QS_SHOW_AUTO_BRIGHTNESS).equals(uri)
                         && mIsAutomaticBrightnessAvailable) {
                     updateViewVisibilityForTuningValue(mAutoBrightnessView,
-                            LineageSettings.Secure.getString(mContext.getContentResolver(),
-                                    LineageSettings.Secure.QS_SHOW_AUTO_BRIGHTNESS));
-                } else if (LineageSettings.Secure.getUriFor(
-                            LineageSettings.Secure.QS_SHOW_BRIGHTNESS_SLIDER).equals(uri)
+                            Settings.Secure.getString(mContext.getContentResolver(),
+                                    Settings.System.QS_SHOW_AUTO_BRIGHTNESS));
+                } else if (Settings.Secure.getUriFor(
+                            Settings.System.QS_SHOW_BRIGHTNESS_SLIDER).equals(uri)
                         && mBrightnessView != null) {
                     updateViewVisibilityForTuningValue(mBrightnessView,
-                            LineageSettings.Secure.getString(mContext.getContentResolver(),
-                                    LineageSettings.Secure.QS_SHOW_BRIGHTNESS_SLIDER));
+                            Settings.Secure.getString(mContext.getContentResolver(),
+                                    Settings.System.QS_SHOW_BRIGHTNESS_SLIDER));
                 }
             }
         };

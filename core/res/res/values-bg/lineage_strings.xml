@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+     SPDX-FileCopyrightText: 2015 The CyanogenMod Project
+     SPDX-FileCopyrightText: 2017-2023 The LineageOS Project
+     SPDX-License-Identifier: Apache-2.0
+-->
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="live_display_auto">Автоматичен</string>
+    <string name="live_display_auto_summary">Автоматично регулиране на цветовата температура след залез/изгрев</string>
+    <string name="live_display_off">Изключен</string>
+    <string name="live_display_off_summary">Няма зададен режим на екрана</string>
+    <string name="live_display_day">Дневен</string>
+    <string name="live_display_day_summary">Само настройки на дневен режим</string>
+    <string name="live_display_night">Нощен</string>
+    <string name="live_display_night_summary">Само настройки на нощен режим</string>
+    <string name="live_display_outdoor">На открито (ярко слънце)</string>
+    <string name="live_display_outdoor_summary">Само настройки на режим на открито</string>
+    <string name="live_display_hint">Използването на адаптивен дисплей може да помогне за намаляване умората в очите през нощта. Докоснете тук, за да го изпробвате!</string>
+    <string name="accessibility_quick_settings_live_display_off">Изключи адаптивен дисплей.</string>
+    <string name="accessibility_quick_settings_live_display_auto">Адаптивен дисплей: автоматичен режим.</string>
+    <string name="accessibility_quick_settings_live_display_day">Адаптивен дисплей: дневен режим.</string>
+    <string name="accessibility_quick_settings_live_display_night">Адаптивен дисплей: нощен режим.</string>
+    <string name="accessibility_quick_settings_live_display_outdoor">Адаптивен дисплей: външен режим.</string>
+    <string name="accessibility_quick_settings_live_display_changed_off">Адаптивен дисплей е изключен.</string>
+    <string name="accessibility_quick_settings_live_display_changed_auto">Адаптивен дисплей е променен на автоматичен режим.</string>
+    <string name="accessibility_quick_settings_live_display_changed_day">Адаптивен дисплей е променен на дневен режим.</string>
+    <string name="accessibility_quick_settings_live_display_changed_night">Адаптивен дисплей е променен на нощен режим.</string>
+    <string name="accessibility_quick_settings_live_display_changed_outdoor">Адаптивен дисплей е променен на външен режим.</string>
+    <string name="unknown">Неизвестно</string>
+    <string name="app_killed_message">Приложението е спряно</string>
+    <string name="kilobitspersecond_short">kб/с</string>
+    <string name="megabitspersecond_short">Mб/с</string>
+    <string name="kilobytespersecond_short">kБ/с</string>
+    <string name="megabytespersecond_short">MБ/с</string>
+    <string name="kilobytespersecond_compact">k</string>
+    <string name="megabytespersecond_compact">M</string>
+    <string name="charging_control_notification_channel">Управление на зареждането</string>
+    <string name="charging_control_notification_title">Управление на зареждането</string>
+    <string name="charging_control_notification_cancel_once">Отмени</string>
+    <string name="charging_control_notification_content_limit">Батерията ще бъде заредена до %1$d%%</string>
+    <string name="charging_control_notification_content_limit_reached">Батерията е заредена на %1$d%%</string>
+    <string name="charging_control_notification_content_target">Батерията ще бъде напълно заредена в %1$s</string>
+    <string name="charging_control_notification_content_target_reached">Батерията е напълно заредена</string>
+</resources>

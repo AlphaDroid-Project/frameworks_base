@@ -161,8 +161,6 @@ import com.android.systemui.volume.domain.interactor.VolumePanelNavigationIntera
 import com.android.systemui.volume.ui.navigation.VolumeNavigator;
 import com.google.android.msdl.domain.MSDLPlayer;
 
-import lineageos.providers.LineageSettings;
-
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -457,9 +455,9 @@ public class VolumeDialogImpl implements VolumeDialog, Dumpable,
             ContentObserver volumePanelOnLeftObserver = new ContentObserver(null) {
                 @Override
                 public void onChange(boolean selfChange) {
-                    final boolean volumePanelOnLeft = LineageSettings.Secure.getIntForUser(
+                    final boolean volumePanelOnLeft = Settings.Secure.getIntForUser(
                             mContext.getContentResolver(),
-                            LineageSettings.Secure.VOLUME_PANEL_ON_LEFT, 0,
+                            Settings.Secure.VOLUME_PANEL_ON_LEFT, 0,
                             UserHandle.USER_CURRENT) != 0;
                     if (mVolumePanelOnLeft != volumePanelOnLeft) {
                         mVolumePanelOnLeft = volumePanelOnLeft;
@@ -468,7 +466,7 @@ public class VolumeDialogImpl implements VolumeDialog, Dumpable,
                 }
             };
             mContext.getContentResolver().registerContentObserver(
-                    LineageSettings.Secure.getUriFor(LineageSettings.Secure.VOLUME_PANEL_ON_LEFT),
+                    Settings.Secure.getUriFor(Settings.Secure.VOLUME_PANEL_ON_LEFT),
                     false, volumePanelOnLeftObserver);
             volumePanelOnLeftObserver.onChange(true);
         }

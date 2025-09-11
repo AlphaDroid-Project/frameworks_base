@@ -1,0 +1,21 @@
+/*
+ * SPDX-FileCopyrightText: 2023 The LineageOS Project
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+package org.lineageos.server.health;
+
+import android.content.Context;
+import android.os.Handler;
+
+import org.lineageos.server.LineageBaseFeature;
+
+public abstract class LineageHealthFeature extends LineageBaseFeature {
+    protected static final String TAG = "LineageHealth";
+
+    public LineageHealthFeature(Context context, Handler handler) {
+        super(context, handler);
+    }
+
+    public abstract boolean isSupported();
+}

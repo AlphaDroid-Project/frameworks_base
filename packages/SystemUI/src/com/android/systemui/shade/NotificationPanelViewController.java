@@ -231,8 +231,6 @@ import kotlinx.coroutines.flow.Flow;
 import kotlinx.coroutines.flow.MutableStateFlow;
 import kotlinx.coroutines.flow.StateFlow;
 
-import lineageos.providers.LineageSettings;
-
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -271,7 +269,7 @@ public final class NotificationPanelViewController implements
     public static final String COUNTER_PANEL_OPEN_QS = "panel_open_qs";
     private static final String COUNTER_PANEL_OPEN_PEEK = "panel_open_peek";
     private static final String DOUBLE_TAP_SLEEP_GESTURE =
-            "lineagesystem:" + LineageSettings.System.DOUBLE_TAP_SLEEP_GESTURE;
+            "system:" + Settings.System.DOUBLE_TAP_SLEEP_GESTURE;
      private static final String DOUBLE_TAP_SLEEP_LOCKSCREEN =
              "system:" + Settings.System.DOUBLE_TAP_SLEEP_LOCKSCREEN;
      private static final String STATUS_BAR_CUSTOM_HEADER =
@@ -1545,10 +1543,10 @@ public final class NotificationPanelViewController implements
         if (newAnimator == null) {
             return false;
         }
-        if (oldAnimator != null 
-            && oldAnimator.equals(lastFlingToHeightAnimator) 
-            && isSameDirection(vel) 
-            && expand == lastFlingToHeightExpand 
+        if (oldAnimator != null
+            && oldAnimator.equals(lastFlingToHeightAnimator)
+            && isSameDirection(vel)
+            && expand == lastFlingToHeightExpand
             && oldAnimator.isRunning()) {
             return true;
         }
@@ -3801,13 +3799,13 @@ public final class NotificationPanelViewController implements
                 case DOUBLE_TAP_SLEEP_GESTURE:
                     mDoubleTapToSleepEnabled =
                             TunerService.parseIntegerSwitch(newValue,
-                                mResources.getBoolean(org.lineageos.platform.internal.R.bool.
+                                mResources.getBoolean(com.android.internal.R.bool.
                                 config_dt2sGestureEnabledByDefault));
                     break;
                 case DOUBLE_TAP_SLEEP_LOCKSCREEN:
                     mIsLockscreenDoubleTapEnabled =
                             TunerService.parseIntegerSwitch(newValue,
-                                mResources.getBoolean(org.lineageos.platform.internal.R.bool.
+                                mResources.getBoolean(com.android.internal.R.bool.
                                 config_dt2sGestureEnabledByDefault));
                     break;
                 case STATUS_BAR_CUSTOM_HEADER:

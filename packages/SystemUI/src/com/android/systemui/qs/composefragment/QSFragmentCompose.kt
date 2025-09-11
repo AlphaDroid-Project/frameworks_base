@@ -26,6 +26,7 @@ import android.graphics.Rect
 import android.os.Bundle
 import android.os.Trace
 import android.os.UserHandle
+import android.provider.Settings
 import android.util.IndentingPrintWriter
 import android.view.LayoutInflater
 import android.view.MotionEvent
@@ -158,8 +159,6 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
-
-import lineageos.providers.LineageSettings
 
 @SuppressLint("ValidFragment")
 class QSFragmentCompose
@@ -1252,8 +1251,8 @@ fun rememberSliderAtTop(): Boolean {
     return remember {
         val cr = context.contentResolver
         try {
-             LineageSettings.Secure.getIntForUser(
-                cr,  LineageSettings.Secure.QS_BRIGHTNESS_SLIDER_POSITION, 0, UserHandle.USER_CURRENT
+             Settings.System.getIntForUser(
+                cr,  Settings.System.QS_BRIGHTNESS_SLIDER_POSITION, 0, UserHandle.USER_CURRENT
             ) == 0
         } catch (_: Throwable) {
             true
@@ -1267,8 +1266,8 @@ fun rememberShowSlider(): Int {
     return remember {
         val cr = context.contentResolver
         try {
-             LineageSettings.Secure.getIntForUser(
-                cr,  LineageSettings.Secure.QS_SHOW_BRIGHTNESS_SLIDER, 1, UserHandle.USER_CURRENT
+             Settings.System.getIntForUser(
+                cr,  Settings.System.QS_SHOW_BRIGHTNESS_SLIDER, 1, UserHandle.USER_CURRENT
             )
         } catch (_: Throwable) {
             1
