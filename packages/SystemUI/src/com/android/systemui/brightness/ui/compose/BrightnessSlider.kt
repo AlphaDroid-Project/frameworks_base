@@ -28,8 +28,10 @@ import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.AnimationVector1D
 import androidx.compose.animation.core.VectorConverter
+import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.interaction.DragInteraction
@@ -43,6 +45,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.CornerSize
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
@@ -84,6 +87,7 @@ import androidx.compose.ui.graphics.painter.ColorPainter
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.input.pointer.pointerInteropFilter
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.painterResource
@@ -397,7 +401,11 @@ fun BrightnessSlider(
 
         if (hasAutoBrightness && showAutoBrightness) {
             Spacer(modifier = Modifier.width(10.dp))
-            drawAutoBrightnessButton(autoMode = autoMode, onIconClick = onIconClick)
+            drawAutoBrightnessButton(
+                autoMode = autoMode,
+                hapticsEnabled = hapticsEnabled,
+                onIconClick = onIconClick
+            )
         }
     }
 
@@ -446,26 +454,64 @@ private fun readEnableHaptics(cr: ContentResolver): Boolean =
 @Composable
 private fun drawAutoBrightnessButton(
     autoMode: Boolean,
+    hapticsEnabled: Boolean,
     onIconClick: suspend () -> Unit,
 ) {
+    val view = LocalView.current
     val coroutineScope = rememberCoroutineScope()
+    val animatedCornerRadius by animateDpAsState(
+        targetValue = if (autoMode) {
+            SliderTrackRoundedCorner
+        } else {
+            22.5.dp
+        }
+    )
+    val backgroundColor by animateColorAsState(
+        targetValue = if (autoMode) {
+            MaterialTheme.colorScheme.primary
+        } else {
+            LocalAndroidColorScheme.current.surfaceEffect1
+        }
+    )
+    val iconTint by animateColorAsState(
+        targetValue = if (autoMode) {
+            MaterialTheme.colorScheme.onPrimary
+        } else {
+            MaterialTheme.colorScheme.onSurface
+        }
+    )
     val painterRes = if (autoMode) {
         R.drawable.ic_qs_brightness_auto_on
     } else {
         R.drawable.ic_qs_brightness_auto_off
     }
+    val hapticConstant = if (autoMode) {
+        HapticFeedbackConstants.TOGGLE_OFF
+    } else {
+        HapticFeedbackConstants.TOGGLE_ON
+    }
 
-    IconButton(
-        colors =
-            IconButtonDefaults.iconButtonColors(
-                containerColor = MaterialTheme.colorScheme.primary,
-                contentColor = MaterialTheme.colorScheme.onPrimary,
+    Box(
+        modifier = Modifier
+            .size(45.dp)
+            .clip(RoundedCornerShape(animatedCornerRadius))
+            .background(backgroundColor)
+            .clickable(
+                interactionSource = remember { MutableInteractionSource() },
+                indication = null, // Disable ripple effect
+                onClick = {
+                    if (hapticsEnabled) {
+                        view.performHapticFeedback(hapticConstant)
+                    }
+                    coroutineScope.launch { onIconClick() }
+                }
             ),
-        onClick = { coroutineScope.launch { onIconClick() } },
+        contentAlignment = Alignment.Center
     ) {
         Icon(
-            painterResource(painterRes),
+            painter = painterResource(painterRes),
             contentDescription = stringResource(R.string.accessibility_adaptive_brightness),
+            tint = iconTint
         )
     }
 }
