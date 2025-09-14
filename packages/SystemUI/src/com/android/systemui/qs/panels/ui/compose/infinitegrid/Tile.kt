@@ -20,7 +20,10 @@ package com.android.systemui.qs.panels.ui.compose.infinitegrid
 
 import android.content.Context
 import android.content.res.Resources
+import android.database.ContentObserver
 import android.os.Trace
+import android.os.UserHandle
+import android.provider.Settings
 import android.service.quicksettings.Tile.STATE_ACTIVE
 import android.service.quicksettings.Tile.STATE_INACTIVE
 import android.service.quicksettings.Tile.STATE_UNAVAILABLE
@@ -54,6 +57,7 @@ import androidx.compose.foundation.shape.CornerSize
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
@@ -68,6 +72,7 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.semantics.Role
@@ -206,8 +211,12 @@ fun ContentScope.Tile(
 
         val colors = TileDefaults.getColorForState(uiState, compact)
         val hapticsViewModel: TileHapticsViewModel? =
-            rememberViewModel(traceName = "TileHapticsViewModel") {
-                tileHapticsViewModelFactoryProvider.getHapticsViewModelFactory()?.create(tile)
+            if (rememberTileHaptic()) {
+                rememberViewModel(traceName = "TileHapticsViewModel") {
+                    tileHapticsViewModelFactoryProvider.getHapticsViewModelFactory()?.create(tile)
+                }
+            } else {
+               null
             }
 
         // TODO(b/361789146): Draw the shapes instead of clipping
@@ -483,7 +492,7 @@ fun Modifier.tileCombinedClickable(
             onLongClick = onLongClick,
             onClickLabel = accessibilityUiState.clickLabel,
             onLongClickLabel = longPressLabel,
-            hapticFeedbackEnabled = !Flags.msdlFeedback(),
+            hapticFeedbackEnabled = rememberTileHaptic() && !Flags.msdlFeedback(),
             interactionSource = interactionSource,
         )
         .semantics {
@@ -511,6 +520,46 @@ data class TileColors(
     val secondaryLabel: Color,
     val icon: Color,
 )
+
+@Composable
+fun rememberTileHaptic(): Boolean {
+    val context = LocalContext.current
+    val contentResolver = context.contentResolver
+
+    fun readHapticEnabled(): Boolean {
+        return try {
+            Settings.System.getIntForUser(
+                contentResolver, Settings.System.QS_TILE_HAPTIC, 1,
+                UserHandle.USER_CURRENT
+            ) != 0
+        } catch (_: Throwable) {
+            false
+        }
+    }
+
+    var hapticEnabled by remember { mutableStateOf(readHapticEnabled()) }
+
+    DisposableEffect(contentResolver) {
+        val observer = object : ContentObserver(null) {
+            override fun onChange(selfChange: Boolean) {
+                context.mainExecutor.execute {
+                    hapticEnabled = readHapticEnabled()
+                }
+            }
+        }
+
+        contentResolver.registerContentObserver(
+            Settings.System.getUriFor(Settings.System.QS_TILE_HAPTIC),
+            false, observer, UserHandle.USER_ALL
+        )
+
+        onDispose {
+            contentResolver.unregisterContentObserver(observer)
+        }
+    }
+
+    return hapticEnabled
+}
 
 private object TileDefaults {
     val ActiveIconCornerRadius = 16.dp
