@@ -7,7 +7,6 @@
     <!-- Button that copies the url to the log of a crashed application -->
     <string name="aerr_copy">Sao chép địa chỉ nhật ký sự cố</string>
     <string name="url_copy_success">Đã sao chép thành công</string>
-    <string name="url_copy_failed">Đã xảy ra lỗi khi tải nhật ký lên máy chủ</string>
     <!-- Lock gesture -->
     <string name="gesture_locked_warning">Vuốt lại để mở khóa cử chỉ</string>
     <!-- App lock -->

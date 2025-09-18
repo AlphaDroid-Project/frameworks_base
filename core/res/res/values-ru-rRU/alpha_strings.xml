@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+     SPDX-FileCopyrightText: 2025 AlphaDroid
+     SPDX-License-Identifier: Apache-2.0
+-->
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <!-- Upload crash log -->
+    <string name="url_copy_failed">Произошла ошибка при загрузке лога</string>
+    <!-- Digital Wellbeing shorter title -->
+    <string name="digital_wellbeing_title">Цифровое благополучие</string>
+    <!-- Settings Restart -->
+    <string name="settings_restart_title">Требуется перезапуск настроек</string>
+    <string name="settings_restart_message">Чтобы все изменения вступили в силу, требуется перезапуск настроек. Перезапустить настройки сейчас?</string>
+    <!-- System Reboot -->
+    <string name="system_restart_title">Требуется перезагрузка системы</string>
+    <string name="system_restart_message">Чтобы все изменения вступили в силу, требуется перезагрузка системы. Перезапустить систему сейчас?</string>
+    <!-- SystemUI Restart -->
+    <string name="systemui_restart_title">Необходима перезагрузка интерфейса</string>
+    <string name="systemui_restart_message">Чтобы все изменения вступили в силу, требуется перезагрузка пользовательского интерфейса. Перезагрузить интерфейс?</string>
+    <!-- Launcher Restart -->
+    <string name="launcher_restart_title">Требуется перезапуск лаунчера</string>
+    <string name="launcher_restart_message">Чтобы все изменения вступили в силу, требуется перезагрузка лаунчера. Перезапустить лаунчер сейчас?</string>
+</resources>
