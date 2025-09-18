@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+     SPDX-FileCopyrightText: 2025 AlphaDroid
+     SPDX-License-Identifier: Apache-2.0
+-->
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <!-- Upload crash log -->
+    <string name="url_copy_failed">Ocorreu um erro ao enviar o arquivo.</string>
+    <!-- Digital Wellbeing shorter title -->
+    <string name="digital_wellbeing_title">Bem-estar digital</string>
+    <!-- Settings Restart -->
+    <string name="settings_restart_title">Reinício das configurações necessário</string>
+    <string name="settings_restart_message">Para que todas as alterações tenham efeito, é necessário reiniciar as definições. Reiniciar definições agora?</string>
+    <!-- System Reboot -->
+    <string name="system_restart_title">Reinício das configurações necessário</string>
+    <string name="system_restart_message">É necessário reiniciar a interface do sistema para que todas as modificações tenham efeito. Reiniciar agora?</string>
+    <!-- SystemUI Restart -->
+    <string name="systemui_restart_title">É necessário o reinício da UI do sistema</string>
+    <string name="systemui_restart_message">É necessário reiniciar a interface do sistema para que todas as modificações tenham efeito. Reiniciar agora?</string>
+    <!-- Launcher Restart -->
+    <string name="launcher_restart_title">Reinício do launcher necessário</string>
+    <string name="launcher_restart_message">É necessário reiniciar o launcher para que todas as modificações tenham efeito. Reiniciar agora?</string>
+</resources>

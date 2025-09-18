@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+     SPDX-FileCopyrightText: 2025 AlphaDroid
+     SPDX-License-Identifier: Apache-2.0
+-->
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <!-- Upload crash log -->
+    <string name="url_copy_failed">Günlük yüklenirken bir hata oluştu</string>
+    <!-- Digital Wellbeing shorter title -->
+    <string name="digital_wellbeing_title">Dijital Denge</string>
+    <!-- Settings Restart -->
+    <string name="settings_restart_title">Ayarların yeniden başlatılması gerekiyor</string>
+    <string name="settings_restart_message">Tüm değişikliklerin etkin olabilmesi için ayarların yeniden başlatılması gerekiyor. Ayarlar şimdi yeniden başlatılsın mı?</string>
+    <!-- System Reboot -->
+    <string name="system_restart_title">Sistemin yeniden başlatılması gerekiyor</string>
+    <string name="system_restart_message">Tüm değişikliklerin etkili olması için sistemin yeniden başlatılması gerekir. Sistem yeniden başlatılsın mı?</string>
+    <!-- SystemUI Restart -->
+    <string name="systemui_restart_title">Sistem arayüzünü yeniden başlatmak gerekli</string>
+    <string name="systemui_restart_message">Tüm değişikliklerin etkili olabilmesi için, sistem arayüzü yeniden başlatılmalı. Yeniden başlatmak ister misiniz?</string>
+    <!-- Launcher Restart -->
+    <string name="launcher_restart_title">Başlatıcının yeniden başlatılması gerekiyor</string>
+    <string name="launcher_restart_message">Tüm değişikliklerin etkili olması için başlatıcının yeniden başlatılması gerekiyor. Başlatıcıyı şimdi yeniden başlatmak ister misiniz?</string>
+</resources>
