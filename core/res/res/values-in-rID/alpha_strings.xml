@@ -15,7 +15,7 @@
     <string name="system_restart_title">Penjalanan ulang sistem dibutuhkan</string>
     <string name="system_restart_message">Agar semua perubahan bisa terlihat, sistem butuh dijalankan ulang. Jalankan ulang sistem sekarang?</string>
     <!-- SystemUI Restart -->
-    <string name="systemui_restart_title">SystemUI restart required</string>
+    <string name="systemui_restart_title">Diperlukan mengulang SystemUI</string>
     <string name="systemui_restart_message">Agar semua perubahan bisa terlihat, SystemUI butuh dijalankan ulang. Jalankan ulang SystemUI sekarang?</string>
     <!-- Launcher Restart -->
     <string name="launcher_restart_title">Peluncur butuh dijalankan ulang</string>
