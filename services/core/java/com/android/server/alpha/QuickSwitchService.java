@@ -48,8 +48,6 @@ import java.util.List;
 
 public final class QuickSwitchService extends SystemService {
 
-    private static final boolean DEBUG = true || IS_ENG;
-
     private static final String LAUNCHER3 = "com.android.launcher3";
     private static final String NEXUS_LAUNCHER = "com.google.android.apps.nexuslauncher";
     private static final String LAWNCHAIR = "app.lawnchair";
@@ -60,28 +58,29 @@ public final class QuickSwitchService extends SystemService {
     private static final String LAWNCHAIR_OVERLAY = "app.lawnchair.overlay";
 
     private static final List <String> WALLPAPER_PICKER_PACKAGES = List.of(
-        "com.android.wallpaper",
-        "com.android.wallpaper.picker.overlay.android",
-        "com.android.wallpaper.picker.overlay.settings",
-        "com.android.customization.themes"
+        "com.android.customization.themes",
+        "com.android.wallpaper"
     );
 
     private static final List<String> WALLPAPER_PICKER_GOOGLE_PACKAGES = List.of(
         "com.google.android.aicore",
         "com.google.android.apps.aiwallpapers",
+        "com.google.android.apps.customization",
         "com.google.android.apps.customization.pixel",
         "com.google.android.apps.emojiwallpaper",
         "com.google.android.apps.wallpaper",
+        "com.google.android.apps.wallpaper",
         "com.google.android.apps.wallpaper.overlay.android",
-        "com.google.android.apps.wallpaper.overlay.settings",
+        "com.google.android.apps.wallpaper.overlay.launcher",
         "com.google.android.apps.wallpaper.pixel",
         "com.google.android.wallpaper.effects",
         "com.google.pixel.livewallpaper"
     );
 
     private static final List<String> NEXUS_LAUNCHER_OVERLAYS = List.of(
-        "com.google.nexus.launcher.overlay.android",
-        "com.google.nexus.launcher.overlay.systemui"
+        "com.android.overlay.pixel_launcher",
+        "com.android.systemui.overlay.pixel_launcher",
+        "com.google.android.apps.nexuslauncher.overlay.pixel_launcher"
     );
 
     private static final String TAG = "QuickSwitchService";
@@ -152,11 +151,11 @@ public final class QuickSwitchService extends SystemService {
 
         for (String pkg : disabledPackages) {
             updateLauncherComponentsState(userId, pkg, false);
-            if (DEBUG) Log.d(TAG, "disabling " + pkg + "... done");
+            Log.i(TAG, "disabling " + pkg + "... done");
         }
         for (String pkg: enabledPackages) {
             updateLauncherComponentsState(userId, pkg, true);
-            if (DEBUG) Log.d(TAG, "enabling " + pkg + "... done");
+            Log.i(TAG, "enabling " + pkg + "... done");
         }
     }
 
