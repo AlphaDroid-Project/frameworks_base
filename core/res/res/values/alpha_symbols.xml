@@ -22,4 +22,39 @@
     <!-- Launcher restart dialog -->
     <java-symbol type="string" name="launcher_restart_title"/>
     <java-symbol type="string" name="launcher_restart_message"/>
+
+    <!-- UI Style System Strings -->
+    <java-symbol type="string" name="ui_style_dialog_title" />
+    <java-symbol type="string" name="ui_style_tile_label" />
+    <java-symbol type="string" name="ui_style_dialog_description" />
+
+    <!-- UI Style Options (0-8) -->
+    <java-symbol type="string" name="ui_style_system_default" />
+    <java-symbol type="string" name="ui_style_outline" />
+    <java-symbol type="string" name="ui_style_neon" />
+    <java-symbol type="string" name="ui_style_bevel" />
+    <java-symbol type="string" name="ui_style_gradient" />
+    <java-symbol type="string" name="ui_style_reflective" />
+    <java-symbol type="string" name="ui_style_slash" />
+    <java-symbol type="string" name="ui_style_aerogel" />
+    <java-symbol type="string" name="ui_style_metallic" />
+
+    <!-- UI Style Descriptions -->
+    <java-symbol type="string" name="ui_style_system_default_description" />
+    <java-symbol type="string" name="ui_style_outline_description" />
+    <java-symbol type="string" name="ui_style_neon_description" />
+    <java-symbol type="string" name="ui_style_bevel_description" />
+    <java-symbol type="string" name="ui_style_gradient_description" />
+    <java-symbol type="string" name="ui_style_reflective_description" />
+    <java-symbol type="string" name="ui_style_slash_description" />
+    <java-symbol type="string" name="ui_style_aerogel_description" />
+    <java-symbol type="string" name="ui_style_metallic_description" />
+
+    <java-symbol type="string" name="ui_style_param_saturation" />
+    <java-symbol type="string" name="ui_style_param_lightness" />
+    <java-symbol type="string" name="ui_style_param_opacity" />
+    <java-symbol type="string" name="ui_style_param_strength" />
+    <java-symbol type="string" name="ui_style_param_angle" />
+
+    <java-symbol type="drawable" name="ic_ui_style" />
 </resources>

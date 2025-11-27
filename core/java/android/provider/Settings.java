@@ -8294,6 +8294,60 @@ public final class Settings {
         public static final String DISPLAY_ENGINE_MODE = "display_engine_mode";
 
         /**
+         * UI style
+         * @hide
+         */
+        public static final String UI_STYLE = "ui_style";
+
+        /**
+         * Ui style Outline parameters
+         * @hide
+         */
+        public static final String UI_STYLE_OUTINE_PARAMS = "ui_style_outline_params";
+
+        /**
+         * UI style Bevel parameters
+         * @hide
+         */
+        public static final String UI_STYLE_BEVEL_PARAMS = "ui_style_bevel_params";
+
+        /**
+         * UI style Gradient parameters
+         * @hide
+         */
+        public static final String UI_STYLE_GRADIENT_PARAMS = "ui_style_gradient_params";
+
+        /**
+         * UI style Neon parameters
+         * @hide
+         */
+        public static final String UI_STYLE_NEON_PARAMS = "ui_style_neon_params";
+
+        /**
+         * UI style Reflective parameters
+         * @hide
+         */
+        public static final String UI_STYLE_REFLECTIVE_PARAMS = "ui_style_reflective_params";
+
+        /**
+         * UI style Metallic parameters
+         * @hide
+         */
+        public static final String UI_STYLE_METALLIC_PARAMS = "ui_style_metallic_params";
+
+        /**
+         * UI style Slash parameters
+         * @hide
+         */
+        public static final String UI_STYLE_SLASH_PARAMS = "ui_style_slash_params";
+
+        /**
+         * UI style Aerogel parameters
+         * @hide
+         */
+        public static final String UI_STYLE_AEROGEL_PARAMS = "ui_style_aerogel_params";
+
+        /**
          * Keys we no longer back up under the current schema, but want to continue to
          * process when restoring historical backup datasets.
          *
