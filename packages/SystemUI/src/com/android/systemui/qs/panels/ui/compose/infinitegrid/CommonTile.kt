@@ -20,6 +20,7 @@ import android.content.Context
 import android.graphics.drawable.Animatable
 import android.graphics.drawable.AnimatedVectorDrawable
 import android.graphics.drawable.Drawable
+import android.service.quicksettings.Tile.STATE_INACTIVE
 import android.text.TextUtils
 import androidx.annotation.VisibleForTesting
 import androidx.compose.animation.animateColorAsState
@@ -27,13 +28,16 @@ import androidx.compose.animation.graphics.res.animatedVectorResource
 import androidx.compose.animation.graphics.res.rememberAnimatedVectorPainter
 import androidx.compose.animation.graphics.vector.AnimatedImageVector
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -91,6 +95,8 @@ import com.android.compose.modifiers.thenIf
 import com.android.compose.ui.graphics.painter.rememberDrawablePainter
 import com.android.systemui.Flags
 import com.android.systemui.Flags.iconRefresh2025
+import com.android.systemui.alpha.style.qs.QSTileStyleWrapper
+import com.android.systemui.alpha.style.qs.renderers.QSTileStyleRenderer
 import com.android.systemui.common.shared.model.Icon
 import com.android.systemui.common.ui.compose.Icon
 import com.android.systemui.common.ui.compose.load
@@ -130,6 +136,8 @@ fun LargeTileContent(
     textScale: () -> Float = { 1f },
     toggleClick: (() -> Unit)? = null,
     onLongClick: (() -> Unit)? = null,
+    styleRenderer: QSTileStyleRenderer? = null,
+    state: Int = STATE_INACTIVE,
 ) {
     val isDualTarget = toggleClick != null
     Row(
@@ -142,13 +150,16 @@ fun LargeTileContent(
         val animatedBackgroundColor by
             animateColorAsState(colors.iconBackground, label = "QSTileDualTargetBackgroundColor")
         val focusBorderColor = MaterialTheme.colorScheme.secondary
+
+        val iconHasBackground = colors.iconBackground != Color.Transparent
+        val shouldStyleIconBackground = iconHasBackground && styleRenderer != null
+
         Box(
             modifier =
                 Modifier.size(CommonTileDefaults.ToggleTargetSize).thenIf(isDualTarget) {
                     Modifier.borderOnFocus(color = focusBorderColor, iconShape.topEnd)
                         .clip(iconShape)
                         .verticalSquish(squishiness)
-                        .drawBehind { drawRect(animatedBackgroundColor) }
                         .combinedClickable(
                             onClick = toggleClick!!,
                             onLongClick = onLongClick,
@@ -169,6 +180,30 @@ fun LargeTileContent(
                         }
                 }
         ) {
+            if (shouldStyleIconBackground) {
+                QSTileStyleWrapper(
+                    renderer = styleRenderer,
+                    shape = iconShape,
+                    state = state,
+                    materialColor = animatedBackgroundColor,
+                    isSmallTile = false,
+                    isIconBackground = true,
+                    modifier = Modifier.fillMaxSize()
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(animatedBackgroundColor, iconShape)
+                    )
+                }
+            } else if (isDualTarget) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .drawBehind { drawRect(animatedBackgroundColor) }
+                )
+            }
+
             SmallTileContent(
                 iconProvider = iconProvider,
                 color = colors.icon,

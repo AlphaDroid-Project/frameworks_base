@@ -65,6 +65,7 @@ import com.android.systemui.qs.panels.domain.interactor.TileSquishinessInteracto
 import com.android.systemui.qs.panels.ui.viewmodel.InFirstPageViewModel
 import com.android.systemui.qs.panels.ui.viewmodel.MediaInRowInLandscapeViewModel
 import com.android.systemui.qs.panels.ui.viewmodel.QuickQuickSettingsViewModel
+import com.android.systemui.alpha.style.qs.QSTileStyleManager
 import com.android.systemui.qs.ui.viewmodel.QuickSettingsContainerViewModel
 import com.android.systemui.res.R
 import com.android.systemui.scene.shared.model.Overlays
@@ -104,6 +105,7 @@ constructor(
     quickQuickSettingsViewModelFactory: QuickQuickSettingsViewModel.Factory,
     footerActionsViewModelFactory: FooterActionsViewModel.Factory,
     private val footerActionsController: FooterActionsController,
+    private val internalQsTileStyleManager: QSTileStyleManager,
     private val sysuiStatusBarStateController: SysuiStatusBarStateController,
     deviceEntryBypassInteractor: DeviceEntryBypassInteractor,
     disableFlagsInteractor: DisableFlagsInteractor,
@@ -127,6 +129,12 @@ constructor(
 
     val containerViewModel = containerViewModelFactory.create(supportsBrightnessMirroring = true)
     val quickQuickSettingsViewModel = quickQuickSettingsViewModelFactory.create()
+
+    /**
+     * QS Tile Style Manager for creating renderers with Material Theme colors.
+     * Renderers are created in Compose using rememberQSTileStyleRenderer().
+     */
+    val qsTileStyleManager: QSTileStyleManager = internalQsTileStyleManager
 
     val qsMediaUiBehavior =
         MediaUiBehavior(
