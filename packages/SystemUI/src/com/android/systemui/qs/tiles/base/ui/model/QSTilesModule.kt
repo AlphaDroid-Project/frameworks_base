@@ -18,8 +18,10 @@ package com.android.systemui.qs.tiles.base.ui.model
 
 import android.content.Context
 import android.content.res.Resources.Theme
+import com.android.systemui.alpha.tiles.dagger.AlphaQSTilesModule
 import com.android.systemui.qs.external.CustomTileStatePersister
 import com.android.systemui.qs.external.CustomTileStatePersisterImpl
+import com.android.systemui.qs.tileimpl.QSTileImpl
 import com.android.systemui.qs.tiles.base.domain.actions.QSTileIntentUserInputHandler
 import com.android.systemui.qs.tiles.base.domain.actions.QSTileIntentUserInputHandlerImpl
 import com.android.systemui.qs.tiles.base.domain.interactor.QSTileAvailabilityInteractor
@@ -33,9 +35,15 @@ import dagger.Binds
 import dagger.Module
 import dagger.Provides
 import dagger.multibindings.Multibinds
+import dagger.multibindings.StringKey
 
 /** Module listing subcomponents */
-@Module(subcomponents = [CustomTileComponent::class])
+@Module(
+    includes = [
+        AlphaQSTilesModule::class,
+    ],
+    subcomponents = [CustomTileComponent::class]
+)
 interface QSTilesModule {
 
     /**

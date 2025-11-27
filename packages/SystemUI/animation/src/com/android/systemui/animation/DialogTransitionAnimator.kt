@@ -96,6 +96,14 @@ constructor(
         val cuj: DialogCuj?
 
         /**
+        * Whether to skip the exit animation checks. This is useful for dialogs that need to animate
+        * regardless of the source view's current state (e.g., when the source view might recompose
+        * during the dialog's lifetime).
+        */
+        val skipExitAnimationChecks: Boolean
+            get() = false
+
+        /**
          * Move the drawing of the source in the overlay of [viewGroup].
          *
          * Once this method is called, and until [stopDrawingInOverlay] is called, the source
@@ -1035,6 +1043,11 @@ private class AnimatedDialog(
     }
 
     private fun shouldAnimateDialogIntoSource(): Boolean {
+        // If the controller wants to skip checks, allow the animation
+        if (controller.skipExitAnimationChecks) {
+            return true
+        }
+
         // Don't animate if the dialog was previously hidden using hide() or if we disabled the exit
         // animation.
         if (exitAnimationDisabled || !dialog.isShowing) {

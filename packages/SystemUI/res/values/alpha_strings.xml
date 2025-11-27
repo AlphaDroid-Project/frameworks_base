@@ -4,5 +4,10 @@
      SPDX-License-Identifier: Apache-2.0
 -->
 <resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
-
+    <!-- Buttons -->
+    <string name="ui_styles_settings_button_label">Settings</string>
+    <string name="ui_styles_reset_all_label">Reset All</string>
+    <string name="ui_styles_reset_label">Reset</string>
+    <string name="ui_styles_apply_label">Apply</string>
+    <string name="ui_styles_cancel_label">Cancel</string>
 </resources>

@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+SPDX-FileCopyrightText: 2025 AlphaDroid
+SPDX-License-Identifier: Apache-2.0
+-->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="24dp"
+    android:background="@drawable/qs_dialog_bg">
+
+    <TextView
+        android:id="@+id/tuning_title"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textSize="20sp"
+        android:textStyle="bold"
+        android:textColor="?android:attr/textColorPrimary"
+        android:layout_marginBottom="20dp" />
+
+    <!-- Saturation -->
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@*android:string/ui_style_param_saturation"
+        android:textColor="?android:attr/textColorSecondary" />
+    <SeekBar
+        android:id="@+id/seek_saturation"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:max="200"
+        android:progress="100"
+        android:layout_marginBottom="12dp" />
+
+    <!-- Lightness -->
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@*android:string/ui_style_param_lightness"
+        android:textColor="?android:attr/textColorSecondary" />
+    <SeekBar
+        android:id="@+id/seek_lightness"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:max="200"
+        android:progress="100"
+        android:layout_marginBottom="12dp" />
+
+    <!-- Opacity -->
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@*android:string/ui_style_param_opacity"
+        android:textColor="?android:attr/textColorSecondary" />
+    <SeekBar
+        android:id="@+id/seek_opacity"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:max="100"
+        android:progress="100"
+        android:layout_marginBottom="12dp" />
+
+    <!-- Strength -->
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@*android:string/ui_style_param_strength"
+        android:textColor="?android:attr/textColorSecondary" />
+    <SeekBar
+        android:id="@+id/seek_strength"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:max="200"
+        android:progress="100"
+        android:layout_marginBottom="12dp" />
+
+    <!-- Angle -->
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@*android:string/ui_style_param_angle"
+        android:textColor="?android:attr/textColorSecondary" />
+    <SeekBar
+        android:id="@+id/seek_angle"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:max="360"
+        android:progress="180"
+        android:layout_marginBottom="24dp" />
+
+    <!-- Buttons -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+
+        <Button
+            android:id="@+id/btn_reset"
+            style="@style/Widget.Dialog.Button.BorderButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/ui_styles_reset_label"
+            android:textColor="?android:attr/textColorSecondary" />
+
+        <Space
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1" />
+
+        <Button
+            android:id="@+id/btn_done"
+            style="@style/Widget.Dialog.Button"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@*android:string/done_label" />
+    </LinearLayout>
+
+</LinearLayout>
