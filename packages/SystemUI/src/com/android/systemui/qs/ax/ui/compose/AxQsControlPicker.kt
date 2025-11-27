@@ -547,6 +547,7 @@ fun AxQsEditTile(
             label = MaterialTheme.colorScheme.onSurface,
             secondaryLabel = MaterialTheme.colorScheme.onSurface,
             icon = MaterialTheme.colorScheme.onSurface,
+            outline = MaterialTheme.colorScheme.onSurface,
         )
     val shape =
         if (circle && span == AxQsSpan.TileDefault) {

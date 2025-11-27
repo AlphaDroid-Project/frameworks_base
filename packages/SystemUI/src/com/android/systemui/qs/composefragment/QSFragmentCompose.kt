@@ -120,6 +120,11 @@ import com.android.mechanics.GestureContext
 import com.android.systemui.Dumpable
 import com.android.systemui.Flags
 import com.android.systemui.Flags.notificationShadeBlur
+import com.android.systemui.alpha.style.common.AlphaColorScheme
+import com.android.systemui.alpha.style.common.LocalAlphaColorScheme
+import com.android.systemui.alpha.style.common.defaultAlphaColorScheme
+import com.android.systemui.alpha.style.qs.LocalQSFragmentComposeViewModel
+import com.android.systemui.alpha.style.qs.rememberQsTileStyleRenderer
 import com.android.systemui.brightness.ui.compose.BrightnessSliderContainer
 import com.android.systemui.brightness.ui.compose.ContainerColors
 import com.android.systemui.brightness.ui.viewmodel.BrightnessSliderViewModel
@@ -272,7 +277,11 @@ constructor(
                     repeatOnLifecycle(Lifecycle.State.CREATED) {
                         initOnBackPressedDispatcherOwner(this@repeatWhenAttached.lifecycle)
                         setContent {
-                            this@QSFragmentCompose.Content(Modifier.sysUiResTagContainer())
+                            CompositionLocalProvider(
+                                LocalQSFragmentComposeViewModel provides viewModel
+                            ) {
+                                this@QSFragmentCompose.Content(Modifier.sysUiResTagContainer())
+                            }
                         }
                     }
                 }
@@ -343,14 +352,14 @@ constructor(
                                         }
                                     }
                                 }
-                            }
-                            .graphicsLayer { alpha = viewModel.viewAlpha }
-                            .thenIf(!Flags.notificationShadeBlur()) {
-                                Modifier.offset {
-                                    IntOffset(
-                                        x = 0,
-                                        y = viewModel.viewTranslationY.fastRoundToInt(),
-                                    )
+                                .graphicsLayer { alpha = viewModel.viewAlpha }
+                                .thenIf(!Flags.notificationShadeBlur()) {
+                                    Modifier.offset {
+                                        IntOffset(
+                                            x = 0,
+                                            y = viewModel.viewTranslationY.fastRoundToInt(),
+                                        )
+                                    }
                                 }
                             }
                             // Disable touches in the whole composable while the mirror is
@@ -360,7 +369,13 @@ constructor(
                             .thenIf(viewModel.showingMirror) { Modifier.gesturesDisabled() }
                 ) {
                     val tileScale = CommonTileDefaults.computeTileScale()
+                    val defaultScheme = defaultAlphaColorScheme()
+                    val styleRenderer = rememberQsTileStyleRenderer()
+                    val alphaColorScheme = remember(defaultScheme, styleRenderer) {
+                        styleRenderer?.produceColorScheme(defaultScheme) ?: defaultScheme
+                    }
                     CompositionLocalProvider(
+                        LocalAlphaColorScheme provides alphaColorScheme,
                         LocalTileScale provides tileScale,
                         LocalBlurEnabled provides blurEnabled,
                         LocalQsScrolling provides scrollState.isScrollInProgress,
