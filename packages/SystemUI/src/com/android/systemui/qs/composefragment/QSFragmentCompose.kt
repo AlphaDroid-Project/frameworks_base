@@ -116,6 +116,11 @@ import com.android.mechanics.GestureContext
 import com.android.systemui.Dumpable
 import com.android.systemui.Flags
 import com.android.systemui.Flags.notificationShadeBlur
+import com.android.systemui.alpha.style.common.AlphaColorScheme
+import com.android.systemui.alpha.style.common.LocalAlphaColorScheme
+import com.android.systemui.alpha.style.common.defaultAlphaColorScheme
+import com.android.systemui.alpha.style.qs.LocalQSFragmentComposeViewModel
+import com.android.systemui.alpha.style.qs.rememberQsTileStyleRenderer
 import com.android.systemui.brightness.ui.compose.BrightnessSliderContainer
 import com.android.systemui.brightness.ui.compose.ContainerColors
 import com.android.systemui.compose.modifiers.sysUiResTagContainer
@@ -242,7 +247,11 @@ constructor(
                     repeatOnLifecycle(Lifecycle.State.CREATED) {
                         initOnBackPressedDispatcherOwner(this@repeatWhenAttached.lifecycle)
                         setContent {
-                            this@QSFragmentCompose.Content(Modifier.sysUiResTagContainer())
+                            CompositionLocalProvider(
+                                LocalQSFragmentComposeViewModel provides viewModel
+                            ) {
+                                this@QSFragmentCompose.Content(Modifier.sysUiResTagContainer())
+                            }
                         }
                     }
                 }
@@ -286,35 +295,42 @@ constructor(
     @Composable
     private fun Content(modifier: Modifier = Modifier) {
         PlatformTheme(isDarkTheme = if (notificationShadeBlur()) isSystemInDarkTheme() else true) {
-            ProvideShortcutHelperIndication(interactionsConfig = interactionsConfig()) {
-                Box(
-                    modifier =
-                        modifier
-                            .layout { measurable, constraints ->
-                                measurable.measure(constraints).run {
-                                    layout(width, height) {
-                                        if (viewModel.isQsVisibleAndAnyShadeExpanded) {
-                                            place(0, 0)
+
+            val defaultScheme = defaultAlphaColorScheme()
+            val styleRenderer = rememberQsTileStyleRenderer()
+            val alphaColorScheme = remember(defaultScheme, styleRenderer) {
+                styleRenderer?.produceColorScheme(defaultScheme) ?: defaultScheme
+            }
+
+            CompositionLocalProvider(
+                LocalAlphaColorScheme provides alphaColorScheme
+            ) {
+                ProvideShortcutHelperIndication(interactionsConfig = interactionsConfig()) {
+                    Box(
+                        modifier =
+                            modifier
+                                .layout { measurable, constraints ->
+                                    measurable.measure(constraints).run {
+                                        layout(width, height) {
+                                            if (viewModel.isQsVisibleAndAnyShadeExpanded) {
+                                                place(0, 0)
+                                            }
                                         }
                                     }
                                 }
-                            }
-                            .graphicsLayer { alpha = viewModel.viewAlpha }
-                            .thenIf(!Flags.notificationShadeBlur()) {
-                                Modifier.offset {
-                                    IntOffset(
-                                        x = 0,
-                                        y = viewModel.viewTranslationY.fastRoundToInt(),
-                                    )
+                                .graphicsLayer { alpha = viewModel.viewAlpha }
+                                .thenIf(!Flags.notificationShadeBlur()) {
+                                    Modifier.offset {
+                                        IntOffset(
+                                            x = 0,
+                                            y = viewModel.viewTranslationY.fastRoundToInt(),
+                                        )
+                                    }
                                 }
-                            }
-                            // Disable touches in the whole composable while the mirror is
-                            // showing. While the mirror is showing, an ancestor of the
-                            // ComposeView is made alpha 0, but touches are still being captured
-                            // by the composables.
-                            .thenIf(viewModel.showingMirror) { Modifier.gesturesDisabled() }
-                ) {
-                    CollapsableQuickSettingsSTL()
+                                .thenIf(viewModel.showingMirror) { Modifier.gesturesDisabled() }
+                    ) {
+                        CollapsableQuickSettingsSTL()
+                    }
                 }
             }
         }

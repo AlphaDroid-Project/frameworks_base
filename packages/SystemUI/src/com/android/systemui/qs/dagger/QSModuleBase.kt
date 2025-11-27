@@ -16,6 +16,7 @@
 
 package com.android.systemui.qs.dagger
 
+import com.android.systemui.alpha.style.qs.QSTileStyleModule
 import com.android.systemui.media.dagger.MediaModule
 import com.android.systemui.qs.ReduceBrightColorsController
 import com.android.systemui.qs.ReduceBrightColorsControllerImpl
@@ -39,6 +40,7 @@ import dagger.multibindings.Multibinds
             MediaModule::class,
             QSFragmentComposeModule::class,
             QSExternalModule::class,
+            QSTileStyleModule::class,
             QSFlagsModule::class,
             QSHostModule::class,
             QSPipelineModule::class,
