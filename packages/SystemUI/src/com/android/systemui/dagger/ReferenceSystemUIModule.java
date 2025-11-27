@@ -30,6 +30,8 @@ import com.android.systemui.accessibility.AccessibilityModule;
 import com.android.systemui.accessibility.SystemActionsModule;
 import com.android.systemui.accessibility.data.repository.AccessibilityRepositoryModule;
 import com.android.systemui.actioncorner.ActionCornerModule;
+import com.android.systemui.alpha.style.UiStyleRepository;
+import com.android.systemui.alpha.style.brightness.BrightnessSliderStyleModule;
 import com.android.systemui.battery.BatterySaverModule;
 import com.android.systemui.clipboardoverlay.dagger.ClipboardOverlayOverrideModule;
 import com.android.systemui.communal.posturing.dagger.NoopPosturingModule;
@@ -92,6 +94,7 @@ import com.android.systemui.statusbar.phone.StatusBarKeyguardViewManager;
 import com.android.systemui.statusbar.phone.dagger.StatusBarPhoneModule;
 import com.android.systemui.statusbar.phone.fragment.CollapsedStatusBarFragmentStartableModule;
 import com.android.systemui.statusbar.policy.AospPolicyModule;
+import com.android.systemui.statusbar.policy.ConfigurationController;
 import com.android.systemui.statusbar.policy.DeviceProvisionedController;
 import com.android.systemui.statusbar.policy.DeviceProvisionedControllerImpl;
 import com.android.systemui.statusbar.policy.IndividualSensorPrivacyController;
@@ -140,6 +143,7 @@ import javax.inject.Provider;
         AospPolicyModule.class,
         BatterySaverModule.class,
         BrightnessSliderModule.class,
+        BrightnessSliderStyleModule.class,
         CentralSurfacesModule.class,
         ClipboardOverlayOverrideModule.class,
         CollapsedStatusBarFragmentStartableModule.class,
@@ -285,5 +289,11 @@ public abstract class ReferenceSystemUIModule {
     @ClassKey(SysuiStatusBarStateController.class)
     static Set<Class<? extends CoreStartable>> providesStatusBarStateControllerDeps() {
         return Set.of(CentralSurfaces.class);
+    }
+
+    @Provides
+    @SysUISingleton
+    static UiStyleRepository provideUiStyleRepository(Context context, ConfigurationController configurationController) {
+        return new UiStyleRepository(context, configurationController);
     }
 }

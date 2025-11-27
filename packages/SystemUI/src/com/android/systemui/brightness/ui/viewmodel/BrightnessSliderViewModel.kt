@@ -22,6 +22,8 @@ import androidx.annotation.FloatRange
 import androidx.annotation.StringRes
 import androidx.compose.runtime.getValue
 import androidx.core.content.res.ResourcesCompat
+import com.android.systemui.alpha.style.brightness.BrightnessSliderStyleManager
+import com.android.systemui.alpha.style.brightness.renderers.BrightnessSliderStyleRenderer
 import com.android.systemui.brightness.domain.interactor.BrightnessPolicyEnforcementInteractor
 import com.android.systemui.brightness.domain.interactor.ScreenBrightnessInteractor
 import com.android.systemui.brightness.shared.model.GammaBrightness
@@ -41,6 +43,7 @@ import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.withTimeoutOrNull
 
 /**
@@ -49,8 +52,11 @@ import kotlinx.coroutines.withTimeoutOrNull
  * If this brightness slider supports mirroring (show on top of current activity while dragging),
  * then:
  * * [showMirror] will be true while dragging
- * * [BrightnessMirrorShowingInteractor.isShowing] will track if the mirror should show (for (other
+ * * [BrightnessMirrorShowingInteractor.isShowing] will track if the mirror should show (for other
  *   parts of SystemUI to act accordingly).
+ *
+ * This ViewModel exposes a [styleRendererFlow] coming from the injected
+ * [BrightnessSliderStyleManager]. When null, the system uses default AOSP styling.
  */
 class BrightnessSliderViewModel
 @AssistedInject
@@ -60,6 +66,7 @@ constructor(
     val hapticsViewModelFactory: SliderHapticsViewModel.Factory,
     private val brightnessMirrorShowingInteractorLazy: Lazy<BrightnessMirrorShowingInteractor>,
     private val falsingInteractor: FalsingInteractor,
+    private val brightnessSliderStyleManager: BrightnessSliderStyleManager,
     @Assisted private val supportsMirroring: Boolean,
     private val brightnessWarningToast: BrightnessWarningToast,
 ) : ExclusiveActivatable() {
@@ -72,6 +79,11 @@ constructor(
     }
 
     private val hydrator = Hydrator("BrightnessSliderViewModel.hydrator")
+
+    /**
+    * Style manager for creating renderers with Material Theme colors.
+    */
+    val styleManager: BrightnessSliderStyleManager = brightnessSliderStyleManager
 
     val currentBrightness by
         hydrator.hydratedStateOf(
@@ -152,6 +164,14 @@ constructor(
     override suspend fun onActivated(): Nothing {
         hydrator.activate()
     }
+
+    val brightnessValueAsFraction: Float
+        get() {
+            val current = currentBrightness.value.toFloat()
+            val min = minBrightness.value.toFloat()
+            val max = maxBrightness.value.toFloat()
+            return ((current - min) / (max - min)).coerceIn(0f, 1f)
+        }
 
     @AssistedFactory
     interface Factory {

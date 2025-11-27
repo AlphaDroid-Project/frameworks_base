@@ -3,14 +3,16 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-package com.android.systemui.alpha.style.qs.renderers
+package com.android.systemui.alpha.style.brightness.renderers
 
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.drawscope.DrawScope
+import androidx.compose.ui.graphics.drawscope.clipPath
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
 import androidx.core.graphics.ColorUtils
@@ -22,12 +24,12 @@ import com.android.systemui.alpha.style.themes.SlashTheme
 import com.android.systemui.alpha.style.themes.SlashLightTheme
 import com.android.systemui.alpha.style.themes.SlashDarkTheme
 
-class QSSlashStyleRenderer(
+class BSSlashStyleRenderer(
     private val accentColor: Color,
     private val neutralColor: Color,
     private val isDarkTheme: Boolean,
     private val userSettings: UserStyleSettings
-) : QSTileStyleRenderer {
+) : BrightnessSliderStyleRenderer {
 
     override val id = "slash"
     override val name = "Slash"
@@ -71,34 +73,77 @@ class QSSlashStyleRenderer(
         return newColor.copy(alpha = (params.baseAlpha * userSettings.opacity).coerceIn(0f, 1f))
     }
 
-    override fun DrawScope.renderTileBackgroundOverlay(
-        tileBounds: Rect,
-        shape: Shape,
-        cornerRadius: Float,
-        materialColor: Color,
-        state: Int,
-        isSmallTile: Boolean,
-        density: Density
-    ) {
-        drawSlashEffect(tileBounds, density)
+    /**
+     * Slash thumb uses the darker slash color (matching the dark part of the slash effect).
+     */
+    override fun getThumbColor(schemeThumbColor: Color, schemeAccentColor: Color): Color {
+        val argb = android.graphics.Color.argb(
+            (schemeAccentColor.alpha * 255).toInt(),
+            (schemeAccentColor.red * 255).toInt(),
+            (schemeAccentColor.green * 255).toInt(),
+            (schemeAccentColor.blue * 255).toInt()
+        )
+        val hsl = FloatArray(3)
+        ColorUtils.colorToHSL(argb, hsl)
+        // Darken to match the slash overlay visual
+        hsl[2] = (hsl[2] * 0.65f).coerceIn(0f, 1f)
+        return Color(ColorUtils.HSLToColor(hsl))
     }
 
-    override fun DrawScope.renderIconBackgroundOverlay(
-        iconBackgroundBounds: Rect,
+    /**
+     * Skip overlay effect on thumb - just use solid dark color + inset.
+     */
+    override fun skipThumbOverlay(): Boolean = true
+
+    /**
+     * Thumb has no overlay effect for Slash style - empty implementation.
+     */
+    override fun DrawScope.renderThumbOverlay(
+        thumbBounds: Rect,
+        shape: Shape,
+        cornerRadius: Float,
+        thumbColor: Color,
+        density: Density
+    ) {
+        // No-op: Slash thumb is just solid color + inset (handled in BrightnessSlider)
+    }
+
+    override fun DrawScope.renderActiveSegmentOverlay(
+        segmentBounds: Rect,
+        shape: Shape,
+        cornerRadii: SegmentCornerRadii,
+        materialColor: Color,
+        density: Density
+    ) {
+        drawSlashEffect(segmentBounds, density)
+    }
+
+    override fun DrawScope.renderInactiveSegmentOverlay(
+        segmentBounds: Rect,
+        shape: Shape,
+        cornerRadii: SegmentCornerRadii,
+        materialColor: Color,
+        density: Density
+    ) {
+        drawSlashEffect(segmentBounds, density)
+    }
+
+    override fun DrawScope.renderButtonOverlay(
+        buttonBounds: Rect,
         shape: Shape,
         cornerRadius: Float,
         materialColor: Color,
-        state: Int,
+        isActive: Boolean,
         density: Density
     ) {
-        drawSlashEffect(iconBackgroundBounds, density)
+        drawSlashEffect(buttonBounds, density)
     }
 
     private fun DrawScope.drawSlashEffect(
         bounds: Rect,
         density: Density
     ) {
-        // Use simplified API with defaults
+        // Use Shared Geometry for consistent slope
         val slashPath = SlashGeometry.createSlashPath(bounds, isRightSide = true)
 
         drawPath(
@@ -106,10 +151,9 @@ class QSSlashStyleRenderer(
             color = Color.Black.copy(alpha = theme.slashAlpha * userSettings.strength)
         )
 
-        // Draw cut line using same geometry
+        // Use Shared Geometry offset for the cut line
         val offset = SlashGeometry.getSlashOffset(bounds.height)
-        val startXRatio = 0.7f
-        val topX = bounds.left + (bounds.width * startXRatio)
+        val topX = bounds.left + (bounds.width * 0.7f)
         val bottomX = topX - offset
 
         val strokeWidth = with(density) { 1.5.dp.toPx() }
