@@ -34,6 +34,9 @@ internal constructor(private val source: View, override val cuj: DialogCuj?) :
 
     override val sourceIdentity: Any = source
 
+    // Keep existing strict checks for standard dialogs
+    override val skipExitAnimationChecks: Boolean = false
+
     override fun startDrawingInOverlayOf(viewGroup: ViewGroup) {
         // Delay the calls to `source.setVisibility()` during the animation. This must be called
         // before `GhostView.addGhost()` is called because the latter will change the *transition*
