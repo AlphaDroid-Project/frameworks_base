@@ -10,9 +10,11 @@ interface SlashTheme {
     val slashAlpha: Float
     val cutLineAlpha: Float
 
+    // Defines where the slash starts on the x-axis (0.0 - 1.0).
+    val slashStartRatio: Float
+
     val activeParams: ColorParams
     val inactiveParams: ColorParams
-    // New: Specific params for the "little icon background" in dual tiles
     val iconBackgroundParams: ColorParams
     val thumbParams: ColorParams
 }
@@ -21,6 +23,7 @@ object SlashLightTheme : SlashTheme {
     override val slashAngle: Float = 115f
     override val slashAlpha: Float = 0.1f
     override val cutLineAlpha: Float = 0.4f
+    override val slashStartRatio: Float = 0.88f
 
     override val activeParams = ColorParams(
         baseLightness = 0.55f,
@@ -36,7 +39,6 @@ object SlashLightTheme : SlashTheme {
         forceLightContent = false
     )
 
-    // More color (sat 0.2) and contrast (lightness 0.80) compared to inactive (0.90)
     override val iconBackgroundParams = ColorParams(
         baseLightness = 0.80f,
         baseSaturation = 0.2f,
@@ -51,6 +53,7 @@ object SlashDarkTheme : SlashTheme {
     override val slashAngle: Float = 115f
     override val slashAlpha: Float = 0.2f
     override val cutLineAlpha: Float = 0.2f
+    override val slashStartRatio: Float = 0.88f
 
     override val activeParams = ColorParams(
         baseLightness = 0.30f,
@@ -66,7 +69,6 @@ object SlashDarkTheme : SlashTheme {
         forceLightContent = true
     )
 
-    // More color (sat 0.2) and contrast (lightness 0.25) compared to inactive (0.12)
     override val iconBackgroundParams = ColorParams(
         baseLightness = 0.25f,
         baseSaturation = 0.2f,
