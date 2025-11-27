@@ -25,4 +25,40 @@
     <!-- Launcher Restart -->
     <string name="launcher_restart_title">Launcher restart required</string>
     <string name="launcher_restart_message">For all changes to take effect, a Launcher restart is required. Restart Launcher now?</string>
+
+    <!-- Title for the UI style dialog [CHAR_LIMIT=30] -->
+    <string name="ui_style_dialog_title">UI Style</string>
+    <!-- Label for the UI style quick settings tile [CHAR_LIMIT=20] -->
+    <string name="ui_style_tile_label">UI Style</string>
+    <!-- Description shown in the dialog explaining real-time preview [CHAR_LIMIT=50] -->
+    <string name="ui_style_dialog_description">Changes apply in real-time</string>
+
+    <!-- Style names (0-8) -->
+    <string name="ui_style_system_default">System Default</string>
+    <string name="ui_style_outline">Outline</string>
+    <string name="ui_style_neon">Neon</string>
+    <string name="ui_style_bevel">Bevel</string>
+    <string name="ui_style_gradient">Gradient</string>
+    <string name="ui_style_reflective">Reflective</string>
+    <string name="ui_style_slash">Slash</string>
+    <string name="ui_style_aerogel">Aerogel</string>
+    <string name="ui_style_metallic">Metallic</string>
+
+    <!-- Style descriptions -->
+    <string name="ui_style_system_default_description">Clean Material You design with dynamic colors</string>
+    <string name="ui_style_outline_description">Adds visible borders around tiles and sliders</string>
+    <string name="ui_style_neon_description">Glowing effects for a vibrant, futuristic look</string>
+    <string name="ui_style_bevel_description">3D beveled edges for a classic raised appearance</string>
+    <string name="ui_style_gradient_description">Smooth color gradients across UI elements</string>
+    <string name="ui_style_reflective_description">Glossy glass-like reflections</string>
+    <string name="ui_style_slash_description">Darker subtle depth with a thin diagonal cut line</string>
+    <string name="ui_style_aerogel_description">Translucent surface with a soft overhead light effect</string>
+    <string name="ui_style_metallic_description">Polished metal with diagonal shine</string>
+
+    <!-- Tuning Dialog Parameters -->
+    <string name="ui_style_param_saturation">Vibrancy (Saturation)</string>
+    <string name="ui_style_param_lightness">Brightness</string>
+    <string name="ui_style_param_opacity">Opacity</string>
+    <string name="ui_style_param_strength">Effect Strength</string>
+    <string name="ui_style_param_angle">Effect Angle</string>
 </resources>
