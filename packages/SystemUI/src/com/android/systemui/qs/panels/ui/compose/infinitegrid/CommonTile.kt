@@ -18,10 +18,11 @@ package com.android.systemui.qs.panels.ui.compose.infinitegrid
 
 import android.content.Context
 import android.graphics.Matrix
-import android.graphics.Path
+import android.graphics.Path as AndroidPath
 import android.graphics.drawable.Animatable
 import android.graphics.drawable.AnimatedVectorDrawable
 import android.graphics.drawable.Drawable
+import android.service.quicksettings.Tile.STATE_INACTIVE
 import android.text.TextUtils
 import android.util.PathParser
 import androidx.annotation.VisibleForTesting
@@ -30,13 +31,16 @@ import androidx.compose.animation.graphics.res.animatedVectorResource
 import androidx.compose.animation.graphics.res.rememberAnimatedVectorPainter
 import androidx.compose.animation.graphics.vector.AnimatedImageVector
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -101,6 +105,8 @@ import com.android.compose.modifiers.thenIf
 import com.android.compose.ui.graphics.painter.rememberDrawablePainter
 import com.android.systemui.Flags
 import com.android.systemui.Flags.iconRefresh2025
+import com.android.systemui.alpha.style.qs.QSTileStyleWrapper
+import com.android.systemui.alpha.style.qs.renderers.QSTileStyleRenderer
 import com.android.systemui.common.shared.model.Icon
 import com.android.systemui.common.ui.compose.Icon
 import com.android.systemui.common.ui.compose.load
@@ -154,6 +160,7 @@ fun ClassicTileContent(
 
     val animatedColor by animateColorAsState(colors.background, label = "QSTileCircleBgColor")
     val animatedOutlineColor by animateColorAsState(colors.outline, label = "QSTileOutlineColor")
+    val animatedLabelColor by animateColorAsState(colors.label, label = "QSTileClassicLabelColor")
 
     val (tileHeight, iconSize) = remember(labelHide) {
         if (labelHide) {
@@ -174,20 +181,13 @@ fun ClassicTileContent(
                 .thenIf(!isNoBackground) {
                     Modifier
                         .clip(iconShape)
-                        .drawBehind {
-                            val brush = colors.iconBackgroundGradient
-                            if (brush != null) {
-                                drawRect(brush = brush)
-                            } else {
-                                drawRect(color = animatedColor)
-                            }
-                        }
+                        .drawBehind { drawRect(color = animatedColor) }
                 }
                 .thenIf(overlayPath != null) {
                     Modifier.drawWithContent {
                         drawContent()
                         overlayPath?.let { path ->
-                            val scaledPath = Path(path)
+                            val scaledPath = AndroidPath(path)
                             val matrix = Matrix()
                             matrix.setScale(size.width / 100f, size.height / 100f)
                             scaledPath.transform(matrix)
@@ -208,7 +208,6 @@ fun ClassicTileContent(
         }
 
         if (!labelHide) {
-            val labelColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.9f)
             BasicText(
                 text = label,
                 style = TextStyle(
@@ -216,7 +215,7 @@ fun ClassicTileContent(
                     textAlign = TextAlign.Center,
                     hyphens = Hyphens.Auto,
                 ),
-                color = { labelColor },
+                color = { animatedLabelColor.copy(alpha = 0.9f) },
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
                 modifier = Modifier
@@ -242,6 +241,8 @@ fun LargeTileContent(
     textScale: () -> Float = { 1f },
     toggleClick: (() -> Unit)? = null,
     onLongClick: (() -> Unit)? = null,
+    styleRenderer: QSTileStyleRenderer? = null,
+    state: Int = STATE_INACTIVE,
 ) {
     val isDualTarget = toggleClick != null
     Row(
@@ -254,13 +255,18 @@ fun LargeTileContent(
         val animatedBackgroundColor by
             animateColorAsState(colors.iconBackground, label = "QSTileDualTargetBackgroundColor")
         val focusBorderColor = MaterialTheme.colorScheme.secondary
+
+        val iconHasBackground = colors.iconBackground != Color.Transparent
+        // Icon background exists only for dual-target layout. Keep renderer behavior consistent
+        // with AOSP logic and avoid styling non-dual icon areas.
+        val shouldStyleIconBackground = isDualTarget && iconHasBackground && styleRenderer != null
+
         Box(
             modifier =
                 Modifier.size(CommonTileDefaults.ToggleTargetSize).thenIf(isDualTarget) {
                     Modifier.borderOnFocus(color = focusBorderColor, iconShape.topEnd)
                         .clip(iconShape)
                         .verticalSquish(squishiness)
-                        .drawBehind { drawRect(animatedBackgroundColor) }
                         .combinedClickable(
                             onClick = toggleClick!!,
                             onLongClick = onLongClick,
@@ -281,6 +287,30 @@ fun LargeTileContent(
                         }
                 }
         ) {
+            if (shouldStyleIconBackground) {
+                QSTileStyleWrapper(
+                    renderer = styleRenderer,
+                    shape = iconShape,
+                    state = state,
+                    materialColor = animatedBackgroundColor,
+                    isSmallTile = false,
+                    isIconBackground = true,
+                    modifier = Modifier.fillMaxSize()
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(animatedBackgroundColor, iconShape)
+                    )
+                }
+            } else if (isDualTarget) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .drawBehind { drawRect(animatedBackgroundColor) }
+                )
+            }
+
             SmallTileContent(
                 iconProvider = iconProvider,
                 color = colors.icon,
