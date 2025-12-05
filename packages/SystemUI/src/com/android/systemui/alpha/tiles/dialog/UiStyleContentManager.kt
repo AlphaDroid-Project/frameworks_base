@@ -5,9 +5,8 @@
 
 package com.android.systemui.alpha.tiles.dialog
 
-import android.content.ComponentName
 import android.content.Context
-import android.content.Intent
+import android.content.DialogInterface
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
@@ -133,46 +132,61 @@ constructor(
     }
 
     private fun openTuningDialog(styleId: String, styleName: String) {
-        val dialog = SystemUIDialog(context)
-        val dialogView = LayoutInflater.from(context).inflate(R.layout.ui_style_tuning_dialog, null)
+        val tuningDialog = SystemUIDialog(context)
+        val dialogView = LayoutInflater.from(context). inflate(R.layout.ui_style_tuning_dialog, null)
         val titleView = dialogView.findViewById<TextView>(R.id.tuning_title)
-        titleView?.text = "${context.getString(InternalR.string.ui_style_tile_label)}: $styleName"
+        titleView?. text = "${context.getString(InternalR.string.ui_style_tile_label)}: $styleName"
 
-        val seekSat = dialogView.findViewById<SeekBar>(R.id.seek_saturation)
-        val seekLight = dialogView.findViewById<SeekBar>(R.id.seek_lightness)
+        val seekSat = dialogView.findViewById<SeekBar>(R.id. seek_saturation)
+        val seekLight = dialogView.findViewById<SeekBar>(R.id. seek_lightness)
         val seekOpac = dialogView.findViewById<SeekBar>(R.id.seek_opacity)
-        val seekStr = dialogView.findViewById<SeekBar>(R.id.seek_strength)
-        val seekAngle = dialogView.findViewById<SeekBar>(R.id.seek_angle)
+        val seekStr = dialogView.findViewById<SeekBar>(R.id. seek_strength)
+        val seekAngle = dialogView.findViewById<SeekBar>(R.id. seek_angle)
         val btnReset = dialogView.findViewById<Button>(R.id.btn_reset)
         val btnDone = dialogView.findViewById<Button>(R.id.btn_done)
 
-        // Always start with current settings. If null/default, sliders show default positions.
-        val currentSettings = if (styleId == uiStyleRepository.styleState.value.styleId) {
-            uiStyleRepository.styleState.value.settings
+        val currentSettings = if (styleId == uiStyleRepository.styleState.value. styleId) {
+            uiStyleRepository.styleState.value. settings
         } else {
-            UserStyleSettings.DEFAULT
+            UserStyleSettings. DEFAULT
         }
 
         fun setSeekBars(settings: UserStyleSettings) {
             seekSat?.progress = (settings.saturation * 100).toInt()
-            seekLight?.progress = (settings.lightness * 100).toInt()
+            seekLight?.progress = (settings.lightness * 100). toInt()
             val opacP = ((settings.opacity - 0.2f) / 0.8f * 100).toInt()
             seekOpac?.progress = opacP.coerceIn(0, 100)
-            val strP = ((settings.strength - 0.2f) / 1.8f * 200).toInt()
+            val strP = ((settings. strength - 0.2f) / 1.8f * 200).toInt()
             seekStr?.progress = strP.coerceIn(0, 200)
             seekAngle?.progress = (settings.angle + 180).toInt()
         }
         setSeekBars(currentSettings)
 
-        dialog.setView(dialogView)
-        dialog.window?.setWindowAnimations(R.style.Animation_InternetDialog)
+        tuningDialog. setView(dialogView)
+        tuningDialog.window?.setWindowAnimations(R.style.Animation_InternetDialog)
+
+        val window = tuningDialog.window
+        val params = window?.attributes
+        params?.width = (context. resources.displayMetrics.widthPixels * 0.85). toInt()
+        window?.attributes = params
+
+        // Fixed dim value for restore
+        val normalDimAmount = 0.6f
+
+        fun setDim(dim: Float) {
+            window?.let {
+                val attrs = it.attributes
+                attrs.dimAmount = dim
+                it.attributes = attrs
+            }
+        }
 
         fun applySettings() {
             if (seekSat == null) return
             val saturation = seekSat.progress / 100f
-            val lightness = seekLight.progress / 100f
+            val lightness = seekLight. progress / 100f
             val opacity = 0.2f + (seekOpac.progress / 100f * 0.8f)
-            val strength = 0.2f + (seekStr.progress / 200f * 1.8f)
+            val strength = 0.2f + (seekStr. progress / 200f * 1.8f)
             val angle = seekAngle.progress.toFloat() - 180f
 
             val newSettings = UserStyleSettings(saturation, lightness, opacity, strength, angle)
@@ -181,29 +195,37 @@ constructor(
             }
         }
 
-        val listener = object : SeekBar.OnSeekBarChangeListener {
-            override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {}
-            override fun onStartTrackingTouch(seekBar: SeekBar?) {}
+        val listener = object : SeekBar. OnSeekBarChangeListener {
+            override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
+                if (fromUser) {
+                    applySettings()
+                }
+            }
+
+            override fun onStartTrackingTouch(seekBar: SeekBar?) {
+                setDim(0f)
+            }
+
             override fun onStopTrackingTouch(seekBar: SeekBar?) {
-                applySettings()
+                setDim(normalDimAmount)
             }
         }
-        seekSat?.setOnSeekBarChangeListener(listener)
+
+        seekSat?. setOnSeekBarChangeListener(listener)
         seekLight?.setOnSeekBarChangeListener(listener)
         seekOpac?.setOnSeekBarChangeListener(listener)
         seekStr?.setOnSeekBarChangeListener(listener)
         seekAngle?.setOnSeekBarChangeListener(listener)
 
         btnReset?.setOnClickListener {
-            // Reset to generic defaults (1.0/1.0)
-            // The Renderers should handle the "vivid" look if the user sets (or resets to) default settings.
             setSeekBars(UserStyleSettings.DEFAULT)
             applySettings()
         }
-        btnDone?.setOnClickListener {
-            dialog.dismiss()
+        btnDone?. setOnClickListener {
+            tuningDialog.dismiss()
         }
-        dialog.show()
+
+        tuningDialog.show()
     }
 
     fun start() {
