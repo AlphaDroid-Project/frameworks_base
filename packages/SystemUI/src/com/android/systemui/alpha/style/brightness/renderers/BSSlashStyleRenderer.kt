@@ -9,10 +9,8 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.drawscope.DrawScope
-import androidx.compose.ui.graphics.drawscope.clipPath
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
 import androidx.core.graphics.ColorUtils
@@ -85,7 +83,6 @@ class BSSlashStyleRenderer(
         )
         val hsl = FloatArray(3)
         ColorUtils.colorToHSL(argb, hsl)
-        // Darken to match the slash overlay visual
         hsl[2] = (hsl[2] * 0.65f).coerceIn(0f, 1f)
         return Color(ColorUtils.HSLToColor(hsl))
     }
@@ -143,23 +140,31 @@ class BSSlashStyleRenderer(
         bounds: Rect,
         density: Density
     ) {
-        // Use Shared Geometry for consistent slope
-        val slashPath = SlashGeometry.createSlashPath(bounds, isRightSide = true)
+        // Combine theme angle with user customization
+        val effectiveAngle = theme.slashAngle + userSettings.angle
+
+        // Use full SlashGeometry API with user-adjusted angle
+        val offset = SlashGeometry.getSlashOffset(bounds.height, effectiveAngle)
+        val slashPath = SlashGeometry.createSlashPath(
+            bounds = bounds,
+            offset = offset,
+            startXRatio = theme.slashStartRatio,
+            isRightSide = true
+        )
 
         drawPath(
             path = slashPath,
             color = Color.Black.copy(alpha = theme.slashAlpha * userSettings.strength)
         )
 
-        // Use Shared Geometry offset for the cut line
-        val offset = SlashGeometry.getSlashOffset(bounds.height)
-        val topX = bounds.left + (bounds.width * 0.7f)
+        // Draw cut line using same geometry
+        val topX = bounds.left + (bounds.width * theme.slashStartRatio)
         val bottomX = topX - offset
 
         val strokeWidth = with(density) { 1.5.dp.toPx() }
 
         drawLine(
-            color = Color.White.copy(alpha = theme.cutLineAlpha),
+            color = Color.White.copy(alpha = theme.cutLineAlpha * userSettings.strength),
             start = Offset(topX, bounds.top),
             end = Offset(bottomX, bounds.bottom),
             strokeWidth = strokeWidth

@@ -20,7 +20,7 @@ interface SlashTheme {
 }
 
 object SlashLightTheme : SlashTheme {
-    override val slashAngle: Float = 115f
+    override val slashAngle: Float = 20f
     override val slashAlpha: Float = 0.1f
     override val cutLineAlpha: Float = 0.4f
     override val slashStartRatio: Float = 0.88f
@@ -50,7 +50,7 @@ object SlashLightTheme : SlashTheme {
 }
 
 object SlashDarkTheme : SlashTheme {
-    override val slashAngle: Float = 115f
+    override val slashAngle: Float = 20f
     override val slashAlpha: Float = 0.2f
     override val cutLineAlpha: Float = 0.2f
     override val slashStartRatio: Float = 0.88f

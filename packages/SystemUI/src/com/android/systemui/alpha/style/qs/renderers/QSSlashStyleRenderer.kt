@@ -98,8 +98,17 @@ class QSSlashStyleRenderer(
         bounds: Rect,
         density: Density
     ) {
-        // Use simplified API with defaults
-        val slashPath = SlashGeometry.createSlashPath(bounds, isRightSide = true)
+        // Combine theme angle with user customization
+        val effectiveAngle = theme.slashAngle + userSettings.angle
+
+        // Use full SlashGeometry API with user-adjusted angle
+        val offset = SlashGeometry.getSlashOffset(bounds.height, effectiveAngle)
+        val slashPath = SlashGeometry.createSlashPath(
+            bounds = bounds,
+            offset = offset,
+            startXRatio = theme.slashStartRatio,
+            isRightSide = true
+        )
 
         drawPath(
             path = slashPath,
@@ -107,15 +116,13 @@ class QSSlashStyleRenderer(
         )
 
         // Draw cut line using same geometry
-        val offset = SlashGeometry.getSlashOffset(bounds.height)
-        val startXRatio = 0.7f
-        val topX = bounds.left + (bounds.width * startXRatio)
+        val topX = bounds.left + (bounds.width * theme.slashStartRatio)
         val bottomX = topX - offset
 
         val strokeWidth = with(density) { 1.5.dp.toPx() }
 
         drawLine(
-            color = Color.White.copy(alpha = theme.cutLineAlpha),
+            color = Color.White.copy(alpha = theme.cutLineAlpha * userSettings.strength),
             start = Offset(topX, bounds.top),
             end = Offset(bottomX, bounds.bottom),
             strokeWidth = strokeWidth
