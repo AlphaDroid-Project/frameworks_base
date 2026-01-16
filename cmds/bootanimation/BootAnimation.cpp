@@ -845,7 +845,13 @@ bool BootAnimation::android(const Display& display) {
     SLOGD("%sAnimationShownTiming start time: %" PRId64 "ms", mShuttingDown ? "Shutdown" : "Boot",
             elapsedRealtime());
     initTexture(&mAndroid[0], mAssets, "images/android-logo-mask.png");
-    initTexture(&mAndroid[1], mAssets, "images/android-logo-shine.png");
+
+    // Randomly cycle anmimation mask
+    srand(time(NULL));
+    int shineNum = (rand() % 4) + 1;
+    char shineFile[64];
+    sprintf(shineFile, "images/android-logo-shine-%d.png", shineNum);
+    initTexture(&mAndroid[1], mAssets, shineFile);
 
     mCallbacks->init({});
 
