@@ -19970,11 +19970,6 @@ public class ActivityManagerService extends IActivityManager.Stub
     }
 
     @Override
-    public boolean shouldForceCutoutFullscreen(String packageName) {
-        return mActivityTaskManager.shouldForceCutoutFullscreen(packageName);
-    }
-
-    @Override
     public void releaseMemory(int minAdj, int maxKillCount,
                               boolean includeUIProcesses, boolean skipCamera) {
         if (minAdj <= 0) return;
