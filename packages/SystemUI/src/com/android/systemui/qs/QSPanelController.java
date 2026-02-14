@@ -308,4 +308,3 @@ public class QSPanelController extends QSPanelControllerBase<QSPanel> {
         return mView.getBottom();
     }
 }
-

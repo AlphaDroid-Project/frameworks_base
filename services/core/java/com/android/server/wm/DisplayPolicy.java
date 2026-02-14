@@ -154,8 +154,6 @@ import com.android.server.statusbar.StatusBarManagerInternal;
 import com.android.server.wallpaper.WallpaperManagerInternal;
 import com.android.wm.shell.Flags;
 
-import lineageos.providers.LineageSettings;
-
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -451,11 +449,11 @@ public class DisplayPolicy {
             super(handler);
 
             ContentResolver resolver = mContext.getContentResolver();
-            resolver.registerContentObserver(LineageSettings.System.getUriFor(
-                    LineageSettings.System.FORCE_SHOW_NAVBAR), false, this,
+            resolver.registerContentObserver(Settings.System.getUriFor(
+                    Settings.System.FORCE_SHOW_NAVBAR), false, this,
                     UserHandle.USER_ALL);
-            resolver.registerContentObserver(LineageSettings.System.getUriFor(
-                    LineageSettings.System.ENABLE_TASKBAR), false, this,
+            resolver.registerContentObserver(Settings.System.getUriFor(
+                    Settings.System.ENABLE_TASKBAR), false, this,
                     UserHandle.USER_ALL);
 
             updateSettings();
@@ -793,14 +791,14 @@ public class DisplayPolicy {
     public void updateSettings() {
         ContentResolver resolver = mContext.getContentResolver();
 
-        mHasNavigationBar = LineageSettings.System.getIntForUser(resolver,
-                LineageSettings.System.FORCE_SHOW_NAVBAR, Utils.hasNavbarByDefault(mContext) ? 1 : 0,
+        mHasNavigationBar = Settings.System.getIntForUser(resolver,
+                Settings.System.FORCE_SHOW_NAVBAR, Utils.hasNavbarByDefault(mContext) ? 1 : 0,
                 UserHandle.USER_CURRENT) != 0;
-        mTaskBarEnabled = LineageSettings.System.getIntForUser(resolver,
-                LineageSettings.System.ENABLE_TASKBAR, isTablet() ? 1 : 0,
+        mTaskBarEnabled = Settings.System.getIntForUser(resolver,
+                Settings.System.ENABLE_TASKBAR, isTablet() ? 1 : 0,
                 UserHandle.USER_CURRENT) != 0;
     }
-    
+
     private boolean isTablet() {
         return getCurrentUserResources().getConfiguration().smallestScreenWidthDp >= 600;
     }
@@ -1958,7 +1956,7 @@ public class DisplayPolicy {
                 R.bool.config_remoteInsetsControllerControlsSystemBars);
 
         updateConfigurationAndScreenSizeDependentBehaviors();
-        
+
         final boolean isMobileTaskbarEnabled = !isTablet() && mTaskBarEnabled;
 
         final boolean shouldAttach =

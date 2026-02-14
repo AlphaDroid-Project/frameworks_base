@@ -96,8 +96,6 @@ import com.google.ux.material.libmonet.dynamiccolor.MaterialDynamicColors;
 import kotlinx.coroutines.flow.Flow;
 import kotlinx.coroutines.flow.StateFlow;
 
-import lineageos.providers.LineageSettings;
-
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -527,7 +525,7 @@ public class ThemeOverlayController implements CoreStartable, Dumpable {
         }
 
         mSecureSettings.registerContentObserverForUserSync(
-                LineageSettings.Secure.getUriFor(LineageSettings.Secure.BERRY_BLACK_THEME),
+                Settings.Secure.getUriFor(Settings.Secure.BERRY_BLACK_THEME),
                 false,
                 new ContentObserver(mBgHandler) {
                     @Override
@@ -842,8 +840,8 @@ public class ThemeOverlayController implements CoreStartable, Dumpable {
             }
         }
 
-        boolean isBlackMode = (LineageSettings.Secure.getIntForUser(
-                mContext.getContentResolver(), LineageSettings.Secure.BERRY_BLACK_THEME,
+        boolean isBlackMode = (Settings.Secure.getIntForUser(
+                mContext.getContentResolver(), Settings.Secure.BERRY_BLACK_THEME,
                 0, currentUser) == 1) && isNightMode();
 
         // Compatibility with legacy themes, where full packages were defined, instead of just

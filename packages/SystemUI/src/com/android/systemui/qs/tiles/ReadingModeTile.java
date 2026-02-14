@@ -21,6 +21,7 @@ import static com.android.internal.logging.MetricsLogger.VIEW_UNKNOWN;
 import android.content.Intent;
 import android.os.Handler;
 import android.os.Looper;
+import android.provider.Settings;
 import android.service.quicksettings.Tile;
 
 import androidx.annotation.Nullable;
@@ -42,7 +43,6 @@ import com.android.systemui.res.R;
 import org.lineageos.internal.util.PackageManagerUtils;
 
 import lineageos.hardware.LineageHardwareManager;
-import lineageos.providers.LineageSettings;
 
 import javax.inject.Inject;
 

@@ -174,7 +174,6 @@ import com.android.systemui.util.settings.SecureSettings;
 import dagger.Lazy;
 
 import lineageos.app.LineageGlobalActions;
-import lineageos.providers.LineageSettings;
 
 import org.lineageos.internal.util.PowerMenuUtils;
 
@@ -545,7 +544,7 @@ public class GlobalActionsDialogLite implements DialogInterface.OnDismissListene
         mConfigurationController.addCallback(this);
 
         mContext.getContentResolver().registerContentObserver(
-                LineageSettings.Secure.getUriFor(LineageSettings.Secure.POWER_MENU_ACTIONS), false,
+                Settings.Secure.getUriFor(Settings.Secure.POWER_MENU_ACTIONS), false,
                 new ContentObserver(null) {
                     @Override
                     public void onChange(boolean selfChange) {
@@ -693,7 +692,7 @@ public class GlobalActionsDialogLite implements DialogInterface.OnDismissListene
     @VisibleForTesting
     protected String[] getRestartActions() {
         return mResources.getStringArray(
-                org.lineageos.platform.internal.R.array.config_restartActionsList);
+                com.android.internal.R.array.config_restartActionsList);
     }
 
     @VisibleForTesting
