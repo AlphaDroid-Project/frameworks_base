@@ -1,4 +1,4 @@
-package com.android.server.crdroid.vbmeta;
+package com.android.server.alpha.vbmeta;
 
 import com.android.internal.org.bouncycastle.asn1.ASN1Encodable;
 import com.android.internal.org.bouncycastle.asn1.ASN1Sequence;

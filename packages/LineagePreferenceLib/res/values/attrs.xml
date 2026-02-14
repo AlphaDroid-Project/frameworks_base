@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+     SPDX-FileCopyrightText: 2016 The CyanogenMod Project
+     SPDX-FileCopyrightText: 2018 The LineageOS Project
+     SPDX-License-Identifier: Apache-2.0
+-->
+<resources>
+    <declare-styleable name="lineage_SelfRemovingPreference">
+        <attr name="requiresPackage" format="string" />
+        <attr name="requiresFeature" format="string" />
+        <attr name="requiresConfig" format="string" />
+        <attr name="requiresConfigMask" format="integer" />
+        <attr name="requiresProperty" format="string" />
+        <attr name="requiresOwner" format="boolean" />
+        <attr name="requiresAction" format="string" />
+        <attr name="requiresService" format="string" />
+        <attr name="replacesKey" format="string" />
+        <attr name="minSummaryLines" format="integer" />
+    </declare-styleable>
+
+    <!--Settings search providers-->
+    <declare-styleable name="lineage_Searchable">
+        <attr name="xmlRes" format="reference" />
+    </declare-styleable>
+
+</resources>
