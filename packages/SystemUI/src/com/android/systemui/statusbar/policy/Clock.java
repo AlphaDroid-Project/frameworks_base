@@ -62,8 +62,6 @@ import com.android.systemui.statusbar.core.StatusBarRootModernization;
 import com.android.systemui.tuner.TunerService;
 import com.android.systemui.tuner.TunerService.Tunable;
 
-import lineageos.providers.LineageSettings;
-
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -90,7 +88,7 @@ public class Clock extends TextView implements
     public static final String STATUS_BAR_CLOCK_SECONDS =
             "system:" + Settings.System.STATUS_BAR_CLOCK_SECONDS;
     private static final String STATUS_BAR_AM_PM =
-            "lineagesystem:" + LineageSettings.System.STATUS_BAR_AM_PM;
+            "system:" + Settings.System.STATUS_BAR_AM_PM;
     public static final String STATUS_BAR_CLOCK_DATE_DISPLAY =
             "system:" + Settings.System.STATUS_BAR_CLOCK_DATE_DISPLAY;
     public static final String STATUS_BAR_CLOCK_DATE_STYLE =
@@ -173,8 +171,8 @@ public class Clock extends TextView implements
                 R.styleable.Clock,
                 0, 0);
         try {
-            mAmPmStyle = LineageSettings.System.getIntForUser(
-                context.getContentResolver(), LineageSettings.System.STATUS_BAR_AM_PM,
+            mAmPmStyle = Settings.System.getIntForUser(
+                context.getContentResolver(), Settings.System.STATUS_BAR_AM_PM,
                 AM_PM_STYLE_GONE, UserHandle.USER_CURRENT);
             mIsStatusBar = a.getBoolean(R.styleable.Clock_isStatusBar, mIsStatusBar);
             mNonAdaptedColor = getCurrentTextColor();
@@ -702,4 +700,3 @@ public class Clock extends TextView implements
         }
     };
 }
-

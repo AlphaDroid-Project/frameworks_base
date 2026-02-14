@@ -117,8 +117,6 @@ import com.android.wm.shell.desktopmode.DesktopMode;
 import com.android.wm.shell.pip.Pip;
 import com.android.wm.shell.shared.desktopmode.DesktopState;
 
-import lineageos.providers.LineageSettings;
-
 import dagger.assisted.Assisted;
 import dagger.assisted.AssistedFactory;
 import dagger.assisted.AssistedInject;
@@ -152,11 +150,11 @@ public class EdgeBackGestureHandler implements TunerService.Tunable {
             "gestures.back_timeout", 250);
 
     private static final String KEY_EDGE_LONG_SWIPE_ACTION =
-            "lineagesystem:" + LineageSettings.System.KEY_EDGE_LONG_SWIPE_ACTION;
+            "system:" + Settings.System.KEY_EDGE_LONG_SWIPE_ACTION;
     private static final String BACK_GESTURE_HEIGHT =
             "system:" + Settings.System.BACK_GESTURE_HEIGHT;
     private static final String FORCE_SHOW_NAVBAR =
-            "lineagesystem:" + LineageSettings.System.FORCE_SHOW_NAVBAR;
+            "system:" + Settings.System.FORCE_SHOW_NAVBAR;
     private static final String BACK_GESTURE_ARROW =
             Settings.Secure.BACK_GESTURE_ARROW;
     private static final String BACK_GESTURE_HAPTIC =
@@ -627,8 +625,8 @@ public class EdgeBackGestureHandler implements TunerService.Tunable {
                 && mButtonForcedVisibleCallback != null) {
             mButtonForcedVisibleCallback.accept(mIsButtonForcedVisible);
         }
-        mNavbarVisible = LineageSettings.System.getIntForUser(mContext.getContentResolver(),
-                LineageSettings.System.FORCE_SHOW_NAVBAR, Utils.hasNavbarByDefault(mContext) ? 1 : 0,
+        mNavbarVisible = Settings.System.getIntForUser(mContext.getContentResolver(),
+                Settings.System.FORCE_SHOW_NAVBAR, Utils.hasNavbarByDefault(mContext) ? 1 : 0,
                 UserHandle.USER_CURRENT) != 0;
 
         final DisplayMetrics dm = res.getDisplayMetrics();
@@ -646,8 +644,8 @@ public class EdgeBackGestureHandler implements TunerService.Tunable {
         if (mMLEnableWidth > mEdgeWidthLeft) mMLEnableWidth = mEdgeWidthLeft;
 
         mIsLongSwipeEnabled = Action.fromIntSafe(
-                LineageSettings.System.getIntForUser(mContext.getContentResolver(),
-                        LineageSettings.System.KEY_EDGE_LONG_SWIPE_ACTION,
+                Settings.System.getIntForUser(mContext.getContentResolver(),
+                        Settings.System.KEY_EDGE_LONG_SWIPE_ACTION,
                         Action.NOTHING.ordinal(), UserHandle.USER_CURRENT)) != Action.NOTHING;
         updateLongSwipeWidth();
 

@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+     SPDX-FileCopyrightText: 2022-2023 The LineageOS Project
+     SPDX-License-Identifier: Apache-2.0
+-->
+<resources>
+
+    <java-symbol type="attr" name="requiresPackage" />
+    <java-symbol type="attr" name="requiresFeature" />
+    <java-symbol type="attr" name="requiresConfig" />
+    <java-symbol type="attr" name="requiresConfigMask" />
+    <java-symbol type="attr" name="requiresProperty" />
+    <java-symbol type="attr" name="requiresOwner" />
+    <java-symbol type="attr" name="requiresAction" />
+    <java-symbol type="attr" name="requiresService" />
+    <java-symbol type="attr" name="replacesKey" />
+
+    <java-symbol type="attr" name="xmlRes" />
+    <java-symbol type="attr" name="minSummaryLines" />
+
+</resources>

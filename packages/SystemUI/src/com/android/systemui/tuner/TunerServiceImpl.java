@@ -52,8 +52,6 @@ import com.android.systemui.util.leak.LeakDetector;
 
 import dagger.Lazy;
 
-import lineageos.providers.LineageSettings;
-
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -176,20 +174,8 @@ public class TunerServiceImpl extends TunerService {
         setValue(TUNER_VERSION, newVersion);
     }
 
-    private boolean isLineageSetting(String key) {
-        return isLineageGlobal(key) || isLineageSystem(key) || isLineageSecure(key);
-    }
-
-    private boolean isLineageGlobal(String key) {
-        return key.startsWith("lineageglobal:");
-    }
-
-    private boolean isLineageSystem(String key) {
-        return key.startsWith("lineagesystem:");
-    }
-
-    private boolean isLineageSecure(String key) {
-        return key.startsWith("lineagesecure:");
+    private boolean isSecure(String key) {
+        return key.startsWith("secure:");
     }
 
     private boolean isSystem(String key) {
@@ -201,20 +187,12 @@ public class TunerServiceImpl extends TunerService {
     }
 
     private String chomp(String key) {
-        return key.replaceFirst("^(lineageglobal|lineagesecure|lineagesystem|system|global):", "");
+        return key.replaceFirst("^(secure|system|global):", "");
     }
 
     @Override
     public String getValue(String setting) {
-        if (isLineageGlobal(setting)) {
-            return LineageSettings.Global.getString(mContentResolver, chomp(setting));
-        } else if (isLineageSecure(setting)) {
-            return LineageSettings.Secure.getStringForUser(
-                    mContentResolver, chomp(setting), mCurrentUser);
-        } else if (isLineageSystem(setting)) {
-            return LineageSettings.System.getStringForUser(
-                    mContentResolver, chomp(setting), mCurrentUser);
-        } else if (isSystem(setting)) {
+        if (isSystem(setting)) {
             return Settings.System.getStringForUser(
                     mContentResolver, chomp(setting), mCurrentUser);
         } else if (isGlobal(setting)) {
@@ -227,15 +205,7 @@ public class TunerServiceImpl extends TunerService {
 
     @Override
     public void setValue(String setting, String value) {
-        if (isLineageGlobal(setting)) {
-            LineageSettings.Global.putString(mContentResolver, chomp(setting), value);
-        } else if (isLineageSecure(setting)) {
-            LineageSettings.Secure.putStringForUser(
-                    mContentResolver, chomp(setting), value, mCurrentUser);
-        } else if (isLineageSystem(setting)) {
-            LineageSettings.System.putStringForUser(
-                    mContentResolver, chomp(setting), value, mCurrentUser);
-        } else if (isSystem(setting)) {
+        if (isSystem(setting)) {
             Settings.System.putStringForUser(
                     mContentResolver, chomp(setting), value, mCurrentUser);
         } else if (isGlobal(setting)) {
@@ -248,15 +218,7 @@ public class TunerServiceImpl extends TunerService {
 
     @Override
     public int getValue(String setting, int def) {
-        if (isLineageGlobal(setting)) {
-            return LineageSettings.Global.getInt(mContentResolver, chomp(setting), def);
-        } else if (isLineageSecure(setting)) {
-            return LineageSettings.Secure.getIntForUser(
-                    mContentResolver, chomp(setting), def, mCurrentUser);
-        } else if (isLineageSystem(setting)) {
-            return LineageSettings.System.getIntForUser(
-                    mContentResolver, chomp(setting), def, mCurrentUser);
-        } else if (isSystem(setting)) {
+        if (isSystem(setting)) {
             return Settings.System.getIntForUser(
                     mContentResolver, chomp(setting), def, mCurrentUser);
         } else if (isGlobal(setting)) {
@@ -270,15 +232,7 @@ public class TunerServiceImpl extends TunerService {
     @Override
     public String getValue(String setting, String def) {
         String ret;
-        if (isLineageGlobal(setting)) {
-            ret = LineageSettings.Global.getString(mContentResolver, chomp(setting));
-        } else if (isLineageSecure(setting)) {
-            ret = LineageSettings.Secure.getStringForUser(
-                    mContentResolver, chomp(setting), mCurrentUser);
-        } else if (isLineageSystem(setting)) {
-            ret = LineageSettings.System.getStringForUser(
-                    mContentResolver, chomp(setting), mCurrentUser);
-        } else if (isSystem(setting)) {
+        if (isSystem(setting)) {
             ret = Settings.System.getStringForUser(
                     mContentResolver, chomp(setting), mCurrentUser);
         } else if (isGlobal(setting)) {
@@ -293,15 +247,7 @@ public class TunerServiceImpl extends TunerService {
 
     @Override
     public void setValue(String setting, int value) {
-        if (isLineageGlobal(setting)) {
-            LineageSettings.Global.putInt(mContentResolver, chomp(setting), value);
-        } else if (isLineageSecure(setting)) {
-            LineageSettings.Secure.putIntForUser(
-                    mContentResolver, chomp(setting), value, mCurrentUser);
-        } else if (isLineageSystem(setting)) {
-            LineageSettings.System.putIntForUser(
-                    mContentResolver, chomp(setting), value, mCurrentUser);
-        } else if (isSystem(setting)) {
+        if (isSystem(setting)) {
             Settings.System.putIntForUser(mContentResolver, chomp(setting), value, mCurrentUser);
         } else if (isGlobal(setting)) {
             Settings.Global.putInt(mContentResolver, chomp(setting), value);
@@ -327,13 +273,7 @@ public class TunerServiceImpl extends TunerService {
             mLeakDetector.trackCollection(mTunables, "TunerService.mTunables");
         }
         final Uri uri;
-        if (isLineageGlobal(key)) {
-            uri = LineageSettings.Global.getUriFor(chomp(key));
-        } else if (isLineageSecure(key)) {
-            uri = LineageSettings.Secure.getUriFor(chomp(key));
-        } else if (isLineageSystem(key)) {
-            uri = LineageSettings.System.getUriFor(chomp(key));
-        } else if (isSystem(key)) {
+        if (isSystem(key)) {
             uri = Settings.System.getUriFor(chomp(key));
         } else if (isGlobal(key)) {
             uri = Settings.Global.getUriFor(chomp(key));
@@ -343,7 +283,7 @@ public class TunerServiceImpl extends TunerService {
         if (!mListeningUris.containsKey(uri)) {
             mListeningUris.put(uri, key);
             mContentResolver.registerContentObserver(uri, false, mObserver,
-                    isLineageGlobal(key) ? UserHandle.USER_ALL : mCurrentUser);
+                    mCurrentUser);
         }
         // Send the first state.
         String value = DejankUtils.whitelistIpcs(() -> getValue(key));
@@ -368,7 +308,7 @@ public class TunerServiceImpl extends TunerService {
         for (Uri uri : mListeningUris.keySet()) {
             String key = mListeningUris.get(uri);
             mContentResolver.registerContentObserver(uri, false, mObserver,
-                    isLineageGlobal(key) ? UserHandle.USER_ALL : mCurrentUser);
+                    mCurrentUser);
         }
     }
 
@@ -409,7 +349,7 @@ public class TunerServiceImpl extends TunerService {
 
         // A couple special cases.
         for (String key : mTunableLookup.keySet()) {
-            if (ArrayUtils.contains(RESET_EXCEPTION_LIST, key) || isLineageSetting(key)) {
+            if (ArrayUtils.contains(RESET_EXCEPTION_LIST, key)) {
                 continue;
             }
             setValue(key, null);
@@ -467,7 +407,7 @@ public class TunerServiceImpl extends TunerService {
                 int flags, int userId) {
             for (Uri u : uris) {
                 String key = mListeningUris.get(u);
-                if (userId == mUserTracker.getUserId() || isLineageGlobal(key)) {
+                if (userId == mUserTracker.getUserId()) {
                     reloadSetting(u);
                 }
             }

@@ -871,6 +871,16 @@
     <!-- Used for long press power torch feature - automatic turn off on timeout -->
     <protected-broadcast android:name="com.android.server.policy.PhoneWindowManager.ACTION_TORCH_OFF" />
 
+    <!-- LineageHealth -->
+    <protected-broadcast android:name="lineageos.intent.action.CHARGING_CONTROL_CANCEL_ONCE" />
+
+    <!-- LineageHardware -->
+    <protected-broadcast android:name="lineageos.intent.action.INITIALIZE_LINEAGE_HARDWARE" />
+
+    <!-- Live display -->
+    <protected-broadcast android:name="lineageos.intent.action.UPDATE_TWILIGHT_STATE" />
+    <protected-broadcast android:name="lineageos.intent.action.INITIALIZE_LIVEDISPLAY" />
+
     <!-- ====================================================================== -->
     <!--                          RUNTIME PERMISSIONS                           -->
     <!-- ====================================================================== -->
@@ -9477,6 +9487,18 @@
     <permission android:name="android.permission.BIND_CONTENT_RESTRICTION_SERVICE"
         android:protectionLevel="signature"
         android:featureFlag="android.permission.flags.content_restriction_role_enabled" />
+
+    <!-- @hide -->
+    <permission android:name="lineageos.permission.HARDWARE_ABSTRACTION_ACCESS"
+        android:protectionLevel="signature|privileged" />
+
+    <!-- @hide -->
+    <permission android:name="lineageos.permission.MANAGE_LIVEDISPLAY"
+        android:protectionLevel="signature|privileged" />
+
+    <!-- @hide -->
+    <permission android:name="lineageos.permission.MANAGE_REMOTE_PREFERENCES"
+        android:protectionLevel="signature|privileged" />
 
     <!-- Attribution for Geofencing service. -->
     <attribution android:tag="GeofencingService" android:label="@string/geofencing_service"/>
