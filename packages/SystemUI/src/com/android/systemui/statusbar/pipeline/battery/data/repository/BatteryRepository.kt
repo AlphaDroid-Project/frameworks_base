@@ -21,6 +21,7 @@ import android.database.ContentObserver
 import android.os.Handler
 import android.os.Looper
 import android.os.UserHandle
+import android.provider.Settings
 import com.android.systemui.Flags
 import com.android.systemui.dagger.SysUISingleton
 import com.android.systemui.dagger.qualifiers.Application
@@ -50,7 +51,6 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.scan
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.suspendCancellableCoroutine
-import lineageos.providers.LineageSettings
 
 /** Repository-style state for battery information. */
 interface BatteryRepository {
@@ -78,13 +78,13 @@ interface BatteryRepository {
     val isStateUnknown: Flow<Boolean>
 
     /**
-     * [LineageSettings.System.STATUS_BAR_BATTERY_STYLE]. A user setting to indicate the battery
+     * [Settings.System.STATUS_BAR_BATTERY_STYLE]. A user setting to indicate the battery
      * style in the home screen status bar
      */
     val batteryIconStyle: StateFlow<Int>
 
     /**
-     * [LineageSettings.System.STATUS_BAR_SHOW_BATTERY_PERCENT]. A user setting to indicate whether
+     * [Settings.System.STATUS_BAR_SHOW_BATTERY_PERCENT]. A user setting to indicate whether
      * we should show the battery percentage in the home screen status bar
      */
     val showBatteryPercentMode: StateFlow<Int>
@@ -279,14 +279,14 @@ constructor(
         callbackFlow {
                 val resolver = context.contentResolver
                 val uri =
-                    LineageSettings.System.getUriFor(
-                        LineageSettings.System.STATUS_BAR_BATTERY_STYLE
+                    Settings.System.getUriFor(
+                        Settings.System.STATUS_BAR_BATTERY_STYLE
                     )
 
                 fun readMode(): Int {
-                    return LineageSettings.System.getIntForUser(
+                    return Settings.System.getIntForUser(
                         resolver,
-                        LineageSettings.System.STATUS_BAR_BATTERY_STYLE,
+                        Settings.System.STATUS_BAR_BATTERY_STYLE,
                         BatteryRepository.ICON_STYLE_DEFAULT,
                         UserHandle.USER_CURRENT,
                     )
@@ -324,28 +324,28 @@ constructor(
                 val resolver = context.contentResolver
                 val uris =
                     listOf(
-                        LineageSettings.System.getUriFor(
-                            LineageSettings.System.STATUS_BAR_BATTERY_STYLE
+                        Settings.System.getUriFor(
+                            Settings.System.STATUS_BAR_BATTERY_STYLE
                         ),
-                        LineageSettings.System.getUriFor(
-                            LineageSettings.System.STATUS_BAR_SHOW_BATTERY_PERCENT
+                        Settings.System.getUriFor(
+                            Settings.System.STATUS_BAR_SHOW_BATTERY_PERCENT
                         ),
                     )
 
                 fun readMode(): Int {
                     val iconStyle =
-                        LineageSettings.System.getIntForUser(
+                        Settings.System.getIntForUser(
                             resolver,
-                            LineageSettings.System.STATUS_BAR_BATTERY_STYLE,
+                            Settings.System.STATUS_BAR_BATTERY_STYLE,
                             BatteryRepository.ICON_STYLE_DEFAULT,
                             UserHandle.USER_CURRENT,
                         )
                     return if (iconStyle == BatteryRepository.ICON_STYLE_TEXT) {
                         BatteryRepository.SHOW_PERCENT_NEXT_TO
                     } else {
-                        LineageSettings.System.getIntForUser(
+                        Settings.System.getIntForUser(
                             resolver,
-                            LineageSettings.System.STATUS_BAR_SHOW_BATTERY_PERCENT,
+                            Settings.System.STATUS_BAR_SHOW_BATTERY_PERCENT,
                             BatteryRepository.SHOW_PERCENT_HIDDEN,
                             UserHandle.USER_CURRENT,
                         )

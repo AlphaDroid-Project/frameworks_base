@@ -16,19 +16,21 @@
 
 package com.android.systemui.brightness.ui.compose
 
-import android.content.ContentResolver
 import android.content.Context
-import android.database.ContentObserver
+import android.graphics.PorterDuff
+import android.graphics.drawable.AnimatedStateListDrawable
+import android.graphics.drawable.StateListDrawable
 import android.os.UserHandle
 import android.provider.Settings
 import android.view.HapticFeedbackConstants
 import android.view.MotionEvent
+import android.widget.ImageButton
+import android.widget.ImageView
 import androidx.annotation.VisibleForTesting
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.AnimationVector1D
 import androidx.compose.animation.core.VectorConverter
-import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
@@ -36,6 +38,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.interaction.DragInteraction
 import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -46,6 +49,8 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.CornerSize
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.BrightnessAuto
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
@@ -78,32 +83,27 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.drawscope.DrawScope
-import androidx.compose.ui.graphics.drawscope.scale
 import androidx.compose.ui.graphics.drawscope.translate
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.graphics.painter.BitmapPainter
 import androidx.compose.ui.graphics.painter.ColorPainter
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.input.pointer.pointerInteropFilter
+import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalView
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.colorResource
-import androidx.compose.ui.res.dimensionResource
-import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.semantics.text
-import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpSize
-import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.viewinterop.AndroidView
+import androidx.core.content.res.ResourcesCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.android.app.tracing.coroutines.launchTraced as launch
 import com.android.compose.modifiers.padding
-import com.android.compose.modifiers.sliderPercentage
-import com.android.compose.modifiers.thenIf
 import com.android.compose.theme.LocalAndroidColorScheme
 import com.android.compose.ui.graphics.drawInOverlay
+import com.android.systemui.Flags
 import com.android.systemui.biometrics.Utils.toBitmap
 import com.android.systemui.brightness.shared.model.GammaBrightness
 import com.android.systemui.brightness.ui.compose.AnimationSpecs.IconAppearSpec
@@ -112,11 +112,8 @@ import com.android.systemui.brightness.ui.compose.Dimensions.IconPadding
 import com.android.systemui.brightness.ui.compose.Dimensions.IconSize
 import com.android.systemui.brightness.ui.compose.Dimensions.SliderBackgroundFrameSize
 import com.android.systemui.brightness.ui.compose.Dimensions.SliderBackgroundRoundedCorner
-import com.android.systemui.brightness.ui.compose.Dimensions.ThumbHeight
 import com.android.systemui.brightness.ui.compose.Dimensions.SliderTrackRoundedCorner
 import com.android.systemui.brightness.ui.compose.Dimensions.ThumbTrackGapSize
-import com.android.systemui.brightness.ui.compose.Dimensions.ThumbWidth
-import com.android.systemui.brightness.ui.compose.Dimensions.TrackHeight
 import com.android.systemui.brightness.ui.viewmodel.BrightnessSliderViewModel
 import com.android.systemui.brightness.ui.viewmodel.Drag
 import com.android.systemui.common.shared.model.Icon
@@ -128,7 +125,6 @@ import com.android.systemui.lifecycle.rememberViewModel
 import com.android.systemui.qs.ui.compose.borderOnFocus
 import com.android.systemui.res.R
 import com.android.systemui.utils.PolicyRestriction
-import lineageos.providers.LineageSettings
 import platform.test.motion.compose.values.MotionTestValueKey
 import platform.test.motion.compose.values.motionTestValues
 
@@ -140,7 +136,7 @@ fun BrightnessSlider(
     valueRange: IntRange,
     autoMode: Boolean,
     iconResProvider: (Float) -> Int,
-    imageLoader: suspend (Int, Context) -> Icon.Loaded?,
+    imageLoader: suspend (Int, Context) -> Icon.Loaded,
     restriction: PolicyRestriction,
     onRestrictedClick: (PolicyRestriction.Restricted) -> Unit,
     onDrag: (Int) -> Unit,
@@ -154,7 +150,25 @@ fun BrightnessSlider(
     val context = LocalContext.current
     val cr = context.contentResolver
 
-    var hapticsEnabled by remember { mutableStateOf(readEnableHaptics(cr)) }
+    val showAutoBrightness = remember {
+        try {
+            Settings.Secure.getIntForUser(
+                cr, Settings.System.QS_SHOW_AUTO_BRIGHTNESS, 1, UserHandle.USER_CURRENT
+            ) != 0
+        } catch (_: Throwable) {
+            false
+        }
+    }
+
+    val hapticsEnabled = remember {
+        try {
+            Settings.System.getIntForUser(
+                cr, Settings.System.QS_BRIGHTNESS_SLIDER_HAPTIC, 0, UserHandle.USER_CURRENT
+            ) != 0
+        } catch (_: Throwable) {
+            false
+        }
+    }
 
     val shapeMode = rememberSliderShapeMode()
     val trackCornerDp: Dp = when (shapeMode) {
@@ -163,6 +177,17 @@ fun BrightnessSlider(
         3 -> 0.dp /* Square */
         else -> Dimensions.SliderTrackRoundedCorner
     }
+    val bgCornerDp: Dp = when (shapeMode) {
+        1 -> 50.dp  /* Circle */
+        2 -> 24.dp  /* Rounded Square */
+        3 -> 0.dp /* Square */
+        else -> Dimensions.SliderBackgroundRoundedCorner
+    }
+    val autoIconShape = when (shapeMode) {
+        2 -> RoundedCornerShape(12.dp)
+        3 -> RoundedCornerShape(0.dp)
+        else -> CircleShape
+    }
 
     var value by remember(gammaValue) { mutableIntStateOf(gammaValue) }
     val animatedValue by
@@ -170,7 +195,6 @@ fun BrightnessSlider(
     val floatValueRange = valueRange.first.toFloat()..valueRange.last.toFloat()
     val isRestricted = restriction is PolicyRestriction.Restricted
     val enabled = !isRestricted
-    val contentDescription = stringResource(R.string.accessibility_brightness)
     val interactionSource = remember { MutableInteractionSource() }
     val hapticsViewModel: SliderHapticsViewModel? =
         if (hapticsEnabled) {
@@ -207,29 +231,19 @@ fun BrightnessSlider(
             key1 = iconRes,
             key2 = context,
         ) {
-            val icon: Icon.Loaded? = imageLoader(iconRes, context)
-            if (icon != null) {
-                val bitmap = icon.drawable.toBitmap()?.asImageBitmap()
-                if (bitmap != null) {
-                    this@produceState.value = BitmapPainter(bitmap)
-                }
-            }
+            val icon = imageLoader(iconRes, context)
+            // toBitmap is Drawable?.() -> Bitmap? and handles null internally.
+            val bitmap = icon.drawable.toBitmap()!!.asImageBitmap()
+            this@produceState.value = BitmapPainter(bitmap)
         }
+
     val activeIconColor = colors.activeTickColor
     val inactiveIconColor = colors.inactiveTickColor
-    // Offset from the right
     val trackIcon: DrawScope.(Offset, Color, Float) -> Unit = remember {
         { offset, color, alpha ->
-            val rtl = layoutDirection == LayoutDirection.Rtl
-            scale(if (rtl) -1f else 1f, 1f) {
-                translate(offset.x - IconPadding.toPx() - IconSize.toSize().width, offset.y) {
-                    with(painter) {
-                        draw(
-                            IconSize.toSize(),
-                            colorFilter = ColorFilter.tint(color),
-                            alpha = alpha,
-                        )
-                    }
+            translate(offset.x + IconPadding.toPx(), offset.y) {
+                with(painter) {
+                    draw(IconSize.toSize(), colorFilter = ColorFilter.tint(color), alpha = alpha)
                 }
             }
         }
@@ -238,32 +252,6 @@ fun BrightnessSlider(
     val hasAutoBrightness = context.resources.getBoolean(
         com.android.internal.R.bool.config_automatic_brightness_available
     )
-    var showAutoBrightness by remember { mutableStateOf(readShowAutoBrightness(cr)) }
-
-    DisposableEffect(Unit) {
-        val observer = object : ContentObserver(null) {
-            override fun onChange(selfChange: Boolean) {
-                context.mainExecutor.execute {
-                    showAutoBrightness = readShowAutoBrightness(cr)
-                    hapticsEnabled = readEnableHaptics(cr)
-                }
-            }
-        }
-
-        cr.registerContentObserver(
-            LineageSettings.Secure.getUriFor(LineageSettings.Secure.QS_SHOW_AUTO_BRIGHTNESS),
-            false, observer, UserHandle.USER_ALL
-        )
-
-        cr.registerContentObserver(
-            Settings.System.getUriFor(Settings.System.QS_BRIGHTNESS_SLIDER_HAPTIC),
-            false, observer, UserHandle.USER_ALL
-        )
-
-        onDispose {
-            cr.unregisterContentObserver(observer)
-        }
-    }
 
     Row(
         verticalAlignment = Alignment.CenterVertically,
@@ -291,29 +279,20 @@ fun BrightnessSlider(
                     }
                 }
             },
-            modifier =
-                modifier
-                    .weight(1f)
-                    .sysuiResTag("slider")
-                    .semantics(mergeDescendants = true) {
-                        this.text = AnnotatedString(contentDescription)
+            modifier = modifier
+                .weight(1f)
+                .sysuiResTag("slider")
+                .clickable(enabled = isRestricted) {
+                    if (restriction is PolicyRestriction.Restricted) {
+                        onRestrictedClick(restriction)
                     }
-                    .sliderPercentage {
-                        (value - valueRange.first).toFloat() / (valueRange.last - valueRange.first)
-                    }
-                    .thenIf(isRestricted) {
-                        Modifier.clickable {
-                            if (restriction is PolicyRestriction.Restricted) {
-                                onRestrictedClick(restriction)
-                            }
-                        }
-                    },
+                },
             interactionSource = interactionSource,
             thumb = {
                 SliderDefaults.Thumb(
                     interactionSource = interactionSource,
                     enabled = enabled,
-                    thumbSize = DpSize(ThumbWidth, ThumbHeight),
+                    thumbSize = DpSize(4.dp, 52.dp),
                     colors = colors,
                 )
             },
@@ -358,7 +337,7 @@ fun BrightnessSlider(
                                 iconInactiveAlphaAnimatable.value exportAs
                                     BrightnessSliderMotionTestKeys.InactiveIconAlpha
                             }
-                            .height(TrackHeight)
+                            .height(40.dp)
                             .drawWithContent {
                                 drawContent()
 
@@ -372,25 +351,24 @@ fun BrightnessSlider(
 
                                 val activeTrackWidth = activeTrackEnd - activeTrackStart
                                 val inactiveTrackWidth = inactiveTrackEnd - inactiveTrackStart
-
                                 if (
+                                    IconSize.toSize().width < activeTrackWidth - IconPadding.toPx() * 2
+                                ) {
+                                    showIconActive = true
+                                    trackIcon(
+                                        Offset(activeTrackStart, yOffset),
+                                        activeIconColor,
+                                        iconActiveAlphaAnimatable.value,
+                                    )
+                                } else if (
                                     IconSize.toSize().width <
                                         inactiveTrackWidth - IconPadding.toPx() * 2
                                 ) {
                                     showIconActive = false
                                     trackIcon(
-                                        Offset(inactiveTrackEnd, yOffset),
+                                        Offset(inactiveTrackStart, yOffset),
                                         inactiveIconColor,
                                         iconInactiveAlphaAnimatable.value,
-                                    )
-                                } else if (
-                                    IconSize.toSize().width < activeTrackWidth - IconPadding.toPx() * 2
-                                ) {
-                                    showIconActive = true
-                                    trackIcon(
-                                        Offset(activeTrackEnd, yOffset),
-                                        activeIconColor,
-                                        iconActiveAlphaAnimatable.value,
                                     )
                                 }
                             },
@@ -400,15 +378,87 @@ fun BrightnessSlider(
                     thumbTrackGapSize = ThumbTrackGapSize,
                     colors = colors,
                 )
-            },
+            }
         )
 
         if (hasAutoBrightness && showAutoBrightness) {
             Spacer(modifier = Modifier.width(10.dp))
-            drawAutoBrightnessButton(
-                autoMode = autoMode,
-                hapticsEnabled = hapticsEnabled,
-                onIconClick = onIconClick
+
+            val coroutineScope = rememberCoroutineScope()
+            val autoBrightnessBackgroundColor by animateColorAsState(
+                targetValue = if (autoMode) MaterialTheme.colorScheme.primary else LocalAndroidColorScheme.current.surfaceEffect2
+            )
+            val autoBrightnessIconTint by animateColorAsState(
+                targetValue = if (autoMode) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface
+            )
+
+            AndroidView(
+                factory = { ctx ->
+                    ImageButton(ctx).apply {
+                        setBackgroundResource(0)
+                        scaleType = ImageView.ScaleType.CENTER_INSIDE
+
+                        isHapticFeedbackEnabled = hapticsEnabled
+
+                        val animatedOrNull = runCatching {
+                            ResourcesCompat.getDrawable(
+                                resources, R.drawable.ic_qs_brightness_auto, ctx.theme
+                            )
+                        }.getOrNull()
+
+                        val fallback = {
+                            ResourcesCompat.getDrawable(
+                                resources,
+                                if (autoMode) R.drawable.ic_qs_brightness_auto_on
+                                else R.drawable.ic_qs_brightness_auto_off,
+                                ctx.theme
+                            )
+                        }
+
+                        setImageDrawable(animatedOrNull ?: fallback())
+                    }
+                },
+                modifier = Modifier
+                    .size(52.dp)
+                    .clip(autoIconShape)
+                    .background(autoBrightnessBackgroundColor),
+                update = { button ->
+                    val targetState =
+                        if (autoMode) intArrayOf(android.R.attr.state_checked) else intArrayOf()
+
+                    val drawable = button.drawable
+                    val supportsState =
+                        drawable is StateListDrawable ||
+                        drawable is AnimatedStateListDrawable
+
+                    val transitioned = if (supportsState) {
+                        try {
+                            button.setImageState(targetState, /*animate=*/true)
+                            true
+                        } catch (_: Throwable) {
+                            false
+                        }
+                    } else false
+
+                    if (!transitioned) {
+                        button.setImageDrawable(
+                            ResourcesCompat.getDrawable(
+                                button.resources,
+                                if (autoMode) R.drawable.ic_qs_brightness_auto_on
+                                else R.drawable.ic_qs_brightness_auto_off,
+                                button.context.theme
+                            )
+                        )
+                    }
+
+                    button.setColorFilter(autoBrightnessIconTint.toArgb(), PorterDuff.Mode.SRC_IN)
+                    button.setOnClickListener {
+                        if (hapticsEnabled) {
+                            button.performHapticFeedback(HapticFeedbackConstants.CONTEXT_CLICK)
+                        }
+                        coroutineScope.launch { onIconClick() }
+                    }
+                }
             )
         }
     }
@@ -416,53 +466,34 @@ fun BrightnessSlider(
     val currentShowToast by rememberUpdatedState(showToast)
     // Showing the warning toast if the current running app window has controlled the
     // brightness value.
-    LaunchedEffect(interactionSource, overriddenByAppState) {
-        interactionSource.interactions.collect { interaction ->
-            if (interaction is DragInteraction.Start && overriddenByAppState) {
-                currentShowToast()
+    if (Flags.showToastWhenAppControlBrightness()) {
+        LaunchedEffect(interactionSource) {
+            interactionSource.interactions.collect { interaction ->
+                if (interaction is DragInteraction.Start && overriddenByAppState) {
+                    currentShowToast()
+                }
             }
         }
     }
 }
 
-@Composable
-fun rememberSliderShapeMode(): Int {
-    val context = LocalContext.current
-    val contentResolver = context.contentResolver
 
-    fun readShapeMode(): Int {
-        return try {
+@Composable
+private fun rememberSliderShapeMode(): Int {
+    val context = LocalContext.current
+    return remember {
+        val cr = context.contentResolver
+        try {
             Settings.System.getIntForUser(
-                contentResolver, Settings.System.QS_BRIGHTNESS_SLIDER_SHAPE, 0,
+                cr,
+                Settings.System.QS_BRIGHTNESS_SLIDER_SHAPE,
+                0,
                 UserHandle.USER_CURRENT
             )
         } catch (_: Throwable) {
             0
         }
     }
-
-    var shapeMode by remember { mutableIntStateOf(readShapeMode()) }
-
-    DisposableEffect(contentResolver) {
-        val observer = object : ContentObserver(null) {
-            override fun onChange(selfChange: Boolean) {
-                context.mainExecutor.execute {
-                    shapeMode = readShapeMode()
-                }
-            }
-        }
-
-        contentResolver.registerContentObserver(
-            Settings.System.getUriFor(Settings.System.QS_BRIGHTNESS_SLIDER_SHAPE),
-            false, observer, UserHandle.USER_ALL
-        )
-
-        onDispose {
-            contentResolver.unregisterContentObserver(observer)
-        }
-    }
-
-    return shapeMode
 }
 
 private fun Modifier.sliderBackground(color: Color, corner: Dp) = drawWithCache {
@@ -472,98 +503,6 @@ private fun Modifier.sliderBackground(color: Color, corner: Dp) = drawWithCache 
     val cornerRadius = CornerRadius(corner.toPx())
     onDrawBehind {
         drawRoundRect(color = color, topLeft = offset, size = newSize, cornerRadius = cornerRadius)
-    }
-}
-
-private fun readShowAutoBrightness(cr: ContentResolver): Boolean =
-    try {
-        LineageSettings.Secure.getIntForUser(
-            cr, LineageSettings.Secure.QS_SHOW_AUTO_BRIGHTNESS,
-            1, UserHandle.USER_CURRENT
-        ) != 0
-    } catch (_: Throwable) {
-        false
-    }
-
-private fun readEnableHaptics(cr: ContentResolver): Boolean =
-    try {
-        Settings.System.getIntForUser(
-            cr, Settings.System.QS_BRIGHTNESS_SLIDER_HAPTIC,
-            1, UserHandle.USER_CURRENT
-        ) != 0
-    } catch (_: Throwable) {
-        false
-    }
-
-@Composable
-private fun drawAutoBrightnessButton(
-    autoMode: Boolean,
-    hapticsEnabled: Boolean,
-    onIconClick: suspend () -> Unit,
-) {
-    val view = LocalView.current
-    val coroutineScope = rememberCoroutineScope()
-    val animatedCornerRadius by animateDpAsState(
-        targetValue = if (autoMode) {
-            SliderTrackRoundedCorner
-        } else {
-            22.5.dp
-        }
-    )
-    val shapeMode = rememberSliderShapeMode()
-    val autoIconShape = when (shapeMode) {
-        1 -> CircleShape
-        2 -> RoundedCornerShape(12.dp)
-        3 -> RoundedCornerShape(0.dp)
-        else -> RoundedCornerShape(animatedCornerRadius)
-    }
-    val backgroundColor by animateColorAsState(
-        targetValue = if (autoMode) {
-            MaterialTheme.colorScheme.primary
-        } else {
-            LocalAndroidColorScheme.current.surfaceEffect1
-        }
-    )
-    val iconTint by animateColorAsState(
-        targetValue = if (autoMode) {
-            MaterialTheme.colorScheme.onPrimary
-        } else {
-            MaterialTheme.colorScheme.onSurface
-        }
-    )
-    val painterRes = if (autoMode) {
-        R.drawable.ic_qs_brightness_auto_on
-    } else {
-        R.drawable.ic_qs_brightness_auto_off
-    }
-    val hapticConstant = if (autoMode) {
-        HapticFeedbackConstants.TOGGLE_OFF
-    } else {
-        HapticFeedbackConstants.TOGGLE_ON
-    }
-
-    Box(
-        modifier = Modifier
-            .size(45.dp)
-            .clip(autoIconShape)
-            .background(backgroundColor)
-            .clickable(
-                interactionSource = remember { MutableInteractionSource() },
-                indication = null, // Disable ripple effect
-                onClick = {
-                    if (hapticsEnabled) {
-                        view.performHapticFeedback(hapticConstant)
-                    }
-                    coroutineScope.launch { onIconClick() }
-                }
-            ),
-        contentAlignment = Alignment.Center
-    ) {
-        Icon(
-            painter = painterResource(painterRes),
-            contentDescription = stringResource(R.string.accessibility_adaptive_brightness),
-            tint = iconTint
-        )
     }
 }
 
@@ -584,7 +523,12 @@ fun BrightnessSliderContainer(
         viewModel.policyRestriction.collectAsStateWithLifecycle(
             initialValue = PolicyRestriction.NoRestriction
         )
-    val overriddenByAppState by viewModel.brightnessOverriddenByWindow.collectAsStateWithLifecycle()
+    val overriddenByAppState by
+        if (Flags.showToastWhenAppControlBrightness()) {
+            viewModel.brightnessOverriddenByWindow.collectAsStateWithLifecycle()
+        } else {
+            remember { mutableStateOf(false) }
+        }
 
     DisposableEffect(Unit) { onDispose { viewModel.setIsDragging(false) } }
 
@@ -680,24 +624,6 @@ private object Dimensions {
     val IconSize = DpSize(28.dp, 28.dp)
     val IconPadding = 6.dp
     val ThumbTrackGapSize = 6.dp
-
-    val ThumbHeight : Dp
-        @Composable
-        @ReadOnlyComposable
-        get() =
-            dimensionResource(id = R.dimen.overlay_qs_layout_brightness_thumb_height)
-
-    val ThumbWidth : Dp
-        @Composable
-        @ReadOnlyComposable
-        get() =
-            dimensionResource(id = R.dimen.overlay_qs_layout_brightness_thumb_width)
-
-    val TrackHeight: Dp
-        @Composable
-        @ReadOnlyComposable
-        get() =
-            dimensionResource(id = R.dimen.overlay_qs_layout_brightness_track_height)
 }
 
 private object AnimationSpecs {
@@ -722,7 +648,7 @@ object BrightnessSliderMotionTestKeys {
 private fun colors(): SliderColors {
     return SliderDefaults.colors()
         .copy(
-            inactiveTrackColor = LocalAndroidColorScheme.current.surfaceEffect1,
+            inactiveTrackColor = LocalAndroidColorScheme.current.surfaceEffect2,
             activeTickColor = MaterialTheme.colorScheme.onPrimary,
             inactiveTickColor = MaterialTheme.colorScheme.onSurface,
         )

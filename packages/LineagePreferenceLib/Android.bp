@@ -1,0 +1,20 @@
+//
+// SPDX-FileCopyrightText: 2022 The LineageOS Project
+// SPDX-License-Identifier: Apache-2.0
+//
+
+android_library {
+    name: "LineagePreferenceLib",
+    min_sdk_version: "30",
+    static_libs: [
+        "androidx.preference_preference",
+        "SettingsLibMainSwitchPreference",
+    ],
+
+    srcs: ["java/**/*.java"],
+    resource_dirs: ["res"],
+
+    aidl: {
+        local_include_dirs: ["java"],
+    },
+}
