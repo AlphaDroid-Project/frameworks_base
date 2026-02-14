@@ -64,7 +64,7 @@ public class RotationLockTile extends QSTileImpl<BooleanState> implements
     private static final String EMPTY_SECONDARY_STRING = "";
 
     private static final String ROTATION_SETTINGS =
-            "org.lineageos.lineageparts.DISPLAY_ROTATION";
+            "android.settings.DISPLAY_ROTATION";
 
     private final Icon mIcon =
             maybeLoadResourceIcon(com.android.internal.R.drawable.ic_qs_auto_rotate);
@@ -114,7 +114,7 @@ public class RotationLockTile extends QSTileImpl<BooleanState> implements
         mAllowRotationResolver = mContext.getResources().getBoolean(
                 com.android.internal.R.bool.config_allowRotationResolver);
         mAdvancedRotationSettingsEnabled = mContext.getResources().getBoolean(
-                org.lineageos.platform.internal.R.bool.config_enableAdvancedRotationSettings);
+                com.android.internal.R.bool.config_enableAdvancedRotationSettings);
     }
 
     @Override
