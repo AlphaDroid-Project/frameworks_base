@@ -17,7 +17,7 @@ import android.view.View
 import android.widget.ImageView
 import android.widget.TextView
 
-import com.android.internal.util.crdroid.OmniJawsClient
+import com.android.internal.util.alpha.OmniJawsClient
 
 import com.android.systemui.res.R
 
