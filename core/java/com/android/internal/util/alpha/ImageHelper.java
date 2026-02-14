@@ -17,7 +17,7 @@
 * limitations under the License.
 */
 
-package com.android.internal.util.crdroid;
+package com.android.internal.util.alpha;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;

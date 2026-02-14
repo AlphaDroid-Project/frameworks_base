@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package com.android.internal.util.crdroid;
+package com.android.internal.util.alpha;
 
 import android.content.BroadcastReceiver;
 import android.content.Context;

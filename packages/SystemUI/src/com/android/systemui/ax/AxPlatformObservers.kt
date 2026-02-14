@@ -78,7 +78,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import lineageos.app.ProfileManager
 import lineageos.hardware.LineageHardwareManager
-import lineageos.providers.LineageSettings
+import android.provider.Settings
 import java.util.concurrent.Executor
 import javax.inject.Inject
 
@@ -806,8 +806,8 @@ class AxPlatformObservers @Inject constructor(
             }
         }, filter)
 
-        val uri = LineageSettings.System.getUriFor(
-            LineageSettings.System.SYSTEM_PROFILES_ENABLED
+        val uri = Settings.System.getUriFor(
+            Settings.System.SYSTEM_PROFILES_ENABLED
         )
         resolver.registerContentObserver(uri, false, object : ExecutorContentObserver(mainExecutor) {
             override fun onChange(selfChange: Boolean) {
@@ -826,9 +826,9 @@ class AxPlatformObservers @Inject constructor(
     }
 
     private fun profilesEnabled(): Boolean =
-        LineageSettings.System.getIntForUser(
+        Settings.System.getIntForUser(
             resolver,
-            LineageSettings.System.SYSTEM_PROFILES_ENABLED,
+            Settings.System.SYSTEM_PROFILES_ENABLED,
             1, UserHandle.USER_CURRENT
         ) == 1
 

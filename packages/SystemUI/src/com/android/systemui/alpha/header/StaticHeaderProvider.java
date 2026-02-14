@@ -16,7 +16,7 @@
  *
  */
 
-package com.android.systemui.crdroid.header;
+package com.android.systemui.alpha.header;
 
 import android.content.Context;
 import android.content.Intent;
@@ -32,7 +32,7 @@ import android.util.Log;
 import java.util.Calendar;
 
 import com.android.systemui.res.R;
-import com.android.internal.util.crdroid.Utils;
+import com.android.internal.util.alpha.Utils;
 
 public class StaticHeaderProvider implements
         StatusBarHeaderMachine.IStatusBarHeaderProvider {
