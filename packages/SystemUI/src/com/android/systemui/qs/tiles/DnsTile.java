@@ -149,7 +149,7 @@ public class DnsTile extends QSTileImpl<BooleanState> {
 
     @Override
     public int getMetricsCategory() {
-        return MetricsEvent.CRDROID_SETTINGS;
+        return MetricsEvent.ALPHA;
     }
 
     private String getSecondaryLabel(int mode) {

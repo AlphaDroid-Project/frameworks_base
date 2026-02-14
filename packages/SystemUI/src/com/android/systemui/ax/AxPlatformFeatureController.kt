@@ -59,7 +59,7 @@ import com.android.systemui.statusbar.policy.ZenModeController
 import com.android.wifitrackerlib.WifiEntry
 import lineageos.app.ProfileManager
 import lineageos.hardware.LineageHardwareManager
-import lineageos.providers.LineageSettings
+import android.provider.Settings
 import javax.inject.Inject
 
 @SysUISingleton
@@ -430,16 +430,16 @@ class AxPlatformFeatureController @Inject constructor(
             ?: bluetoothController.connectedDevices
 
     private fun profilesEnabled(): Boolean =
-        LineageSettings.System.getIntForUser(
+        Settings.System.getIntForUser(
             context.contentResolver,
-            LineageSettings.System.SYSTEM_PROFILES_ENABLED,
+            Settings.System.SYSTEM_PROFILES_ENABLED,
             1, UserHandle.USER_CURRENT
         ) == 1
 
     private fun setProfilesEnabled(enabled: Boolean) {
-        LineageSettings.System.putIntForUser(
+        Settings.System.putIntForUser(
             context.contentResolver,
-            LineageSettings.System.SYSTEM_PROFILES_ENABLED,
+            Settings.System.SYSTEM_PROFILES_ENABLED,
             if (enabled) 1 else 0, UserHandle.USER_CURRENT
         )
     }

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.android.systemui.crdroid.batterybar;
+package com.android.systemui.alpha.batterybar;
 
 import android.content.BroadcastReceiver;
 import android.content.ContentResolver;
