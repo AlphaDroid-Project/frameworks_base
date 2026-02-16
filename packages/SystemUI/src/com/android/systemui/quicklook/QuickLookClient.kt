@@ -28,9 +28,17 @@ import com.android.axion.quicklook.IAxQuickLookService
 import com.android.axion.quicklook.IQuickLookCallback
 import com.android.axion.quicklook.QuickLookTarget
 import com.android.axion.quicklook.SportsData
+import com.android.axion.quicklook.calendarData
+import com.android.axion.quicklook.mediaData
 import com.android.axion.quicklook.nowPlayingData
+import com.android.axion.quicklook.smartspaceData
 import com.android.axion.quicklook.sportsData
+import com.android.axion.quicklook.weatherData
 import com.android.systemui.dagger.SysUISingleton
+import com.android.systemui.plugins.keyguard.ui.clocks.CalendarSimpleData
+import com.android.systemui.plugins.keyguard.ui.clocks.ClockData
+import com.android.systemui.plugins.keyguard.ui.clocks.ClockWeatherData
+import com.android.systemui.plugins.keyguard.ui.clocks.SmartspaceData
 import com.android.systemui.util.WeakListenerManager
 import javax.inject.Inject
 
@@ -40,6 +48,9 @@ class QuickLookClient @Inject constructor(
 ) {
 
     interface Callback {
+        fun onClockDataChanged(data: ClockData) {}
+        fun onQLPlaybackStateChanged(play: Boolean) {}
+        fun onQLMetadataChanged(track: String, artist: String, packageName: String) {}
         fun onNowPlayingUpdate(nowPlayingText: String, tapAction: PendingIntent?) {}
         fun onSportsUpdate(sports: List<SportsData>) {}
     }
@@ -49,6 +60,11 @@ class QuickLookClient @Inject constructor(
     private var isBound = false
     private var rebindAttempts = 0
 
+    private var cachedClockData: ClockData = ClockData.EMPTY
+    private var cachedMediaPlaying: Boolean = false
+    private var cachedTrack: String = ""
+    private var cachedArtist: String = ""
+    private var cachedMediaPackage: String = ""
     private var cachedNowPlaying: String = ""
     private var cachedNowPlayingAction: PendingIntent? = null
     private var cachedSports: List<SportsData> = emptyList()
@@ -97,6 +113,13 @@ class QuickLookClient @Inject constructor(
     }
 
     private fun deliverCachedData(callback: Callback) {
+        if (cachedClockData != ClockData.EMPTY) {
+            callback.onClockDataChanged(cachedClockData)
+        }
+        callback.onQLPlaybackStateChanged(cachedMediaPlaying)
+        if (cachedTrack.isNotEmpty() || cachedArtist.isNotEmpty()) {
+            callback.onQLMetadataChanged(cachedTrack, cachedArtist, cachedMediaPackage)
+        }
         if (cachedNowPlaying.isNotEmpty()) {
             callback.onNowPlayingUpdate(cachedNowPlaying, cachedNowPlayingAction)
         }
@@ -106,11 +129,63 @@ class QuickLookClient @Inject constructor(
     }
 
     private fun processTargets(targets: List<QuickLookTarget>) {
+        var weather: ClockWeatherData = ClockWeatherData.EMPTY
+        var calendar: CalendarSimpleData = CalendarSimpleData.EMPTY
+        var hasMedia = false
         var hasNowPlaying = false
+        val smartspaceTargets = mutableListOf<SmartspaceData>()
         val sportsTargets = mutableListOf<SportsData>()
 
         for (target in targets) {
             when (target.targetType) {
+                QuickLookTarget.TYPE_WEATHER -> {
+                    val w = target.weatherData ?: continue
+                    weather = ClockWeatherData(
+                        temp = w.temp,
+                        condition = w.condition,
+                        conditionCode = w.conditionCode,
+                        city = w.city,
+                        humidity = w.humidity,
+                        wind = w.wind,
+                        windDirection = w.windDirection,
+                        tempUnit = w.tempUnit,
+                        windUnit = w.windUnit,
+                        pinWheel = w.pinWheel,
+                        timestamp = w.timestamp,
+                        iconBytes = w.iconBytes,
+                        tintIcon = w.iconBytes == null,
+                        tapAction = target.primaryAction?.pendingIntent,
+                    )
+                }
+                QuickLookTarget.TYPE_CALENDAR -> {
+                    val c = target.calendarData ?: continue
+                    calendar = CalendarSimpleData(
+                        id = c.id,
+                        title = c.title,
+                        startTime = c.startTime,
+                        endTime = c.endTime,
+                        location = c.location,
+                        description = c.description,
+                        formattedTime = c.formattedTime,
+                        eventStatus = c.eventStatus,
+                        tapAction = target.primaryAction?.pendingIntent,
+                    )
+                }
+                QuickLookTarget.TYPE_MEDIA -> {
+                    hasMedia = true
+                    val m = target.mediaData ?: continue
+
+                    if (m.isPlaying != cachedMediaPlaying) {
+                        cachedMediaPlaying = m.isPlaying
+                        callbacks.notify { it.onQLPlaybackStateChanged(m.isPlaying) }
+                    }
+                    if (m.track != cachedTrack || m.artist != cachedArtist || m.packageName != cachedMediaPackage) {
+                        cachedTrack = m.track
+                        cachedArtist = m.artist
+                        cachedMediaPackage = m.packageName ?: ""
+                        callbacks.notify { it.onQLMetadataChanged(m.track, m.artist, cachedMediaPackage) }
+                    }
+                }
                 QuickLookTarget.TYPE_NOW_PLAYING -> {
                     hasNowPlaying = true
                     val np = target.nowPlayingData ?: continue
@@ -131,8 +206,46 @@ class QuickLookClient @Inject constructor(
                             "${s.team1Name} vs ${s.team2Name}"
                         else -> target.title ?: ""
                     }
+                    if (sportTitle.isNotEmpty()) {
+                        smartspaceTargets.add(SmartspaceData(
+                            id = target.id,
+                            title = sportTitle,
+                            subtitle = s.statusDetail,
+                            featureType = 9,
+                            iconBytes = target.iconBytes,
+                            componentName = null,
+                            isSensitive = false,
+                            sourceType = QuickLookTarget.TYPE_SPORTS,
+                            creationTime = target.creationTime,
+                            score = target.score,
+                            tapAction = target.primaryAction?.pendingIntent,
+                        ))
+                    }
+                }
+                QuickLookTarget.TYPE_SMARTSPACER,
+                QuickLookTarget.TYPE_GOOGLE_SMARTSPACE -> {
+                    val s = target.smartspaceData ?: continue
+                    smartspaceTargets.add(SmartspaceData(
+                        id = s.id,
+                        title = s.title,
+                        subtitle = s.subtitle,
+                        featureType = s.featureType,
+                        iconBytes = s.iconBytes,
+                        componentName = s.componentName,
+                        isSensitive = s.isSensitive,
+                        sourceType = s.sourceType,
+                        creationTime = s.creationTime,
+                        score = s.score,
+                        tapAction = target.primaryAction?.pendingIntent,
+                    ))
                 }
             }
+        }
+
+        val newClockData = ClockData(weather, calendar, smartspaceTargets)
+        if (newClockData != cachedClockData) {
+            cachedClockData = newClockData
+            callbacks.notify { it.onClockDataChanged(newClockData) }
         }
 
         if (sportsTargets != cachedSports) {
@@ -140,6 +253,18 @@ class QuickLookClient @Inject constructor(
             callbacks.notify { it.onSportsUpdate(sportsTargets) }
         }
 
+        if (!hasMedia) {
+            if (cachedMediaPlaying) {
+                cachedMediaPlaying = false
+                callbacks.notify { it.onQLPlaybackStateChanged(false) }
+            }
+            if (cachedTrack.isNotEmpty() || cachedArtist.isNotEmpty()) {
+                cachedTrack = ""
+                cachedArtist = ""
+                cachedMediaPackage = ""
+                callbacks.notify { it.onQLMetadataChanged("", "", "") }
+            }
+        }
         if (!hasNowPlaying && cachedNowPlaying.isNotEmpty()) {
             cachedNowPlaying = ""
             cachedNowPlayingAction = null
@@ -191,3 +316,4 @@ class QuickLookClient @Inject constructor(
         private const val MAX_REBIND_DELAY_MS = 30000L
     }
 }
+
