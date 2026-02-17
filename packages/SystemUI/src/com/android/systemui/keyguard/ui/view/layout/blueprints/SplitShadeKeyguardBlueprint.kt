@@ -36,6 +36,7 @@ import com.android.systemui.keyguard.ui.view.layout.sections.AxDynamicBarKeyguar
 import com.android.systemui.keyguard.ui.view.layout.sections.KeyguardSectionsModule
 import com.android.systemui.keyguard.ui.view.layout.sections.KeyguardSliceViewSection
 import com.android.systemui.keyguard.ui.view.layout.sections.KeyguardWeatherViewSection
+import com.android.systemui.keyguard.ui.view.layout.sections.KeyguardWidgetViewSection
 import com.android.systemui.keyguard.ui.view.layout.sections.SmartspaceSection
 import com.android.systemui.keyguard.ui.view.layout.sections.SplitShadeGuidelines
 import com.android.systemui.keyguard.ui.view.layout.sections.SplitShadeMediaSection
@@ -70,6 +71,7 @@ constructor(
     aodNotificationIconsSection: AodNotificationIconsSection,
     aodBurnInSection: AodBurnInSection,
     clockSection: ClockSection,
+    keyguardWidgetViewSection: KeyguardWidgetViewSection,
     mediaSection: SplitShadeMediaSection,
     smartspaceSection: SmartspaceSection,
     keyguardWeatherViewSection: KeyguardWeatherViewSection,
@@ -98,6 +100,7 @@ constructor(
             smartspaceSection,
             keyguardWeatherViewSection,
             keyguardSliceViewSection,
+            keyguardWidgetViewSection,
             mediaSection,
             defaultDeviceEntrySection, // Add LAST: Intentionally has z-order above other views.
         )

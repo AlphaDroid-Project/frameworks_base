@@ -315,4 +315,8 @@
 
     <!-- Clock face -->
     <item type="id" name="original_text_color" />
+
+    <!-- Lockscreen widgets -->
+    <item type="id" name="keyguard_widgets_area" />
+    <item type="id" name="clock_bottom_barrier" />
 </resources>
