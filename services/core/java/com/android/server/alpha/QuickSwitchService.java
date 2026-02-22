@@ -212,7 +212,7 @@ public final class QuickSwitchService extends SystemService {
 
     private void init() {
         try {
-            for (UserInfo user : mUM.getUsers(false, false, false)) {
+            for (UserInfo user : mUM.getUsers(false /*excludeDying*/)) {
                 initForUser(user.id);
             }
         } catch (RemoteException e) {
