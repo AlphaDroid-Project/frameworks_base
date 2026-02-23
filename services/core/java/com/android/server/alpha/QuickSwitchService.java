@@ -43,7 +43,6 @@ import com.android.server.ServiceThread;
 import com.android.server.SystemService;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 
 public final class QuickSwitchService extends SystemService {
@@ -68,7 +67,6 @@ public final class QuickSwitchService extends SystemService {
         "com.google.android.apps.customization",
         "com.google.android.apps.customization.pixel",
         "com.google.android.apps.emojiwallpaper",
-        "com.google.android.apps.wallpaper",
         "com.google.android.apps.wallpaper",
         "com.google.android.apps.wallpaper.overlay.android",
         "com.google.android.apps.wallpaper.overlay.launcher",
@@ -175,11 +173,15 @@ public final class QuickSwitchService extends SystemService {
 
     private static boolean isDisabledPackage(String packageName) {
         int defaultLauncher = SystemProperties.getInt(DEFAULT_LAUNCHER_PROP, 0);
+
         for (int i = 0; i < LAUNCHER_PACKAGES.size(); i++) {
-            if (i != defaultLauncher) {
-                String launcher = LAUNCHER_PACKAGES.get(i);
-                if (launcher.equals(packageName)
-                        || getDisabledLauncherPackages(launcher).equals(packageName)) {
+            String launcherName = LAUNCHER_PACKAGES.get(i);
+            if (i == defaultLauncher) {
+                if (getDisabledLauncherPackages(launcherName).contains(packageName)) {
+                    return true;
+                }
+            } else {
+                if (launcherName.equals(packageName)) {
                     return true;
                 }
             }
@@ -232,14 +234,6 @@ public final class QuickSwitchService extends SystemService {
         mWorker.start();
         mHandler = new Handler(mWorker.getLooper());
         init();
-    }
-
-    @Override
-    public void onBootPhase(int phase) {
-        super.onBootPhase(phase);
-        if (phase == SystemService.PHASE_BOOT_COMPLETED) {
-            IntentFilter filter = new IntentFilter(Intent.ACTION_USER_PRESENT);
-        }
     }
 
     public QuickSwitchService(Context context) {
