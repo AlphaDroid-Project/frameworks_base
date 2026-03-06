@@ -188,10 +188,59 @@ public final class CutoutProgressSettings {
                 if (mCallback != null) mCallback.run();
             }
         };
-        Uri base = Settings.Secure.getUriFor("cutout_progress_enabled").buildUpon()
-                .path("").build();
-        mCr.registerContentObserver(
-                Settings.Secure.CONTENT_URI, true, mObserver);
+
+        final String[] KEYS = {
+            KEY_ENABLED,
+            KEY_RING_COLOR_MODE,
+            KEY_RING_COLOR,
+            KEY_ERROR_COLOR,
+            KEY_FINISH_FLASH_COLOR,
+            KEY_STROKE_WIDTH_DP10,
+            KEY_RING_GAP_X1000,
+            KEY_OPACITY,
+            KEY_CLOCKWISE,
+            KEY_FINISH_STYLE,
+            KEY_FINISH_HOLD_MS,
+            KEY_FINISH_EXIT_MS,
+            KEY_FINISH_USE_FLASH,
+            KEY_COMPLETION_PULSE,
+            KEY_PATH_MODE,
+            KEY_RING_SCALE_X_X1000,
+            KEY_RING_SCALE_Y_X1000,
+            KEY_RING_OFFSET_X_DP10,
+            KEY_RING_OFFSET_Y_DP10,
+            KEY_BG_RING_ENABLED,
+            KEY_BG_RING_COLOR,
+            KEY_BG_RING_OPACITY,
+            KEY_MIN_VIS_ENABLED,
+            KEY_MIN_VIS_MS,
+            KEY_SHOW_COUNT_BADGE,
+            KEY_BADGE_OFFSET_X_DP10,
+            KEY_BADGE_OFFSET_Y_DP10,
+            KEY_BADGE_TEXT_SIZE_SP10,
+            KEY_PERCENT_ENABLED,
+            KEY_PERCENT_SIZE_SP10,
+            KEY_PERCENT_BOLD,
+            KEY_PERCENT_POSITION,
+            KEY_PERCENT_OFFSET_X,
+            KEY_PERCENT_OFFSET_Y,
+            KEY_FILENAME_ENABLED,
+            KEY_FILENAME_SIZE_SP10,
+            KEY_FILENAME_BOLD,
+            KEY_FILENAME_POSITION,
+            KEY_FILENAME_OFFSET_X,
+            KEY_FILENAME_OFFSET_Y,
+            KEY_FILENAME_MAX_CHARS,
+            KEY_FILENAME_TRUNCATE,
+            KEY_PROGRESS_EASING,
+            KEY_CHARGING_RING_ENABLED,
+            KEY_CHARGING_PULSE_ENABLED
+        };
+
+        for (String key : KEYS) {
+            mCr.registerContentObserver(
+                    Settings.Secure.getUriFor(key), false, mObserver);
+        }
     }
 
     public void stopObserving() {

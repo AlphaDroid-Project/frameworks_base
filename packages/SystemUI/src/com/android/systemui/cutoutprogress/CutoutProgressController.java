@@ -52,6 +52,26 @@ public class CutoutProgressController implements CoreStartable {
     private boolean mListenerRegistered = false;
     private boolean mBatteryReceiverRegistered = false;
 
+    private final NotifCollectionListener mNotifListener = new NotifCollectionListener() {
+        @Override
+        public void onEntryAdded(NotificationEntry entry) {
+            if (!mSettings.isEnabled()) return;
+            mTracker.onNotificationChanged(entry);
+        }
+
+        @Override
+        public void onEntryUpdated(NotificationEntry entry) {
+            if (!mSettings.isEnabled()) return;
+            mTracker.onNotificationChanged(entry);
+        }
+
+        @Override
+        public void onEntryRemoved(NotificationEntry entry, int reason) {
+            if (!mSettings.isEnabled()) return;
+            mTracker.onNotificationRemoved(entry, reason);
+        }
+    };
+
     private final BroadcastReceiver mBatteryReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
@@ -114,6 +134,12 @@ public class CutoutProgressController implements CoreStartable {
 
     private void disableFeature() {
         mTracker.reset();
+
+        if (mListenerRegistered) {
+            mPipeline.removeCollectionListener(mNotifListener);
+            mListenerRegistered = false;
+        }
+
         detachOverlay();
         unregisterBatteryReceiver();
     }
@@ -154,27 +180,7 @@ public class CutoutProgressController implements CoreStartable {
     private void registerPipelineListener() {
         if (mListenerRegistered) return;
         mListenerRegistered = true;
-
-        mPipeline.addCollectionListener(new NotifCollectionListener() {
-
-            @Override
-            public void onEntryAdded(NotificationEntry entry) {
-                if (!mSettings.isEnabled()) return;
-                mTracker.onNotificationChanged(entry);
-            }
-
-            @Override
-            public void onEntryUpdated(NotificationEntry entry) {
-                if (!mSettings.isEnabled()) return;
-                mTracker.onNotificationChanged(entry);
-            }
-
-            @Override
-            public void onEntryRemoved(NotificationEntry entry, int reason) {
-                if (!mSettings.isEnabled()) return;
-                mTracker.onNotificationRemoved(entry, reason);
-            }
-        });
+        mPipeline.addCollectionListener(mNotifListener);
     }
 
     private void registerBatteryReceiver() {
