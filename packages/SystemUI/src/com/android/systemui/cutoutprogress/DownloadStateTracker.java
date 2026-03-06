@@ -83,7 +83,6 @@ public final class DownloadStateTracker {
             if (mActive.remove(id) != null) {
                 notifyCountChanged();
                 publishAggregated();
-                fireComplete();
             }
             return;
         }
@@ -125,6 +124,8 @@ public final class DownloadStateTracker {
             fireComplete();
         } else if (reason == REASON_APP_CANCEL || reason == REASON_APP_CANCEL_ALL) {
             fireComplete();
+        } else if (reason == 1 || reason == 2) {
+
         } else if (snap.progress >= ERROR_THRESHOLD_PCT) {
             fireError();
         }
@@ -142,7 +143,7 @@ public final class DownloadStateTracker {
     }
 
     private String entryKey(NotificationEntry e) {
-        return e.getSbn().getPackageName() + ":" + e.getSbn().getId();
+        return e.getKey();
     }
 
     private void pruneStale(String pkg, String currentId) {

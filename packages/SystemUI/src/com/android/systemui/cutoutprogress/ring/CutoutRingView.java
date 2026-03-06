@@ -68,6 +68,10 @@ public final class CutoutRingView extends View {
     private final RectF mArcBounds = new RectF();
     private boolean mHasCutout = false;
 
+    // Pre-allocated to avoid memory churn during onDraw
+    private final float[] mTempPoint = new float[2];
+    private final Matrix mTempMatrix = new Matrix();
+
     private final OverlayAnimationHelper mAnim;
     private RingViewRenderer mRenderer;
     private final CountBadgePainter mBadge;
@@ -202,13 +206,6 @@ public final class CutoutRingView extends View {
         sCfgChargingRing = s.isChargingRingEnabled();
         sCfgChargingPulse = s.isChargingPulseEnabled();
 
-        boolean needPath = sCfgPathMode;
-        if (needPath && !(mRenderer instanceof CapsuleRingRenderer)) {
-            mRenderer = new CapsuleRingRenderer();
-        } else if (!needPath && !(mRenderer instanceof CircleRingRenderer)) {
-            mRenderer = new CircleRingRenderer();
-        }
-
         if (!sCfgChargingRing && mIsCharging) {
             stopChargingAnimations();
         }
@@ -275,9 +272,8 @@ public final class CutoutRingView extends View {
 
     private void applyRainbowShader(Paint paint, float cx, float cy) {
         SweepGradient shader = requireRainbowShader(cx, cy);
-        Matrix m = new Matrix();
-        m.setRotate(-90f, cx, cy);
-        shader.setLocalMatrix(m);
+        mTempMatrix.setRotate(-90f, cx, cy);
+        shader.setLocalMatrix(mTempMatrix);
         paint.setShader(shader);
     }
 
@@ -443,6 +439,7 @@ public final class CutoutRingView extends View {
             }
         }
 
+        // If no hardware cutout is found, create a dummy fallback
         if (!mHasCutout) {
             float cx = getResources().getDisplayMetrics().widthPixels / 2f;
             float radius = 15f * mDp;
@@ -450,16 +447,44 @@ public final class CutoutRingView extends View {
             mHasCutout = true;
         }
 
+        // Always invalidate the rainbow shader when insets change,
+        // as the center point (cx, cy) might have moved.
         mRainbowShader = null;
         mRainbowCx = Float.NaN;
 
         recalcScaledPath();
         invalidate();
+
         return super.onApplyWindowInsets(insets);
     }
 
+
     private void recalcScaledPath() {
         mCutoutPath.computeBounds(mPathBounds, true);
+
+        boolean needPath = sCfgPathMode;
+        if (mPathBounds.width() > mPathBounds.height() * 2.5f) {
+            needPath = true;
+        }
+
+        if (needPath && !(mRenderer instanceof CapsuleRingRenderer)) {
+            mRenderer = new CapsuleRingRenderer();
+        } else if (!needPath && !(mRenderer instanceof CircleRingRenderer)) {
+            mRenderer = new CircleRingRenderer();
+        }
+
+        if (mRenderer instanceof CircleRingRenderer) {
+            float screenW = getResources().getDisplayMetrics().widthPixels;
+            float cx = mPathBounds.centerX();
+            float startAngle = -90f;
+            if (cx < screenW / 3f) {
+                startAngle = 180f;
+            } else if (cx > screenW * 2f / 3f) {
+                startAngle = 0f;
+            }
+            ((CircleRingRenderer) mRenderer).setStartAngle(startAngle);
+        }
+
         mScaleMatrix.setScale(sCfgRingGap, sCfgRingGap,
                 mPathBounds.centerX(), mPathBounds.centerY());
         mScaledPath.reset();
@@ -625,11 +650,11 @@ public final class CutoutRingView extends View {
         if (sCfgPct) {
             String text = pct + "%";
             float tw = mPercentPaint.measureText(text);
-            float[] pos = labelXY(sCfgPctPos, pad, mPercentPaint.getTextSize(), tw);
+            computeLabelXY(sCfgPctPos, pad, mPercentPaint.getTextSize(), tw, mTempPoint);
             mPercentPaint.setColor(ringColor);
             mPercentPaint.setAlpha(alpha);
-            canvas.drawText(text, pos[0] + sCfgPctOffXDp * mDp,
-                    pos[1] + sCfgPctOffYDp * mDp, mPercentPaint);
+            canvas.drawText(text, mTempPoint[0] + sCfgPctOffXDp * mDp,
+                    mTempPoint[1] + sCfgPctOffYDp * mDp, mPercentPaint);
         }
 
         boolean geoPreview = mAnim.isGeometryPreviewActive();
@@ -638,49 +663,56 @@ public final class CutoutRingView extends View {
 
         if (sCfgFname && fname != null && (mDownloadCount <= 1 || geoPreview)) {
             String display = truncate(fname, sCfgFnameMaxChars, sCfgFnameTruncate);
-            float[] pos = labelXY(sCfgFnamePos, pad, mFilenamePaint.getTextSize(), null);
+            computeLabelXY(sCfgFnamePos, pad, mFilenamePaint.getTextSize(), 0f, mTempPoint);
             mFilenamePaint.setColor(ringColor);
             mFilenamePaint.setAlpha(alpha);
-            canvas.drawText(display, pos[0] + sCfgFnameOffXDp * mDp,
-                    pos[1] + sCfgFnameOffYDp * mDp, mFilenamePaint);
+            canvas.drawText(display, mTempPoint[0] + sCfgFnameOffXDp * mDp,
+                    mTempPoint[1] + sCfgFnameOffYDp * mDp, mFilenamePaint);
         }
     }
 
-    private float[] labelXY(String position, float pad, float textHeight, Float textW) {
+    private void computeLabelXY(String position, float pad, float textHeight, float textW, float[] outPoint) {
         switch (position) {
             case "left":
-                return new float[]{
-                        textW != null ? mArcBounds.left - textW / 2f - pad
-                                      : mArcBounds.left - pad,
-                        mArcBounds.centerY() + textHeight / 3f};
+                outPoint[0] = textW > 0 ? mArcBounds.left - textW / 2f - pad : mArcBounds.left - pad;
+                outPoint[1] = mArcBounds.centerY() + textHeight / 3f;
+                break;
             case "top":
-                return new float[]{mArcBounds.centerX(), mArcBounds.top - pad};
+                outPoint[0] = mArcBounds.centerX();
+                outPoint[1] = mArcBounds.top - pad;
+                break;
             case "bottom":
-                return new float[]{mArcBounds.centerX(),
-                        mArcBounds.bottom + textHeight + pad};
+                outPoint[0] = mArcBounds.centerX();
+                outPoint[1] = mArcBounds.bottom + textHeight + pad;
+                break;
             case "top_left":
-                return new float[]{mArcBounds.left - pad, mArcBounds.top - pad};
+                outPoint[0] = mArcBounds.left - pad;
+                outPoint[1] = mArcBounds.top - pad;
+                break;
             case "top_right":
-                return new float[]{mArcBounds.right + pad, mArcBounds.top - pad};
+                outPoint[0] = mArcBounds.right + pad;
+                outPoint[1] = mArcBounds.top - pad;
+                break;
             case "bottom_left":
-                return new float[]{mArcBounds.left - pad,
-                        mArcBounds.bottom + textHeight + pad};
+                outPoint[0] = mArcBounds.left - pad;
+                outPoint[1] = mArcBounds.bottom + textHeight + pad;
+                break;
             case "bottom_right":
-                return new float[]{mArcBounds.right + pad,
-                        mArcBounds.bottom + textHeight + pad};
-            default:
-                return new float[]{
-                        textW != null ? mArcBounds.right + textW / 2f + pad
-                                      : mArcBounds.right + pad,
-                        mArcBounds.centerY() + textHeight / 3f};
+                outPoint[0] = mArcBounds.right + pad;
+                outPoint[1] = mArcBounds.bottom + textHeight + pad;
+                break;
+            default: // right
+                outPoint[0] = textW > 0 ? mArcBounds.right + textW / 2f + pad : mArcBounds.right + pad;
+                outPoint[1] = mArcBounds.centerY() + textHeight / 3f;
+                break;
         }
     }
 
     private void computeArcBounds() {
         mScaledPath.computeBounds(mArcBounds, true);
-        float[] offRotated = rotateOffset(sCfgOffsetXDp, sCfgOffsetYDp);
-        float cx = mArcBounds.centerX() + offRotated[0];
-        float cy = mArcBounds.centerY() + offRotated[1];
+        computeRotatedOffset(sCfgOffsetXDp, sCfgOffsetYDp, mTempPoint);
+        float cx = mArcBounds.centerX() + mTempPoint[0];
+        float cy = mArcBounds.centerY() + mTempPoint[1];
 
         float halfW, halfH;
         if (sCfgPathMode) {
@@ -694,13 +726,25 @@ public final class CutoutRingView extends View {
         mArcBounds.set(cx - halfW, cy - halfH, cx + halfW, cy + halfH);
     }
 
-    private float[] rotateOffset(float dx, float dy) {
+    private void computeRotatedOffset(float dx, float dy, float[] outPoint) {
         int rot = getDisplay() != null ? getDisplay().getRotation() : Surface.ROTATION_0;
         switch (rot) {
-            case Surface.ROTATION_90: return new float[]{ dy * mDp, -dx * mDp};
-            case Surface.ROTATION_180: return new float[]{-dx * mDp, -dy * mDp};
-            case Surface.ROTATION_270: return new float[]{-dy * mDp,  dx * mDp};
-            default: return new float[]{ dx * mDp, dy * mDp};
+            case Surface.ROTATION_90:
+                outPoint[0] = dy * mDp;
+                outPoint[1] = -dx * mDp;
+                break;
+            case Surface.ROTATION_180:
+                outPoint[0] = -dx * mDp;
+                outPoint[1] = -dy * mDp;
+                break;
+            case Surface.ROTATION_270:
+                outPoint[0] = -dy * mDp;
+                outPoint[1] = dx * mDp;
+                break;
+            default: // Surface.ROTATION_0
+                outPoint[0] = dx * mDp;
+                outPoint[1] = dy * mDp;
+                break;
         }
     }
 
@@ -788,7 +832,9 @@ public final class CutoutRingView extends View {
         switch (mode) {
             case "accelerate": return v * v;
             case "decelerate": return 1f - (1f - v) * (1f - v);
-            case "ease_in_out": return v < .5f ? 2*v*v : 1f - (float)Math.pow(-2*v+2,2)/2f;
+            case "ease_in_out":
+                float f = -2f * v + 2f;
+                return v < 0.5f ? 2f * v * v : 1f - (f * f) / 2f;
             default: return v;
         }
     }

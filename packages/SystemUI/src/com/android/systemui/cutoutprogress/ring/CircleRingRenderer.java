@@ -23,6 +23,11 @@ import android.graphics.RectF;
 public final class CircleRingRenderer implements RingViewRenderer {
 
     private final RectF mBounds = new RectF();
+    private float mStartAngle = -90f;
+
+    public void setStartAngle(float startAngle) {
+        mStartAngle = startAngle;
+    }
 
     @Override
     public void updateBounds(RectF bounds) {
@@ -37,9 +42,9 @@ public final class CircleRingRenderer implements RingViewRenderer {
     @Override
     public void drawProgress(Canvas canvas, float sweepFraction,
                              boolean clockwise, Paint paint) {
-        float sweep  = 360f * Math.max(0f, Math.min(1f, sweepFraction));
+        float sweep = 360f * Math.max(0f, Math.min(1f, sweepFraction));
         float actual = clockwise ? sweep : -sweep;
-        canvas.drawArc(mBounds, -90f, actual, false, paint);
+        canvas.drawArc(mBounds, mStartAngle, actual, false, paint);
     }
 
     @Override
@@ -48,7 +53,7 @@ public final class CircleRingRenderer implements RingViewRenderer {
                               int highlight,
                               Paint basePaint, Paint shinePaint, float alpha) {
         for (int i = 0; i < segments; i++) {
-            float startAngle = -90f + i * (arcDeg + gapDeg);
+            float startAngle = mStartAngle + i * (arcDeg + gapDeg);
             if (i == highlight || i == highlight - 1) {
                 Paint tmp = new Paint(shinePaint);
                 tmp.setAlpha((int)(255 * alpha));
