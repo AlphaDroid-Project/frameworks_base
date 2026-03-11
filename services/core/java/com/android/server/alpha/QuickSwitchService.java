@@ -1,12 +1,12 @@
 /*
  * Copyright (C) 2023 The RisingOS Android Project
- * Copyright (C) 2023-2024 AlphaDroid Project
+ * Copyright (C) 2026 AlphaDroid Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      [http://www.apache.org/licenses/LICENSE-2.0](http://www.apache.org/licenses/LICENSE-2.0)
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -75,10 +75,33 @@ public final class QuickSwitchService extends SystemService {
         "com.google.pixel.livewallpaper"
     );
 
+    private static final List<String> LAUNCHER3_OVERLAYS = List.of(
+        "com.android.system.navbar.android",
+        "com.android.system.navbar.asus",
+        "com.android.system.navbar.dora",
+        "com.android.system.navbar.moto",
+        "com.android.system.navbar.nexus",
+        "com.android.system.navbar.old",
+        "com.android.system.navbar.oneplus",
+        "com.android.system.navbar.oneui",
+        "com.android.system.navbar.sammy",
+        "com.android.system.navbar.tecno"
+    );
+
     private static final List<String> NEXUS_LAUNCHER_OVERLAYS = List.of(
         "com.android.overlay.pixel_launcher",
         "com.android.systemui.overlay.pixel_launcher",
-        "com.google.android.apps.nexuslauncher.overlay.pixel_launcher"
+        "com.google.android.apps.nexuslauncher.overlay.pixel_launcher",
+        "com.android.system.navbar.android.pixel",
+        "com.android.system.navbar.asus.pixel",
+        "com.android.system.navbar.dora.pixel",
+        "com.android.system.navbar.moto.pixel",
+        "com.android.system.navbar.nexus.pixel",
+        "com.android.system.navbar.old.pixel",
+        "com.android.system.navbar.oneplus.pixel",
+        "com.android.system.navbar.oneui.pixel",
+        "com.android.system.navbar.sammy.pixel",
+        "com.android.system.navbar.tecno.pixel"
     );
 
     private static final String TAG = "QuickSwitchService";
@@ -136,6 +159,7 @@ public final class QuickSwitchService extends SystemService {
         // handle relatives
         if (defaultLauncher.equals(LAUNCHER3)) {
             enabledPackages.addAll(WALLPAPER_PICKER_PACKAGES);
+            enabledPackages.addAll(LAUNCHER3_OVERLAYS);
             disabledPackages.addAll(getDisabledLauncherPackages(LAUNCHER3));
         } else if (defaultLauncher.equals(LAWNCHAIR)) {
             enabledPackages.add(LAWNCHAIR_OVERLAY);
@@ -199,9 +223,11 @@ public final class QuickSwitchService extends SystemService {
         } else if (launcher.equals(LAWNCHAIR)) {
             disabledPackages.addAll(WALLPAPER_PICKER_GOOGLE_PACKAGES);
             disabledPackages.addAll(NEXUS_LAUNCHER_OVERLAYS);
+            disabledPackages.addAll(LAUNCHER3_OVERLAYS);
         } else if (launcher.equals(NEXUS_LAUNCHER)) {
             disabledPackages.addAll(WALLPAPER_PICKER_PACKAGES);
             disabledPackages.add(LAWNCHAIR_OVERLAY);
+            disabledPackages.addAll(LAUNCHER3_OVERLAYS);
         }
         return disabledPackages;
     }
