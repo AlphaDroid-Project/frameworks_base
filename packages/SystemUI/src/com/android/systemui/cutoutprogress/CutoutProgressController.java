@@ -1,5 +1,6 @@
 /*
  * Copyright (C) 2024-2026 Lunaris AOSP
+ * Copyright (C) 2026 AlphaDroid
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,15 +24,21 @@ import android.content.IntentFilter;
 import android.graphics.PixelFormat;
 import android.os.BatteryManager;
 import android.os.Handler;
+import android.os.RemoteException;
+import android.text.format.Formatter;
 import android.view.WindowManager;
 
+import com.android.internal.app.IBatteryStats;
+import com.android.settingslib.fuelgauge.BatteryStatus;
 import com.android.systemui.CoreStartable;
+import com.android.systemui.cutoutprogress.ring.CutoutRingView;
 import com.android.systemui.dagger.SysUISingleton;
 import com.android.systemui.dagger.qualifiers.Main;
-import com.android.systemui.cutoutprogress.ring.CutoutRingView;
 import com.android.systemui.statusbar.notification.collection.NotifPipeline;
 import com.android.systemui.statusbar.notification.collection.NotificationEntry;
 import com.android.systemui.statusbar.notification.collection.notifcollection.NotifCollectionListener;
+
+import java.util.Locale;
 
 import javax.inject.Inject;
 
@@ -43,6 +50,7 @@ public class CutoutProgressController implements CoreStartable {
     private final Context mContext;
     private final NotifPipeline mPipeline;
     private final Handler mMainHandler;
+    private final IBatteryStats mBatteryStats;
 
     private final CutoutProgressSettings mSettings;
     private final DownloadStateTracker mTracker;
@@ -51,6 +59,11 @@ public class CutoutProgressController implements CoreStartable {
     private boolean mOverlayAttached = false;
     private boolean mListenerRegistered = false;
     private boolean mBatteryReceiverRegistered = false;
+
+    private int mCurrentDivider = 1000;
+    private boolean mHasDashCharger = false;
+    private boolean mHasWarpCharger = false;
+    private boolean mHasVoocCharger = false;
 
     private final NotifCollectionListener mNotifListener = new NotifCollectionListener() {
         @Override
@@ -76,20 +89,94 @@ public class CutoutProgressController implements CoreStartable {
         @Override
         public void onReceive(Context context, Intent intent) {
             if (!mSettings.isEnabled() || !mSettings.isChargingRingEnabled()) {
-                mMainHandler.post(() -> mRingView.setChargingState(false, 0));
+                mMainHandler.post(() -> mRingView.setChargingState(false, 0, null, null, null, null));
                 return;
             }
-            int status = intent.getIntExtra(BatteryManager.EXTRA_STATUS,
-                    BatteryManager.BATTERY_STATUS_UNKNOWN);
+
+            BatteryStatus bs = new BatteryStatus(intent);
+
+            int status = intent.getIntExtra(BatteryManager.EXTRA_STATUS, BatteryManager.BATTERY_STATUS_UNKNOWN);
             boolean charging = status == BatteryManager.BATTERY_STATUS_CHARGING
                     || status == BatteryManager.BATTERY_STATUS_FULL;
             int level = intent.getIntExtra(BatteryManager.EXTRA_LEVEL, 0);
             int scale = intent.getIntExtra(BatteryManager.EXTRA_SCALE, 100);
             int pct = scale > 0 ? level * 100 / scale : 0;
+
+            int temp = intent.getIntExtra(BatteryManager.EXTRA_TEMPERATURE, 0);
+
+            float chargingCurrent = bs.maxChargingCurrent;
+            float chargingVoltage = bs.maxChargingVoltage;
+            float chargingWattage = bs.maxChargingWattage;
+
+            if (chargingCurrent <= 0) {
+                BatteryManager bm = context.getSystemService(BatteryManager.class);
+                if (bm != null) {
+                    int currentNow = bm.getIntProperty(BatteryManager.BATTERY_PROPERTY_CURRENT_NOW);
+                    if (currentNow != 0) chargingCurrent = Math.abs(currentNow);
+                }
+            }
+
+            if (chargingWattage <= 0 && chargingCurrent > 0 && chargingVoltage > 0) {
+                chargingWattage = (chargingCurrent / 1000f) * (chargingVoltage / 1000f);
+            }
+
+            String statsLine1 = "";
+            if (chargingCurrent >= mCurrentDivider * 1000) {
+                statsLine1 += String.format(Locale.US, "%.1fA", (chargingCurrent / mCurrentDivider / 1000f));
+            } else if (chargingCurrent > 0) {
+                statsLine1 += String.format(Locale.US, "%.0fmA", (chargingCurrent / mCurrentDivider));
+            }
+
+            if (chargingWattage > 0) {
+                statsLine1 += (statsLine1.isEmpty() ? "" : " • ")
+                        + String.format(Locale.US, "%.1fW", (chargingWattage / mCurrentDivider / 1000f));
+            }
+
+            if (chargingVoltage > 0) {
+                statsLine1 += (statsLine1.isEmpty() ? "" : " • ")
+                        + String.format(Locale.US, "%.1fV", (chargingVoltage / 1000f / 1000f));
+            }
+
+            String statsLine2 = temp > 0
+                    ? String.format(Locale.US, "%.1f°C", (temp / 10f))
+                    : "";
+
+            String chargeMode = "Charging";
+            int chargingSpeed = bs.getChargingSpeed(mContext);
+            int chargingStatus = bs.chargingStatus;
+
+            if (chargingStatus == BatteryManager.BATTERY_STATUS_FULL) {
+                chargeMode = "Fully Charged";
+            } else if (chargingSpeed == BatteryStatus.CHARGING_OEM) {
+                if (mHasVoocCharger) chargeMode = "VOOC Charging";
+                else if (mHasWarpCharger) chargeMode = "Warp Charging";
+                else if (mHasDashCharger) chargeMode = "Dash Charging";
+                else chargeMode = "Charging rapidly";
+            } else if (chargingSpeed == BatteryStatus.CHARGING_FAST) {
+                chargeMode = "Charging rapidly";
+            } else if (chargingSpeed == BatteryStatus.CHARGING_SLOWLY) {
+                chargeMode = "Charging slowly";
+            }
+
+            String timeRemainingStr = "";
+            try {
+                if (mBatteryStats != null && charging && chargingStatus != BatteryManager.BATTERY_STATUS_FULL) {
+                    long timeMs = mBatteryStats.computeChargeTimeRemaining();
+                    if (timeMs > 0) {
+                        timeRemainingStr = Formatter.formatShortElapsedTimeRoundingUpToMinutes(mContext, timeMs) + " remaining";
+                    }
+                }
+            } catch (RemoteException ignored) {}
+
             boolean pulseEnabled = mSettings.isChargingPulseEnabled();
+            String finalMode = chargeMode;
+            String finalTime = timeRemainingStr;
+            String finalStats1 = statsLine1;
+            String finalStats2 = statsLine2;
+
             mMainHandler.post(() -> {
                 mRingView.setChargingPulseEnabled(pulseEnabled);
-                mRingView.setChargingState(charging, pct);
+                mRingView.setChargingState(charging, pct, finalMode, finalTime, finalStats1, finalStats2);
             });
         }
     };
@@ -98,13 +185,26 @@ public class CutoutProgressController implements CoreStartable {
     public CutoutProgressController(
             Context context,
             NotifPipeline notifPipeline,
+            IBatteryStats batteryStats,
             @Main Handler mainHandler) {
         mContext = context;
         mPipeline = notifPipeline;
+        mBatteryStats = batteryStats;
         mMainHandler = mainHandler;
-        mSettings = new CutoutProgressSettings(
-                context.getContentResolver(), mainHandler);
+        mSettings = new CutoutProgressSettings(context.getContentResolver(), mainHandler);
         mTracker = new DownloadStateTracker();
+
+        try {
+            mHasDashCharger = mContext.getResources().getBoolean(com.android.internal.R.bool.config_hasDashCharger);
+            mHasWarpCharger = mContext.getResources().getBoolean(com.android.internal.R.bool.config_hasWarpCharger);
+            mHasVoocCharger = mContext.getResources().getBoolean(com.android.internal.R.bool.config_hasVoocCharger);
+        } catch (Exception ignored) {}
+
+        try {
+            int resId = mContext.getResources().getIdentifier("config_currentInfoDivider", "integer", mContext.getPackageName());
+            if (resId == 0) resId = mContext.getResources().getIdentifier("config_currentInfoDivider", "integer", "android");
+            if (resId != 0) mCurrentDivider = mContext.getResources().getInteger(resId);
+        } catch (Exception ignored) {}
     }
 
     @Override
@@ -118,7 +218,6 @@ public class CutoutProgressController implements CoreStartable {
 
     private void onSettingsChanged() {
         mRingView.applySettings(mSettings);
-
         if (mSettings.isEnabled()) {
             enableFeature();
         } else {
@@ -134,12 +233,10 @@ public class CutoutProgressController implements CoreStartable {
 
     private void disableFeature() {
         mTracker.reset();
-
         if (mListenerRegistered) {
             mPipeline.removeCollectionListener(mNotifListener);
             mListenerRegistered = false;
         }
-
         detachOverlay();
         unregisterBatteryReceiver();
     }
@@ -152,7 +249,6 @@ public class CutoutProgressController implements CoreStartable {
                 WindowManager.LayoutParams.MATCH_PARENT,
                 WINDOW_TYPE,
                 WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE
-                        | WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE
                         | WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS
                         | WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN,
                 PixelFormat.TRANSLUCENT);
@@ -194,23 +290,13 @@ public class CutoutProgressController implements CoreStartable {
         if (!mBatteryReceiverRegistered) return;
         mContext.unregisterReceiver(mBatteryReceiver);
         mBatteryReceiverRegistered = false;
-        mMainHandler.post(() -> mRingView.setChargingState(false, 0));
+        mMainHandler.post(() -> mRingView.setChargingState(false, 0, null, null, null, null));
     }
 
     private void bindTrackerToView() {
-        mTracker.setOnProgress(progress ->
-                mMainHandler.post(() -> mRingView.setProgress(progress)));
-
-        mTracker.setOnComplete(() ->
-                mMainHandler.post(() -> mRingView.setProgress(100)));
-
-        mTracker.setOnError(() ->
-                mMainHandler.post(() -> mRingView.showError()));
-
-        mTracker.setOnCountChanged(count ->
-                mMainHandler.post(() -> mRingView.setDownloadCount(count)));
-
-        mTracker.setOnLabelChanged(label ->
-                mMainHandler.post(() -> mRingView.setFilenameHint(label)));
+        mTracker.setOnProgress(progress -> mMainHandler.post(() -> mRingView.setProgress(progress)));
+        mTracker.setOnComplete(() -> mMainHandler.post(() -> mRingView.setProgress(100)));
+        mTracker.setOnError(() -> mMainHandler.post(() -> mRingView.showError()));
+        mTracker.setOnLabelChanged(label -> mMainHandler.post(() -> mRingView.setFilenameHint(label)));
     }
 }

@@ -60,13 +60,11 @@ public final class DownloadStateTracker {
     private IntCallback mOnProgress;
     private Runnable mOnComplete;
     private Runnable mOnError;
-    private IntCallback mOnCountChanged;
     private StringCallback mOnLabelChanged;
 
     public void setOnProgress(IntCallback cb) { mOnProgress = cb; }
     public void setOnComplete(Runnable cb) { mOnComplete = cb; }
     public void setOnError(Runnable cb) { mOnError = cb; }
-    public void setOnCountChanged(IntCallback cb) { mOnCountChanged = cb; }
     public void setOnLabelChanged(StringCallback cb) { mOnLabelChanged = cb; }
 
     public void onNotificationChanged(NotificationEntry entry) {
@@ -81,7 +79,6 @@ public final class DownloadStateTracker {
 
         if (rawProgress < 0 || rawMax <= 0) {
             if (mActive.remove(id) != null) {
-                notifyCountChanged();
                 publishAggregated();
             }
             return;
@@ -102,12 +99,10 @@ public final class DownloadStateTracker {
                     : (existing != null ? existing.label : null);
             mActive.put(id, new DownloadSnapshot(pkg, usedLabel, pct));
             publishAggregated();
-            if (isNew || isReset) notifyCountChanged();
         }
 
         if (pct >= 100) {
             mActive.remove(id);
-            notifyCountChanged();
             publishAggregated();
             fireComplete();
         }
@@ -117,7 +112,6 @@ public final class DownloadStateTracker {
         DownloadSnapshot snap = mActive.remove(entryKey(entry));
         if (snap == null) return;
 
-        notifyCountChanged();
         publishAggregated();
 
         if (snap.progress >= 100) {
@@ -125,7 +119,7 @@ public final class DownloadStateTracker {
         } else if (reason == REASON_APP_CANCEL || reason == REASON_APP_CANCEL_ALL) {
             fireComplete();
         } else if (reason == 1 || reason == 2) {
-
+            // Ignored reasons (e.g. click, swipe)
         } else if (snap.progress >= ERROR_THRESHOLD_PCT) {
             fireError();
         }
@@ -133,7 +127,6 @@ public final class DownloadStateTracker {
 
     public void reset() {
         mActive.clear();
-        notifyCountChanged();
         fire(mOnProgress, 0);
         fire(mOnLabelChanged, null);
     }
@@ -181,7 +174,6 @@ public final class DownloadStateTracker {
         fire(mOnLabelChanged, lbl);
     }
 
-    private void notifyCountChanged() { fire(mOnCountChanged, mActive.size()); }
     private void fireComplete() { if (mOnComplete != null) mOnComplete.run(); }
     private void fireError() { if (mOnError != null) mOnError.run(); }
 
