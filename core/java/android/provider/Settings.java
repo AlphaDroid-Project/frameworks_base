@@ -7522,12 +7522,6 @@ public final class Settings {
         public static final String QS_BRIGHTNESS_SLIDER_GRADIENT = "qs_brightness_slider_gradient";
 
         /**
-         * Gradient on Volume slider
-         * @hide
-         */
-        public static final String VOLUME_SLIDER_GRADIENT = "volume_slider_gradient";
-
-        /**
          * @hide
          */
         public static final String ONGOING_ACTION_CHIP = "ongoing_action_chip";
@@ -18652,7 +18646,7 @@ public final class Settings {
          * Force LTE Carrier Aggregation setting per SIM slot.
          * Use FORCE_LTE_CA_0 for SIM slot 0 (first SIM)
          * Use FORCE_LTE_CA_1 for SIM slot 1 (second SIM)
-         * 
+         *
          * Type: int (0 = disabled, 1 = enabled)
          * @hide
          */
