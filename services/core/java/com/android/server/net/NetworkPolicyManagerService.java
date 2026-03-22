@@ -1277,6 +1277,11 @@ public class NetworkPolicyManagerService extends INetworkPolicyManager.Stub {
     private static int getAllowedTransportsPackedForUidPolicy(int policy) {
         int allowedTransports = ALL_VALID_TRANSPORTS;
         // Where policy rejects a transport, remove the flags that allow it.
+
+        if ((policy & POLICY_REJECT_ALL) == POLICY_REJECT_ALL) {
+            return 0;
+        }
+
         if ((policy & POLICY_REJECT_VPN) == POLICY_REJECT_VPN) {
             allowedTransports &= ~(1 << TRANSPORT_VPN);
         }
