@@ -7510,12 +7510,6 @@ public final class Settings {
         public static final String QS_FOOTER_SHOW_POWER_MENU = "qs_footer_show_power_menu";
 
         /**
-         * Gradient on QS tiles
-         * @hide
-         */
-        public static final String QS_TILE_GRADIENT = "qs_tile_gradient";
-
-        /**
          * @hide
          */
         public static final String ONGOING_ACTION_CHIP = "ongoing_action_chip";
