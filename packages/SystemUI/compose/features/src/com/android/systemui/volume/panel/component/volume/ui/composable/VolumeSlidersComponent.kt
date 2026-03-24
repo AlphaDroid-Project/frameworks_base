@@ -18,10 +18,15 @@ package com.android.systemui.volume.panel.component.volume.ui.composable
 
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.android.compose.PlatformSliderDefaults
+import com.android.systemui.alpha.style.common.LocalAlphaColorScheme
+import com.android.systemui.alpha.style.common.defaultAlphaColorScheme
+import com.android.systemui.alpha.style.volume.VolumeSliderStyleManager
 import com.android.systemui.volume.panel.component.volume.slider.ui.viewmodel.SliderViewModel
 import com.android.systemui.volume.panel.component.volume.ui.viewmodel.AudioVolumeComponentViewModel
 import com.android.systemui.volume.panel.component.volume.ui.viewmodel.SlidersExpandableViewModel
@@ -34,6 +39,7 @@ class VolumeSlidersComponent
 @Inject
 constructor(
     private val viewModel: AudioVolumeComponentViewModel,
+    private val volumeSliderStyleManager: VolumeSliderStyleManager,
 ) : ComposeVolumePanelUiComponent {
 
     @Composable
@@ -43,30 +49,61 @@ constructor(
         if (sliderViewModels.isEmpty()) {
             return
         }
-        if (isLargeScreen) {
-            GridVolumeSliders(
-                viewModels = sliderViewModels,
-                sliderColors = PlatformSliderDefaults.defaultPlatformSliderColors(),
-                modifier = modifier.fillMaxWidth(),
+
+        val defaultScheme = defaultAlphaColorScheme()
+        val styleState by volumeSliderStyleManager.styleState.collectAsStateWithLifecycle()
+
+        val styleRenderer = remember(
+            styleState.styleId,
+            styleState.settings,
+            styleState.themeVersion,
+            styleState.isNightMode,
+            defaultScheme.accent,
+            defaultScheme.neutral,
+        ) {
+            volumeSliderStyleManager.getRenderer(
+                accentColor = defaultScheme.accent,
+                neutralColor = defaultScheme.neutral,
             )
-        } else {
-            val expandableViewModel: SlidersExpandableViewModel by
-                viewModel
-                    .isExpandable(isPortrait)
-                    .collectAsStateWithLifecycle(SlidersExpandableViewModel.Unavailable)
-            if (expandableViewModel is SlidersExpandableViewModel.Unavailable) {
-                return
+        }
+
+        val themedScheme = remember(styleRenderer, defaultScheme) {
+            styleRenderer?.produceColorScheme(defaultScheme) ?: defaultScheme
+        }
+
+        CompositionLocalProvider(LocalAlphaColorScheme provides themedScheme) {
+            val sliderColors = PlatformSliderDefaults.defaultPlatformSliderColors()
+
+            if (isLargeScreen) {
+                GridVolumeSliders(
+                    viewModels = sliderViewModels,
+                    sliderColors = sliderColors,
+                    styleRenderer = styleRenderer,
+                    modifier = modifier.fillMaxWidth(),
+                )
+            } else {
+                val expandableViewModel: SlidersExpandableViewModel by
+                    viewModel
+                        .isExpandable(isPortrait)
+                        .collectAsStateWithLifecycle(SlidersExpandableViewModel.Unavailable)
+                if (expandableViewModel is SlidersExpandableViewModel.Unavailable) {
+                    return@CompositionLocalProvider
+                }
+
+                val isExpanded =
+                    (expandableViewModel as? SlidersExpandableViewModel.Expandable)?.isExpanded
+                        ?: true
+
+                ColumnVolumeSliders(
+                    viewModels = sliderViewModels,
+                    isExpanded = isExpanded,
+                    onExpandedChanged = viewModel::onExpandedChanged,
+                    sliderColors = sliderColors,
+                    isExpandable = expandableViewModel is SlidersExpandableViewModel.Expandable,
+                    styleRenderer = styleRenderer,
+                    modifier = modifier.fillMaxWidth(),
+                )
             }
-            val isExpanded =
-                (expandableViewModel as? SlidersExpandableViewModel.Expandable)?.isExpanded ?: true
-            ColumnVolumeSliders(
-                viewModels = sliderViewModels,
-                isExpanded = isExpanded,
-                onExpandedChanged = viewModel::onExpandedChanged,
-                sliderColors = PlatformSliderDefaults.defaultPlatformSliderColors(),
-                isExpandable = expandableViewModel is SlidersExpandableViewModel.Expandable,
-                modifier = modifier.fillMaxWidth(),
-            )
         }
     }
 }

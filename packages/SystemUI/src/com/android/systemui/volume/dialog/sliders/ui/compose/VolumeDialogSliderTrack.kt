@@ -16,11 +16,13 @@
 
 package com.android.systemui.volume.dialog.sliders.ui.compose
 
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.LocalContentColor
@@ -33,6 +35,9 @@ import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.geometry.RoundRect
+import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.layout.Measurable
 import androidx.compose.ui.layout.MeasurePolicy
@@ -45,6 +50,13 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.util.fastFirst
+import com.android.systemui.alpha.style.brightness.renderers.BrightnessSliderStyleRenderer
+import com.android.systemui.alpha.style.volume.VolumeMaterialColors
+import com.android.systemui.alpha.style.volume.VolumeSliderStyleWrapper
+import com.android.systemui.volume.dialog.sliders.ui.VolumeDialogSliderDimensions
+import com.android.systemui.volume.dialog.ui.utils.VOLUME_SLIDER_SHAPE_DEFAULT
+import com.android.systemui.volume.dialog.ui.utils.getVolumeTrackCornerDpForMode
+import com.android.systemui.volume.dialog.ui.utils.getVolumeTrackInsideCornerDpForMode
 import kotlin.math.min
 
 @Composable
@@ -55,47 +67,183 @@ fun SliderTrack(
     modifier: Modifier = Modifier,
     colors: SliderColors = SliderDefaults.colors(),
     thumbTrackGapSize: Dp = 6.dp,
+    thumbIconGapSize: Dp = thumbTrackGapSize + 4.dp,
     trackCornerSize: Dp = 12.dp,
     trackInsideCornerSize: Dp = 2.dp,
-    trackSize: Dp = 40.dp,
+    trackSize: Dp = VolumeDialogSliderDimensions.TrackThickness,
     isVertical: Boolean = false,
+    styleRenderer: BrightnessSliderStyleRenderer? = null,
+    shapeMode: Int = VOLUME_SLIDER_SHAPE_DEFAULT,
     activeTrackStartIcon: (@Composable BoxScope.(iconsState: SliderIconsState) -> Unit)? = null,
     activeTrackEndIcon: (@Composable BoxScope.(iconsState: SliderIconsState) -> Unit)? = null,
     inactiveTrackStartIcon: (@Composable BoxScope.(iconsState: SliderIconsState) -> Unit)? = null,
     inactiveTrackEndIcon: (@Composable BoxScope.(iconsState: SliderIconsState) -> Unit)? = null,
 ) {
     val isRtl = LocalLayoutDirection.current == LayoutDirection.Rtl
-    val measurePolicy =
-        remember(sliderState, isRtl, isVertical, thumbTrackGapSize) {
-            TrackMeasurePolicy(
-                sliderState = sliderState,
-                shouldMirrorIcons = !isVertical && isRtl || isVertical,
-                isVertical = isVertical,
-                gapSize = thumbTrackGapSize,
-            )
+
+    val effectiveTrackCornerSize = remember(shapeMode, trackSize, trackCornerSize) {
+        getVolumeTrackCornerDpForMode(
+            shapeMode = shapeMode,
+            trackSize = trackSize,
+            defaultCorner = trackCornerSize,
+        )
+    }
+    val effectiveTrackInsideCornerSize = remember(shapeMode, trackInsideCornerSize) {
+        getVolumeTrackInsideCornerDpForMode(
+            shapeMode = shapeMode,
+            defaultInsideCorner = trackInsideCornerSize,
+        )
+    }
+    val useStyledVisualThumb = styleRenderer != null || shapeMode != VOLUME_SLIDER_SHAPE_DEFAULT
+
+    val effectiveThumbAlongTrack = if (useStyledVisualThumb) {
+        VolumeDialogSliderDimensions.StyledVisualThumbSize
+    } else {
+        if (isVertical) {
+            VolumeDialogSliderDimensions.VerticalLogicalThumbSize.height
+        } else {
+            VolumeDialogSliderDimensions.HorizontalLogicalThumbSize.width
         }
+    }
+
+    val measurePolicy = remember(
+        sliderState,
+        isRtl,
+        isVertical,
+        thumbIconGapSize,
+        effectiveThumbAlongTrack,
+    ) {
+        TrackMeasurePolicy(
+            sliderState = sliderState,
+            shouldMirrorIcons = (!isVertical && isRtl) || isVertical,
+            isVertical = isVertical,
+            gapSize = thumbIconGapSize,
+            effectiveThumbAlongTrack = effectiveThumbAlongTrack,
+        )
+    }
+
     Layout(
         measurePolicy = measurePolicy,
         content = {
-            SliderDefaults.Track(
-                sliderState = sliderState,
-                colors = colors,
-                enabled = isEnabled,
-                trackCornerSize = trackCornerSize,
-                trackInsideCornerSize = trackInsideCornerSize,
-                drawStopIndicator = null,
-                thumbTrackGapSize = thumbTrackGapSize,
-                drawTick = { _, _ -> },
-                modifier =
-                    Modifier.then(
-                            if (isVertical) {
-                                Modifier.width(trackSize)
-                            } else {
-                                Modifier.height(trackSize)
-                            }
-                        )
-                        .layoutId(Contents.Track),
-            )
+            val logicalThumbSize = if (isVertical) {
+                VolumeDialogSliderDimensions.VerticalLogicalThumbSize
+            } else {
+                VolumeDialogSliderDimensions.HorizontalLogicalThumbSize
+            }
+
+            VolumeSliderStyleWrapper(
+                renderer = styleRenderer,
+                shape = RoundedCornerShape(effectiveTrackCornerSize),
+                segmentMode = true,
+                isVertical = isVertical,
+                isActive = false,
+                activeFraction = sliderState.coercedValueAsFraction,
+                trackCornerDp = effectiveTrackCornerSize,
+                trackInsideCornerDp = if (styleRenderer == null) {
+                    effectiveTrackInsideCornerSize
+                } else {
+                    0.dp
+                },
+                thumbGapDp = if (styleRenderer == null) thumbTrackGapSize else 0.dp,
+                logicalThumbWidthDp = logicalThumbSize.width,
+                logicalThumbHeightDp = logicalThumbSize.height,
+                materialColors = VolumeMaterialColors(
+                    activeSegment = colors.activeTrackColor,
+                    inactiveSegment = colors.inactiveTrackColor,
+                    activeButton = colors.activeTrackColor,
+                    inactiveButton = colors.inactiveTrackColor,
+                ),
+                modifier = Modifier
+                    .then(
+                        if (isVertical) {
+                            Modifier.width(trackSize)
+                        } else {
+                            Modifier.height(trackSize)
+                        },
+                    )
+                    .layoutId(Contents.Track),
+            ) {
+                if (styleRenderer == null) {
+                    SliderDefaults.Track(
+                        sliderState = sliderState,
+                        colors = colors,
+                        enabled = isEnabled,
+                        trackCornerSize = effectiveTrackCornerSize,
+                        trackInsideCornerSize = effectiveTrackInsideCornerSize,
+                        drawStopIndicator = null,
+                        thumbTrackGapSize = thumbTrackGapSize,
+                        drawTick = { _, _ -> },
+                        modifier = Modifier.fillMaxSize(),
+                    )
+                } else {
+                    Canvas(modifier = Modifier.fillMaxSize()) {
+                        val cornerPx = effectiveTrackCornerSize.toPx()
+                        val innerCornerPx = 0f
+
+                        if (isVertical) {
+                            val fraction = sliderState.coercedValueAsFraction.coerceIn(0f, 1f)
+                            val thumbCenterY = size.height * (1f - fraction)
+                            val thumbHalf =
+                                VolumeDialogSliderDimensions.VerticalLogicalThumbSize.height.toPx() /
+                                    2f
+
+                            val inactiveTop = 0f
+                            val inactiveBottom = (thumbCenterY - thumbHalf).coerceIn(0f, size.height)
+
+                            val activeTop = (thumbCenterY + thumbHalf).coerceIn(0f, size.height)
+                            val activeBottom = size.height
+
+                            drawVerticalInactiveTrackSegment(
+                                top = inactiveTop,
+                                bottom = inactiveBottom,
+                                width = size.width,
+                                color = colors.inactiveTrackColor,
+                                outerCornerPx = cornerPx,
+                                innerCornerPx = innerCornerPx,
+                            )
+
+                            drawVerticalActiveTrackSegment(
+                                top = activeTop,
+                                bottom = activeBottom,
+                                width = size.width,
+                                color = colors.activeTrackColor,
+                                outerCornerPx = cornerPx,
+                                innerCornerPx = innerCornerPx,
+                            )
+                        } else {
+                            val fraction = sliderState.coercedValueAsFraction.coerceIn(0f, 1f)
+                            val thumbCenterX = size.width * fraction
+                            val thumbHalf =
+                                VolumeDialogSliderDimensions.HorizontalLogicalThumbSize.width.toPx() /
+                                    2f
+
+                            val activeStart = 0f
+                            val activeEnd = (thumbCenterX - thumbHalf).coerceIn(0f, size.width)
+
+                            val inactiveStart = (thumbCenterX + thumbHalf).coerceIn(0f, size.width)
+                            val inactiveEnd = size.width
+
+                            drawHorizontalActiveTrackSegment(
+                                left = activeStart,
+                                right = activeEnd,
+                                height = size.height,
+                                color = colors.activeTrackColor,
+                                outerCornerPx = cornerPx,
+                                innerCornerPx = innerCornerPx,
+                            )
+
+                            drawHorizontalInactiveTrackSegment(
+                                left = inactiveStart,
+                                right = inactiveEnd,
+                                height = size.height,
+                                color = colors.inactiveTrackColor,
+                                outerCornerPx = cornerPx,
+                                innerCornerPx = innerCornerPx,
+                            )
+                        }
+                    }
+                }
+            }
 
             TrackIcon(
                 icon = activeTrackStartIcon,
@@ -130,6 +278,114 @@ fun SliderTrack(
     )
 }
 
+private fun androidx.compose.ui.graphics.drawscope.DrawScope.drawHorizontalActiveTrackSegment(
+    left: Float,
+    right: Float,
+    height: Float,
+    color: androidx.compose.ui.graphics.Color,
+    outerCornerPx: Float,
+    innerCornerPx: Float,
+) {
+    if (right <= left) return
+
+    val path = Path().apply {
+        addRoundRect(
+            RoundRect(
+                left = left,
+                top = 0f,
+                right = right,
+                bottom = height,
+                topLeftCornerRadius = CornerRadius(outerCornerPx),
+                topRightCornerRadius = CornerRadius(innerCornerPx),
+                bottomLeftCornerRadius = CornerRadius(outerCornerPx),
+                bottomRightCornerRadius = CornerRadius(innerCornerPx),
+            ),
+        )
+    }
+    drawPath(path, color)
+}
+
+private fun androidx.compose.ui.graphics.drawscope.DrawScope.drawHorizontalInactiveTrackSegment(
+    left: Float,
+    right: Float,
+    height: Float,
+    color: androidx.compose.ui.graphics.Color,
+    outerCornerPx: Float,
+    innerCornerPx: Float,
+) {
+    if (right <= left) return
+
+    val path = Path().apply {
+        addRoundRect(
+            RoundRect(
+                left = left,
+                top = 0f,
+                right = right,
+                bottom = height,
+                topLeftCornerRadius = CornerRadius(innerCornerPx),
+                topRightCornerRadius = CornerRadius(outerCornerPx),
+                bottomLeftCornerRadius = CornerRadius(innerCornerPx),
+                bottomRightCornerRadius = CornerRadius(outerCornerPx),
+            ),
+        )
+    }
+    drawPath(path, color)
+}
+
+private fun androidx.compose.ui.graphics.drawscope.DrawScope.drawVerticalActiveTrackSegment(
+    top: Float,
+    bottom: Float,
+    width: Float,
+    color: androidx.compose.ui.graphics.Color,
+    outerCornerPx: Float,
+    innerCornerPx: Float,
+) {
+    if (bottom <= top) return
+
+    val path = Path().apply {
+        addRoundRect(
+            RoundRect(
+                left = 0f,
+                top = top,
+                right = width,
+                bottom = bottom,
+                topLeftCornerRadius = CornerRadius(innerCornerPx),
+                topRightCornerRadius = CornerRadius(innerCornerPx),
+                bottomLeftCornerRadius = CornerRadius(outerCornerPx),
+                bottomRightCornerRadius = CornerRadius(outerCornerPx),
+            ),
+        )
+    }
+    drawPath(path, color)
+}
+
+private fun androidx.compose.ui.graphics.drawscope.DrawScope.drawVerticalInactiveTrackSegment(
+    top: Float,
+    bottom: Float,
+    width: Float,
+    color: androidx.compose.ui.graphics.Color,
+    outerCornerPx: Float,
+    innerCornerPx: Float,
+) {
+    if (bottom <= top) return
+
+    val path = Path().apply {
+        addRoundRect(
+            RoundRect(
+                left = 0f,
+                top = top,
+                right = width,
+                bottom = bottom,
+                topLeftCornerRadius = CornerRadius(outerCornerPx),
+                topRightCornerRadius = CornerRadius(outerCornerPx),
+                bottomLeftCornerRadius = CornerRadius(innerCornerPx),
+                bottomRightCornerRadius = CornerRadius(innerCornerPx),
+            ),
+        )
+    }
+    drawPath(path, color)
+}
+
 @Composable
 private fun TrackIcon(
     icon: (@Composable BoxScope.(sliderIconsState: SliderIconsState) -> Unit)?,
@@ -140,29 +396,15 @@ private fun TrackIcon(
     modifier: Modifier = Modifier,
 ) {
     icon ?: return
-    /*
-    ignore icons mirroring for the rtl layouts here because icons positioning is handled by the
-    TrackMeasurePolicy. It ensures that active icons are always above the active track and the
-    same for inactive
-    */
-    val iconColor =
-        when (contents) {
-            is Contents.Inactive ->
-                if (isEnabled) {
-                    colors.inactiveTickColor
-                } else {
-                    colors.disabledInactiveTickColor
-                }
-            is Contents.Active ->
-                if (isEnabled) {
-                    colors.activeTickColor
-                } else {
-                    colors.disabledActiveTickColor
-                }
-            is Contents.Track -> {
-                error("$contents is unsupported by the TrackIcon")
-            }
-        }
+
+    val iconColor = when (contents) {
+        is Contents.Inactive ->
+            if (isEnabled) colors.inactiveTickColor else colors.disabledInactiveTickColor
+        is Contents.Active ->
+            if (isEnabled) colors.activeTickColor else colors.disabledActiveTickColor
+        is Contents.Track -> error("$contents is unsupported by the TrackIcon")
+    }
+
     Box(modifier = modifier.layoutId(contents).fillMaxSize()) {
         if (trackMeasurePolicy.isVisible(contents) != null) {
             CompositionLocalProvider(LocalContentColor provides iconColor) {
@@ -178,15 +420,15 @@ private class TrackMeasurePolicy(
     private val shouldMirrorIcons: Boolean,
     private val gapSize: Dp,
     private val isVertical: Boolean,
+    private val effectiveThumbAlongTrack: Dp,
 ) : MeasurePolicy, SliderIconsState {
 
-    private val isVisible: Map<Contents, MutableState<Boolean?>> =
-        mutableMapOf(
-            Contents.Active.TrackStartIcon to mutableStateOf(null),
-            Contents.Active.TrackEndIcon to mutableStateOf(null),
-            Contents.Inactive.TrackStartIcon to mutableStateOf(null),
-            Contents.Inactive.TrackEndIcon to mutableStateOf(null),
-        )
+    private val isVisible: Map<Contents, MutableState<Boolean?>> = mutableMapOf(
+        Contents.Active.TrackStartIcon to mutableStateOf(null),
+        Contents.Active.TrackEndIcon to mutableStateOf(null),
+        Contents.Inactive.TrackStartIcon to mutableStateOf(null),
+        Contents.Inactive.TrackEndIcon to mutableStateOf(null),
+    )
 
     fun isVisible(contents: Contents): Boolean? = isVisible.getValue(contents.resolve()).value
 
@@ -214,7 +456,6 @@ private class TrackMeasurePolicy(
         val components = buildMap {
             put(Contents.Track, track)
             for (measurable in measurables) {
-                // don't measure track a second time
                 if (measurable.layoutId != Contents.Track) {
                     put(
                         (measurable.layoutId as Contents).resolve(),
@@ -226,65 +467,69 @@ private class TrackMeasurePolicy(
 
         return layout(track.width, track.height) {
             val gapSizePx = gapSize.roundToPx()
-            val coercedValueAsFraction =
-                if (shouldMirrorIcons) {
-                    1 - sliderState.coercedValueAsFraction
-                } else {
-                    sliderState.coercedValueAsFraction
-                }
+            val coercedValueAsFraction = if (shouldMirrorIcons) {
+                1f - sliderState.coercedValueAsFraction
+            } else {
+                sliderState.coercedValueAsFraction
+            }
+
+            val containerDimension = if (isVertical) track.height else track.width
+            val thumbSizePx = effectiveThumbAlongTrack.roundToPx().toFloat()
+            val thumbHalfPx = thumbSizePx / 2f
+
+            val minThumbCenter = thumbHalfPx
+            val maxThumbCenter = (containerDimension.toFloat() - thumbHalfPx).coerceAtLeast(minThumbCenter)
+            val unclampedThumbCenter = containerDimension * coercedValueAsFraction
+            val thumbCenter = unclampedThumbCenter.coerceIn(minThumbCenter, maxThumbCenter)
+
+            val thumbStart = thumbCenter - thumbHalfPx
+            val thumbEnd = thumbCenter + thumbHalfPx
+
             for (iconLayoutId in components.keys) {
-                val iconPlaceable = components.getValue(iconLayoutId)
-                if (isVertical) {
-                    iconPlaceable.place(
-                        0,
-                        iconLayoutId.calculatePosition(
-                            placeableDimension = iconPlaceable.height,
-                            containerDimension = track.height,
-                            gapSize = gapSizePx,
-                            coercedValueAsFraction = coercedValueAsFraction,
-                        ),
-                    )
+                val placeable = components.getValue(iconLayoutId)
+
+                val placeableDimension = if (isVertical) {
+                    placeable.height
                 } else {
-                    iconPlaceable.place(
-                        iconLayoutId.calculatePosition(
-                            placeableDimension = iconPlaceable.width,
-                            containerDimension = track.width,
-                            gapSize = gapSizePx,
-                            coercedValueAsFraction = coercedValueAsFraction,
-                        ),
-                        0,
-                    )
+                    placeable.width
                 }
 
-                // isVisible is only relevant for the icons
+                val position = iconLayoutId.calculatePosition(
+                    placeableDimension = placeableDimension,
+                    containerDimension = containerDimension,
+                    gapSize = gapSizePx,
+                    thumbStart = thumbStart,
+                    thumbEnd = thumbEnd,
+                )
+
+                if (isVertical) {
+                    placeable.place(0, position)
+                } else {
+                    placeable.place(position, 0)
+                }
+
                 if (iconLayoutId != Contents.Track) {
-                    val isIconVisible =
-                        iconLayoutId.isVisible(
-                            placeableDimension =
-                                if (isVertical) iconPlaceable.height else iconPlaceable.width,
-                            containerDimension = if (isVertical) track.height else track.width,
-                            gapSize = gapSizePx,
-                            coercedValueAsFraction = coercedValueAsFraction,
-                        )
-                    isVisible.getValue(iconLayoutId).value = isIconVisible
+                    val visible = iconLayoutId.isVisible(
+                        placeableDimension = placeableDimension,
+                        containerDimension = containerDimension,
+                        gapSize = gapSizePx,
+                        thumbStart = thumbStart,
+                        thumbEnd = thumbEnd,
+                    )
+                    isVisible.getValue(iconLayoutId).value = visible
                 }
             }
         }
     }
 
     private fun Contents.resolve(): Contents {
-        return if (shouldMirrorIcons) {
-            mirrored
-        } else {
-            this
-        }
+        return if (shouldMirrorIcons) mirrored else this
     }
 }
 
 private sealed interface Contents {
 
     data object Track : Contents {
-
         override val mirrored: Contents
             get() = error("unsupported for Track")
 
@@ -292,29 +537,29 @@ private sealed interface Contents {
             placeableDimension: Int,
             containerDimension: Int,
             gapSize: Int,
-            coercedValueAsFraction: Float,
+            thumbStart: Float,
+            thumbEnd: Float,
         ): Int = 0
 
         override fun isVisible(
             placeableDimension: Int,
             containerDimension: Int,
             gapSize: Int,
-            coercedValueAsFraction: Float,
+            thumbStart: Float,
+            thumbEnd: Float,
         ): Boolean = true
     }
 
     interface Active : Contents {
-
         override fun isVisible(
             placeableDimension: Int,
             containerDimension: Int,
             gapSize: Int,
-            coercedValueAsFraction: Float,
-        ): Boolean =
-            (containerDimension * coercedValueAsFraction - gapSize).toInt() > placeableDimension
+            thumbStart: Float,
+            thumbEnd: Float,
+        ): Boolean = thumbStart - gapSize > placeableDimension
 
         data object TrackStartIcon : Active {
-
             override val mirrored: Contents
                 get() = Inactive.TrackEndIcon
 
@@ -322,12 +567,12 @@ private sealed interface Contents {
                 placeableDimension: Int,
                 containerDimension: Int,
                 gapSize: Int,
-                coercedValueAsFraction: Float,
+                thumbStart: Float,
+                thumbEnd: Float,
             ): Int = 0
         }
 
         data object TrackEndIcon : Active {
-
             override val mirrored: Contents
                 get() = Inactive.TrackStartIcon
 
@@ -335,25 +580,22 @@ private sealed interface Contents {
                 placeableDimension: Int,
                 containerDimension: Int,
                 gapSize: Int,
-                coercedValueAsFraction: Float,
-            ): Int =
-                (containerDimension * coercedValueAsFraction - placeableDimension - gapSize).toInt()
+                thumbStart: Float,
+                thumbEnd: Float,
+            ): Int = (thumbStart - placeableDimension - gapSize).toInt()
         }
     }
 
     interface Inactive : Contents {
-
         override fun isVisible(
             placeableDimension: Int,
             containerDimension: Int,
             gapSize: Int,
-            coercedValueAsFraction: Float,
-        ): Boolean =
-            containerDimension - (containerDimension * coercedValueAsFraction + gapSize) >
-                placeableDimension
+            thumbStart: Float,
+            thumbEnd: Float,
+        ): Boolean = containerDimension - (thumbEnd + gapSize) > placeableDimension
 
         data object TrackStartIcon : Inactive {
-
             override val mirrored: Contents
                 get() = Active.TrackEndIcon
 
@@ -361,12 +603,12 @@ private sealed interface Contents {
                 placeableDimension: Int,
                 containerDimension: Int,
                 gapSize: Int,
-                coercedValueAsFraction: Float,
-            ): Int = (containerDimension * coercedValueAsFraction + gapSize).toInt()
+                thumbStart: Float,
+                thumbEnd: Float,
+            ): Int = (thumbEnd + gapSize).toInt()
         }
 
         data object TrackEndIcon : Inactive {
-
             override val mirrored: Contents
                 get() = Active.TrackStartIcon
 
@@ -374,7 +616,8 @@ private sealed interface Contents {
                 placeableDimension: Int,
                 containerDimension: Int,
                 gapSize: Int,
-                coercedValueAsFraction: Float,
+                thumbStart: Float,
+                thumbEnd: Float,
             ): Int = containerDimension - placeableDimension
         }
     }
@@ -383,24 +626,21 @@ private sealed interface Contents {
         placeableDimension: Int,
         containerDimension: Int,
         gapSize: Int,
-        coercedValueAsFraction: Float,
+        thumbStart: Float,
+        thumbEnd: Float,
     ): Int
 
     fun isVisible(
         placeableDimension: Int,
         containerDimension: Int,
         gapSize: Int,
-        coercedValueAsFraction: Float,
+        thumbStart: Float,
+        thumbEnd: Float,
     ): Boolean
 
-    /**
-     * [Contents] that is visually on the opposite side of the current one on the slider. This is
-     * handy when dealing with the rtl layouts
-     */
     val mirrored: Contents
 }
 
-/** Provides visibility state for each of the Slider's icons. */
 interface SliderIconsState {
     val isActiveTrackStartIconVisible: Boolean
     val isActiveTrackEndIconVisible: Boolean
