@@ -139,6 +139,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -226,6 +227,42 @@ public class StatusBarManagerService extends IStatusBarService.Stub implements D
 
     private final boolean mVisibleBackgroundUsersEnabled;
     private final UserManagerService mUserManager;
+
+    private static final Set<String> SYSTEM_UI_RESTART_CALLER_ALLOWLIST =
+            Set.of(
+                    "com.android.wallpaper",
+                    "com.android.launcher3",
+                    "com.android.settings");
+
+    private boolean isCallerWhitelisted() {
+        final int callingUid = Binder.getCallingUid();
+        final int callingUserId = UserHandle.getUserId(callingUid);
+
+        final String[] callingPackages = mContext.getPackageManager().getPackagesForUid(callingUid);
+        if (callingPackages == null || callingPackages.length == 0) {
+            return false;
+        }
+
+        for (String packageName : callingPackages) {
+            if (!SYSTEM_UI_RESTART_CALLER_ALLOWLIST.contains(packageName)) {
+                continue;
+            }
+
+            final int packageUid =
+                    mPackageManagerInternal.getPackageUid(packageName, 0, callingUserId);
+            if (packageUid < 0) {
+                continue;
+            }
+
+            if (UserHandle.getAppId(callingUid) != UserHandle.getAppId(packageUid)) {
+                continue;
+            }
+
+            return true;
+        }
+
+        return false;
+    }
 
     private class DeathRecipient implements IBinder.DeathRecipient {
         public void binderDied() {
@@ -2010,7 +2047,16 @@ public class StatusBarManagerService extends IStatusBarService.Stub implements D
      */
     @Override
     public void restartSystemUI() {
-        enforceStatusBarService();
+        final boolean skipPermissionCheck = isCallerWhitelisted();
+
+        Slog.d(TAG, "restartSystemUI skipPermissionCheck=" + skipPermissionCheck
+                + " callingUid=" + Binder.getCallingUid()
+                + " packages=" + Arrays.toString(
+                        mContext.getPackageManager().getPackagesForUid(Binder.getCallingUid())));
+
+        if (!skipPermissionCheck) {
+            enforceStatusBarService();
+        }
         enforceValidCallingUser();
 
         final long identity = Binder.clearCallingIdentity();
