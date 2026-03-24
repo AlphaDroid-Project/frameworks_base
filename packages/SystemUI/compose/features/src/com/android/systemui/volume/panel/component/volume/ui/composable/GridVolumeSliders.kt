@@ -23,12 +23,14 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.android.compose.PlatformSliderColors
 import com.android.compose.grid.VerticalGrid
+import com.android.systemui.alpha.style.brightness.renderers.BrightnessSliderStyleRenderer
 import com.android.systemui.volume.panel.component.volume.slider.ui.viewmodel.SliderViewModel
 
 @Composable
 fun GridVolumeSliders(
     viewModels: List<SliderViewModel>,
     sliderColors: PlatformSliderColors,
+    styleRenderer: BrightnessSliderStyleRenderer?,
     modifier: Modifier = Modifier,
 ) {
     require(viewModels.isNotEmpty())
@@ -49,6 +51,7 @@ fun GridVolumeSliders(
                 onValueChangeFinished = { sliderViewModel.onValueChangeFinished() },
                 onIconTapped = { sliderViewModel.toggleMuted(sliderState) },
                 sliderColors = sliderColors,
+                styleRenderer = styleRenderer,
                 hapticsViewModelFactory = sliderViewModel.getSliderHapticsViewModelFactory(),
             )
         }

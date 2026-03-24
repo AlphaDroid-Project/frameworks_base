@@ -60,6 +60,7 @@ import com.android.compose.PlatformSliderColors
 import com.android.compose.modifiers.padding
 import com.android.compose.modifiers.thenIf
 import com.android.systemui.Flags
+import com.android.systemui.alpha.style.brightness.renderers.BrightnessSliderStyleRenderer
 import com.android.systemui.compose.modifiers.sysuiResTag
 import com.android.systemui.res.R
 import com.android.systemui.volume.panel.component.volume.slider.ui.viewmodel.SliderViewModel
@@ -83,6 +84,7 @@ fun ColumnVolumeSliders(
     onExpandedChanged: (Boolean) -> Unit,
     sliderColors: PlatformSliderColors,
     isExpandable: Boolean,
+    styleRenderer: BrightnessSliderStyleRenderer?,
     modifier: Modifier = Modifier,
 ) {
     require(viewModels.isNotEmpty())
@@ -105,6 +107,7 @@ fun ColumnVolumeSliders(
                 onValueChangeFinished = { sliderViewModel.onValueChangeFinished() },
                 onIconTapped = { sliderViewModel.toggleMuted(sliderState) },
                 sliderColors = sliderColors,
+                styleRenderer = styleRenderer,
                 hapticsViewModelFactory = sliderViewModel.getSliderHapticsViewModelFactory(),
                 button =
                     if (Flags.volumeRedesign()) {
@@ -191,6 +194,7 @@ fun ColumnVolumeSliders(
                             onValueChangeFinished = { sliderViewModel.onValueChangeFinished() },
                             onIconTapped = { sliderViewModel.toggleMuted(sliderState) },
                             sliderColors = sliderColors,
+                            styleRenderer = styleRenderer,
                             hapticsViewModelFactory =
                                 sliderViewModel.getSliderHapticsViewModelFactory(),
                         )

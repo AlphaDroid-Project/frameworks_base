@@ -8354,6 +8354,16 @@ public final class Settings {
         public static final String UI_STYLE_AEROGEL_PARAMS = "ui_style_aerogel_params";
 
         /**
+         * Volume slider shape
+         * 0 - Default
+         * 1 - Circle
+         * 2 - Rounded square
+         * 3 - Square
+         * @hide
+         */
+        public static final String VOLUME_SLIDER_SHAPE = "volume_slider_shape";
+
+        /**
          * Keys we no longer back up under the current schema, but want to continue to
          * process when restoring historical backup datasets.
          *
