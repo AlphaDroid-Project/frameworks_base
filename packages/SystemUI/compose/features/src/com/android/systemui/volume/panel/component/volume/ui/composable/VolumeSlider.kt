@@ -22,6 +22,7 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.Orientation
@@ -35,8 +36,11 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.requiredSize
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon as MaterialIcon
@@ -54,6 +58,14 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.drawscope.DrawScope
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.CustomAccessibilityAction
@@ -65,12 +77,15 @@ import androidx.compose.ui.semantics.disabled
 import androidx.compose.ui.semantics.progressBarRangeInfo
 import androidx.compose.ui.semantics.setProgress
 import androidx.compose.ui.semantics.stateDescription
+import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import com.android.compose.PlatformSlider
 import com.android.compose.PlatformSliderColors
 import com.android.systemui.Flags
+import com.android.systemui.alpha.style.brightness.renderers.BrightnessSliderStyleRenderer
+import com.android.systemui.alpha.style.common.LocalAlphaColorScheme
 import com.android.systemui.common.shared.model.Icon as IconModel
 import com.android.systemui.common.ui.compose.Icon
 import com.android.systemui.compose.modifiers.sysuiResTag
@@ -79,6 +94,10 @@ import com.android.systemui.haptics.slider.compose.ui.SliderHapticsViewModel
 import com.android.systemui.lifecycle.rememberViewModel
 import com.android.systemui.res.R
 import com.android.systemui.volume.dialog.sliders.ui.compose.SliderTrack
+import com.android.systemui.volume.dialog.ui.utils.getVolumeThumbOrButtonCornerRadiusForMode
+import com.android.systemui.volume.dialog.ui.utils.getVolumeThumbOrButtonShapeForMode
+import com.android.systemui.volume.dialog.ui.utils.rememberVolumeSliderShapeMode
+import com.android.systemui.volume.dialog.ui.utils.useCustomVolumeThumb
 import com.android.systemui.volume.haptics.ui.VolumeHapticsConfigsProvider
 import com.android.systemui.volume.panel.component.volume.slider.ui.viewmodel.SliderState
 import com.android.systemui.volume.ui.compose.slider.AccessibilityParams
@@ -98,12 +117,13 @@ fun VolumeSlider(
     onValueChange: (newValue: Float) -> Unit,
     onIconTapped: () -> Unit,
     sliderColors: PlatformSliderColors,
+    styleRenderer: BrightnessSliderStyleRenderer? = null,
     modifier: Modifier = Modifier,
     hapticsViewModelFactory: SliderHapticsViewModel.Factory?,
     onValueChangeFinished: (() -> Unit)? = null,
     button: (@Composable RowScope.() -> Unit)? = null,
     showLabel: Boolean = true,
-    dimensions: VolumeSliderDimensions = VolumeSliderDimensions.Defaults
+    dimensions: VolumeSliderDimensions = VolumeSliderDimensions.Defaults,
 ) {
     if (!Flags.volumeRedesign()) {
         LegacyVolumeSlider(
@@ -118,6 +138,10 @@ fun VolumeSlider(
         return
     }
 
+    val scheme = LocalAlphaColorScheme.current
+    val density = LocalDensity.current
+    val shapeMode = rememberVolumeSliderShapeMode()
+
     Column(modifier = modifier.animateContentSize()) {
         if (showLabel) {
             Text(
@@ -129,30 +153,35 @@ fun VolumeSlider(
         }
         Row(
             horizontalArrangement = Arrangement.spacedBy(8.dp),
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = dimensions.verticalPadding),
+            modifier =
+                Modifier.fillMaxWidth().padding(vertical = dimensions.verticalPadding),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            val materialSliderColors =
+            val themedSliderColors =
                 SliderDefaults.colors(
-                    activeTickColor = MaterialTheme.colorScheme.surfaceContainerHigh,
-                    inactiveTrackColor = MaterialTheme.colorScheme.surfaceContainerHigh,
-                    disabledActiveTickColor = MaterialTheme.colorScheme.surfaceContainerHigh,
-                    disabledInactiveTrackColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                    thumbColor = scheme.thumb,
+                    activeTrackColor = scheme.accent,
+                    inactiveTrackColor = scheme.neutral,
+                    activeTickColor = scheme.onAccent,
+                    inactiveTickColor = scheme.onNeutral,
+                    disabledThumbColor = scheme.thumb.copy(alpha = 0.50f),
+                    disabledActiveTrackColor = scheme.accent.copy(alpha = 0.45f),
+                    disabledInactiveTrackColor = scheme.neutral.copy(alpha = 0.45f),
+                    disabledActiveTickColor = scheme.onAccent.copy(alpha = 0.45f),
+                    disabledInactiveTickColor = scheme.onNeutral.copy(alpha = 0.45f),
                 )
+
             if (state is SliderState.Empty) {
-                // reserve the space for the slider to avoid excess resizing
-                Spacer(modifier = Modifier
-                    .weight(1f)
-                    .height(dimensions.thumbHeight))
+                Spacer(
+                    modifier = Modifier.weight(1f).height(dimensions.thumbHeight)
+                )
             } else {
                 Slider(
                     value = state.value,
                     valueRange = state.valueRange,
                     onValueChanged = onValueChange,
                     onValueChangeFinished = { onValueChangeFinished?.invoke() },
-                    colors = materialSliderColors,
+                    colors = themedSliderColors,
                     isEnabled = state.isEnabled,
                     stepDistance = state.step,
                     accessibilityParams =
@@ -163,9 +192,12 @@ fun VolumeSlider(
                     track = { sliderState ->
                         SliderTrack(
                             sliderState = sliderState,
-                            colors = materialSliderColors,
+                            colors = themedSliderColors,
                             isEnabled = state.isEnabled,
                             trackSize = dimensions.trackHeight,
+                            isVertical = false,
+                            styleRenderer = styleRenderer,
+                            shapeMode = shapeMode,
                             activeTrackEndIcon =
                                 state.icon?.let { icon ->
                                     { iconsState ->
@@ -209,13 +241,94 @@ fun VolumeSlider(
                         )
                     },
                     thumb = { sliderState, interactionSource ->
-                        SliderDefaults.Thumb(
-                            sliderState = sliderState,
-                            interactionSource = interactionSource,
-                            enabled = state.isEnabled,
-                            colors = materialSliderColors,
-                            thumbSize = DpSize(dimensions.thumbWidth, dimensions.thumbHeight),
-                        )
+                        val logicalThumbSize = DpSize(dimensions.thumbWidth, dimensions.thumbHeight)
+                        val shouldUseCustomThumb =
+                            useCustomVolumeThumb(
+                                shapeMode = shapeMode,
+                                hasStyleRenderer = styleRenderer != null,
+                            )
+
+                        if (!shouldUseCustomThumb) {
+                            SliderDefaults.Thumb(
+                                sliderState = sliderState,
+                                interactionSource = interactionSource,
+                                enabled = state.isEnabled,
+                                colors = themedSliderColors,
+                                thumbSize = logicalThumbSize,
+                            )
+                        } else {
+                            val visualThumbSize = dimensions.trackHeight + 4.dp
+                            val thumbColor =
+                                styleRenderer?.getThumbColor(
+                                    scheme.thumb,
+                                    scheme.accent,
+                                ) ?: scheme.thumb
+
+                            val defaultThumbShape =
+                                remember(visualThumbSize) {
+                                    RoundedCornerShape(visualThumbSize * 0.25f)
+                                }
+                            val defaultCornerRadius =
+                                with(density) { (visualThumbSize * 0.25f).toPx() }
+                            val thumbShape =
+                                getVolumeThumbOrButtonShapeForMode(
+                                    shapeMode = shapeMode,
+                                    sizeDp = visualThumbSize,
+                                    defaultShape = defaultThumbShape,
+                                )
+                            val thumbCornerRadius =
+                                with(density) {
+                                    getVolumeThumbOrButtonCornerRadiusForMode(
+                                        shapeMode = shapeMode,
+                                        sizePx = visualThumbSize.toPx(),
+                                        defaultCornerRadius = defaultCornerRadius,
+                                    )
+                                }
+
+                            val offsetX =
+                                calculateHorizontalThumbOffset(
+                                    fraction = sliderState.coercedValueAsFraction,
+                                    visualThumbSize = visualThumbSize,
+                                    logicalThumbWidth = logicalThumbSize.width,
+                                )
+
+                            Box(
+                                modifier = Modifier.size(logicalThumbSize),
+                                contentAlignment = Alignment.Center,
+                            ) {
+                                Box(
+                                    modifier =
+                                        Modifier.offset(x = offsetX)
+                                            .requiredSize(visualThumbSize)
+                                            .clip(thumbShape),
+                                ) {
+                                    Canvas(modifier = Modifier.fillMaxSize()) {
+                                        val bounds = Rect(0f, 0f, size.width, size.height)
+                                        drawRect(color = thumbColor)
+
+                                        if (styleRenderer != null &&
+                                            !styleRenderer.skipThumbOverlay()
+                                        ) {
+                                            with(styleRenderer) {
+                                                renderThumbOverlay(
+                                                    thumbBounds = bounds,
+                                                    shape = thumbShape,
+                                                    cornerRadius = thumbCornerRadius,
+                                                    thumbColor = thumbColor,
+                                                    density = density,
+                                                )
+                                            }
+                                        }
+
+                                        drawThumbInset(
+                                            bounds = bounds,
+                                            cornerRadius = thumbCornerRadius,
+                                            density = density,
+                                        )
+                                    }
+                                }
+                            }
+                        }
                     },
                     haptics =
                         hapticsViewModelFactory?.let {
@@ -228,10 +341,10 @@ fun VolumeSlider(
                                 orientation = Orientation.Horizontal,
                             )
                         } ?: Haptics.Disabled,
-                    modifier = Modifier
-                        .weight(1f)
-                        .height(dimensions.thumbHeight)
-                        .sysuiResTag(state.label),
+                    modifier =
+                        Modifier.weight(1f)
+                            .height(dimensions.thumbHeight)
+                            .sysuiResTag(state.label),
                 )
             }
             button?.invoke(this)
@@ -438,6 +551,66 @@ private fun setUpHapticsViewModel(
 
 private fun ClosedFloatingPointRange<Float>.stepSize(): Float = 1f / (endInclusive - start)
 
+private fun DrawScope.drawThumbInset(
+    bounds: Rect,
+    cornerRadius: Float,
+    density: Density,
+) {
+    val bevelWidth = with(density) { 1.5.dp.toPx() }
+    val halfStroke = bevelWidth / 2f
+    val strokeRect = bounds.deflate(halfStroke)
+    val strokeRadius = (cornerRadius - halfStroke).coerceAtLeast(0f)
+
+    drawRoundRect(
+        brush =
+            Brush.linearGradient(
+                colors = listOf(Color.White.copy(alpha = 0.35f), Color.Transparent),
+                start = bounds.topLeft,
+                end = bounds.bottomRight,
+            ),
+        topLeft = strokeRect.topLeft,
+        size = strokeRect.size,
+        cornerRadius = CornerRadius(strokeRadius),
+        style = Stroke(bevelWidth),
+    )
+
+    drawRoundRect(
+        brush =
+            Brush.linearGradient(
+                colors = listOf(Color.Transparent, Color.Black.copy(alpha = 0.25f)),
+                start = bounds.topLeft,
+                end = bounds.bottomRight,
+            ),
+        topLeft = strokeRect.topLeft,
+        size = strokeRect.size,
+        cornerRadius = CornerRadius(strokeRadius),
+        style = Stroke(bevelWidth),
+    )
+}
+
+private fun calculateHorizontalThumbOffset(
+    fraction: Float,
+    visualThumbSize: Dp,
+    logicalThumbWidth: Dp,
+): Dp {
+    val visualHalf = visualThumbSize / 2
+    val logicalHalf = logicalThumbWidth / 2
+    val maxOffset = visualHalf - logicalHalf
+    val edgeThreshold = 0.08f
+
+    return when {
+        fraction < edgeThreshold -> {
+            val t = 1f - (fraction / edgeThreshold)
+            maxOffset * t
+        }
+        fraction > (1f - edgeThreshold) -> {
+            val t = (fraction - (1f - edgeThreshold)) / edgeThreshold
+            -maxOffset * t
+        }
+        else -> 0.dp
+    }
+}
+
 @VisibleForTesting
 object VolumeSlidersMotionTestKeys {
     const val ACTIVE_ICON_TAG = "Volume_Slider_activeStartIcon"
@@ -449,14 +622,15 @@ data class VolumeSliderDimensions(
     val thumbHeight: Dp,
     val thumbWidth: Dp,
     val trackHeight: Dp,
-    val verticalPadding: Dp
+    val verticalPadding: Dp,
 ) {
     companion object {
-        val Defaults = VolumeSliderDimensions(
-            thumbHeight = 52.dp,
-            thumbWidth = 4.dp,
-            trackHeight = 40.dp,
-            verticalPadding = 4.dp
-        )
+        val Defaults =
+            VolumeSliderDimensions(
+                thumbHeight = 52.dp,
+                thumbWidth = 4.dp,
+                trackHeight = 40.dp,
+                verticalPadding = 4.dp,
+            )
     }
 }

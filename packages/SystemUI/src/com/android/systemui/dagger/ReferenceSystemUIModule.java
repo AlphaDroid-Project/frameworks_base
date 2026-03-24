@@ -32,6 +32,7 @@ import com.android.systemui.accessibility.data.repository.AccessibilityRepositor
 import com.android.systemui.actioncorner.ActionCornerModule;
 import com.android.systemui.alpha.style.UiStyleRepository;
 import com.android.systemui.alpha.style.brightness.BrightnessSliderStyleModule;
+import com.android.systemui.alpha.style.volume.VolumeSliderStyleModule;
 import com.android.systemui.battery.BatterySaverModule;
 import com.android.systemui.clipboardoverlay.dagger.ClipboardOverlayOverrideModule;
 import com.android.systemui.communal.posturing.dagger.NoopPosturingModule;
@@ -188,6 +189,7 @@ import javax.inject.Provider;
         TopLevelWindowEffectsModule.class,
         TouchpadTutorialModule.class,
         VolumeModule.class,
+        VolumeSliderStyleModule.class,
         WallpaperModule.class,
         ShortcutHelperModule.class,
         ContextualEducationModule.class,
