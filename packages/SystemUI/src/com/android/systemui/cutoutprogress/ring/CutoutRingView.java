@@ -37,6 +37,7 @@ import android.util.Log;
 import android.util.TypedValue;
 import android.view.DisplayCutout;
 import android.view.MotionEvent;
+import android.view.Surface;
 import android.view.View;
 import android.view.ViewTreeObserver;
 import android.view.WindowInsets;
@@ -51,7 +52,7 @@ public final class CutoutRingView extends View {
     private static final long BURN_IN_HIDE_MS = 10_000L;
     private static final long CHARGING_PULSE_MS = 900L;
     private static final long MIN_VIS_MS = 500L;
-    private static final float RING_GAP = 1.155f;
+    private static final float DEFAULT_RING_GAP = 1.155f;
     private static final int BG_RING_OPACITY = 30;
 
     private static final int[] RAINBOW = {
@@ -129,6 +130,7 @@ public final class CutoutRingView extends View {
     private boolean sCfgChargingRing;
     private boolean sCfgChargingPulse;
     private boolean sCfgIslandCompact;
+    private boolean sCfgPathMode;
 
     private int sCfgRingColorMode;
     private int sCfgRingColor;
@@ -137,6 +139,11 @@ public final class CutoutRingView extends View {
     private int sCfgRingOpacityPct;
     private int sCfgDialogBgOpacityPct;
     private float sCfgStrokeDp;
+    private float sCfgRingGap = DEFAULT_RING_GAP;
+    private float sCfgScaleX = 1f;
+    private float sCfgScaleY = 1f;
+    private float sCfgOffsetXDp = 0f;
+    private float sCfgOffsetYDp = 0f;
 
     private final ViewTreeObserver.OnComputeInternalInsetsListener mInsetsListener = info -> {
         info.setTouchableInsets(ViewTreeObserver.InternalInsetsInfo.TOUCHABLE_INSETS_REGION);
@@ -262,6 +269,13 @@ public final class CutoutRingView extends View {
         sCfgIslandCompact = s.isIslandCompactMode();
         sCfgIslandPosition = s.getIslandPosition();
         sCfgIslandTimeoutMs = s.getIslandTimeoutMs();
+
+        sCfgPathMode = s.isPathMode();
+        sCfgRingGap = s.getRingGap();
+        sCfgScaleX = s.getRingScaleX();
+        sCfgScaleY = s.getRingScaleY();
+        sCfgOffsetXDp = s.getRingOffsetXDp();
+        sCfgOffsetYDp = s.getRingOffsetYDp();
 
         if (sCfgChargingRing && !oldChargingRing && mIsCharging) {
             mChargingDisplayPct = 0f;
@@ -542,11 +556,19 @@ public final class CutoutRingView extends View {
 
         mCutoutPath.computeBounds(mPathBounds, true);
 
-        boolean isCapsule = mPathBounds.width() > mPathBounds.height() * 2.5f;
-        if (isCapsule) {
-            mRenderer = new CapsuleRingRenderer();
+        boolean usePathMode = sCfgPathMode;
+        if (mPathBounds.width() > mPathBounds.height() * 2.5f) {
+            usePathMode = true;
+        }
+
+        if (usePathMode) {
+            if (!(mRenderer instanceof CapsuleRingRenderer)) {
+                mRenderer = new CapsuleRingRenderer();
+            }
         } else {
-            mRenderer = new CircleRingRenderer();
+            if (!(mRenderer instanceof CircleRingRenderer)) {
+                mRenderer = new CircleRingRenderer();
+            }
             float screenWidth = getResources().getDisplayMetrics().widthPixels;
             float centerX = mPathBounds.centerX();
 
@@ -561,7 +583,8 @@ public final class CutoutRingView extends View {
             ((CircleRingRenderer) mRenderer).setStartAngle(startAngle);
         }
 
-        mScaleMatrix.setScale(RING_GAP, RING_GAP, mPathBounds.centerX(), mPathBounds.centerY());
+        mScaleMatrix.setScale(sCfgRingGap, sCfgRingGap,
+                mPathBounds.centerX(), mPathBounds.centerY());
         mScaledPath.reset();
         mCutoutPath.transform(mScaleMatrix, mScaledPath);
     }
@@ -579,7 +602,7 @@ public final class CutoutRingView extends View {
             return;
         }
 
-        mScaledPath.computeBounds(mArcBounds, true);
+        computeArcBounds();
         float centerX = mArcBounds.centerX();
         float centerY = mArcBounds.centerY();
 
@@ -670,6 +693,41 @@ public final class CutoutRingView extends View {
             if (mAnim.displayScale != 1f) {
                 canvas.restore();
             }
+        }
+    }
+
+    private void computeArcBounds() {
+        mScaledPath.computeBounds(mArcBounds, true);
+
+        float[] rotatedOffset = rotateOffset(sCfgOffsetXDp, sCfgOffsetYDp);
+        float cx = mArcBounds.centerX() + rotatedOffset[0];
+        float cy = mArcBounds.centerY() + rotatedOffset[1];
+
+        float halfW;
+        float halfH;
+        if (sCfgPathMode) {
+            halfW = mArcBounds.width() / 2f * sCfgScaleX;
+            halfH = mArcBounds.height() / 2f * sCfgScaleY;
+        } else {
+            float halfBase = Math.max(mArcBounds.width(), mArcBounds.height()) / 2f;
+            halfW = halfBase * sCfgScaleX;
+            halfH = halfBase * sCfgScaleY;
+        }
+
+        mArcBounds.set(cx - halfW, cy - halfH, cx + halfW, cy + halfH);
+    }
+
+    private float[] rotateOffset(float dx, float dy) {
+        int rot = getDisplay() != null ? getDisplay().getRotation() : Surface.ROTATION_0;
+        switch (rot) {
+            case Surface.ROTATION_90:
+                return new float[]{dy * mDp, -dx * mDp};
+            case Surface.ROTATION_180:
+                return new float[]{-dx * mDp, -dy * mDp};
+            case Surface.ROTATION_270:
+                return new float[]{-dy * mDp, dx * mDp};
+            default:
+                return new float[]{dx * mDp, dy * mDp};
         }
     }
 
