@@ -83,6 +83,7 @@ import com.android.systemui.keyguard.domain.interactor.KeyguardTransitionInterac
 import com.android.systemui.keyguard.shared.model.KeyguardState;
 import com.android.systemui.monet.ColorScheme;
 import com.android.systemui.monet.DynamicColors;
+import com.android.systemui.monet.MonetParams;
 import com.android.systemui.settings.UserTracker;
 import com.android.systemui.statusbar.policy.DeviceProvisionedController;
 import com.android.systemui.statusbar.policy.DeviceProvisionedController.DeviceProvisionedListener;
@@ -127,6 +128,19 @@ import javax.inject.Inject;
 public class ThemeOverlayController implements CoreStartable, Dumpable {
     protected static final String TAG = "ThemeOverlayController";
     private static final boolean DEBUG = false;
+
+    private static final String OVERLAY_LUMINANCE_FACTOR =
+            "android.theme.customization.luminance_factor";
+    private static final String OVERLAY_CHROMA_FACTOR =
+            "android.theme.customization.chroma_factor";
+    private static final String OVERLAY_TINT_BACKGROUND =
+            "android.theme.customization.tint_background";
+    private static final String OVERLAY_CATEGORY_BG_COLOR =
+            "android.theme.customization.bg_color";
+    private static final String OVERLAY_FIDELITY =
+            "android.theme.customization.fidelity";
+    private static final double MIN_FACTOR = 0.05;
+    private static final double MAX_FACTOR = 2.0;
 
     private final ThemeOverlayApplier mThemeManager;
     private final UserManager mUserManager;
@@ -178,6 +192,7 @@ public class ThemeOverlayController implements CoreStartable, Dumpable {
     private final UserScopedService<UiModeManager> mUiModeManagerProvider;
     private ColorScheme mDarkColorScheme;
     private ColorScheme mLightColorScheme;
+    private MonetParams mMonetParams = MonetParams.DEFAULT;
 
     // Defers changing themes until Setup Wizard is done.
     private boolean mDeferredThemeEvaluation;
@@ -668,11 +683,13 @@ public class ThemeOverlayController implements CoreStartable, Dumpable {
 
         if (mIsMonetEnabled) {
             mThemeStyle = fetchThemeStyleFromSetting();
+            mMonetParams = fetchMonetParamsFromSetting();  // FIXED: Now properly fetches all params
             createOverlays(mMainWallpaperColor);
             mNeedsOverlayCreation = true;
             if (DEBUG) {
                 Log.d(TAG, "fetched overlays. accent: " + mAccentOverlay
-                        + " neutral: " + mNeutralOverlay + " dynamic: " + mDynamicOverlay);
+                        + " neutral: " + mNeutralOverlay + " dynamic: " + mDynamicOverlay
+                        + " monetParams: " + mMonetParams);
             }
         }
 
@@ -708,8 +725,21 @@ public class ThemeOverlayController implements CoreStartable, Dumpable {
     }
 
     private void createOverlays(int color) {
-        mDarkColorScheme = new ColorScheme(color, true /* isDark */, mThemeStyle, mContrast);
-        mLightColorScheme = new ColorScheme(color, false /* isDark */, mThemeStyle, mContrast);
+        // Keep SystemUI resilient: if custom Monet params trigger an unexpected runtime issue,
+        // fall back to default params instead of crashing the process.
+        try {
+            mDarkColorScheme = new ColorScheme(color, true /* isDark */, mThemeStyle, mContrast,
+                    mMonetParams);
+            mLightColorScheme = new ColorScheme(color, false /* isDark */, mThemeStyle, mContrast,
+                    mMonetParams);
+        } catch (RuntimeException e) {
+            Log.w(TAG, "Failed to build ColorScheme with custom MonetParams, falling back", e);
+            mMonetParams = MonetParams.DEFAULT;
+            mDarkColorScheme = new ColorScheme(color, true /* isDark */, mThemeStyle, mContrast,
+                    mMonetParams);
+            mLightColorScheme = new ColorScheme(color, false /* isDark */, mThemeStyle, mContrast,
+                    mMonetParams);
+        }
         mColorScheme = isNightMode() ? mDarkColorScheme : mLightColorScheme;
 
         mAccentOverlay = newFabricatedOverlay("accent");
@@ -818,11 +848,48 @@ public class ThemeOverlayController implements CoreStartable, Dumpable {
                 if (!colorString.startsWith("#")) {
                     colorString = "#" + colorString;
                 }
-                createOverlays(Color.parseColor(colorString));
+                int customColor = Color.parseColor(colorString);
+
+                // Keep style and params in sync with current settings before custom seed rebuild.
+                mThemeStyle = fetchThemeStyleFromSetting();
+                // FIXED: Re-fetch MonetParams to ensure all customizations are honored
+                // when a custom accent color is applied
+                mMonetParams = fetchMonetParamsFromSetting();
+
+                try {
+                    // Create new color schemes with the custom color and fetched params.
+                    mDarkColorScheme = new ColorScheme(customColor, true /* isDark */, mThemeStyle,
+                            mContrast, mMonetParams);
+                    mLightColorScheme = new ColorScheme(customColor, false /* isDark */, mThemeStyle,
+                            mContrast, mMonetParams);
+                } catch (RuntimeException e) {
+                    Log.w(TAG, "Failed custom-color scheme with MonetParams, falling back", e);
+                    mMonetParams = MonetParams.DEFAULT;
+                    mDarkColorScheme = new ColorScheme(customColor, true /* isDark */, mThemeStyle,
+                            mContrast, mMonetParams);
+                    mLightColorScheme = new ColorScheme(customColor, false /* isDark */, mThemeStyle,
+                            mContrast, mMonetParams);
+                }
+                mColorScheme = isNightMode() ? mDarkColorScheme : mLightColorScheme;
+
+                // Now recreate overlays with the updated color schemes
+                mAccentOverlay = newFabricatedOverlay("accent");
+                assignColorsToOverlay(mAccentOverlay, DynamicColors.getAllAccentPalette(), false);
+
+                mNeutralOverlay = newFabricatedOverlay("neutral");
+                assignColorsToOverlay(mNeutralOverlay, DynamicColors.getAllNeutralPalette(), false);
+
+                mDynamicOverlay = newFabricatedOverlay("dynamic");
+                assignColorsToOverlay(mDynamicOverlay, DynamicColors.getAllDynamicColorsMapped(), false);
+                assignColorsToOverlay(mDynamicOverlay, DynamicColors.getFixedColorsMapped(), true);
+                assignColorsToOverlay(mDynamicOverlay, DynamicColors.getCustomColorsMapped(), false);
+
                 mNeedsOverlayCreation = true;
                 categoryToPackage.remove(OVERLAY_CATEGORY_SYSTEM_PALETTE);
                 categoryToPackage.remove(OVERLAY_CATEGORY_ACCENT_COLOR);
                 categoryToPackage.remove(OVERLAY_CATEGORY_DYNAMIC_COLOR);
+
+                if (DEBUG) Log.d(TAG, "Applied custom accent color with MonetParams: " + mMonetParams);
             } catch (Exception e) {
                 // Color.parseColor doesn't catch any exceptions from the calls it makes
                 Log.w(TAG, "Invalid color definition: " + systemPalette.getPackageName(), e);
@@ -894,7 +961,6 @@ public class ThemeOverlayController implements CoreStartable, Dumpable {
 
         mThemeManager.applyCurrentUserOverlays(categoryToPackage, fOverlays, currentUser,
                 managedProfiles, onCompleteCallback);
-
     }
 
     @ThemeStyle.Type
@@ -926,6 +992,59 @@ public class ThemeOverlayController implements CoreStartable, Dumpable {
             }
         }
         return style;
+    }
+
+    private MonetParams fetchMonetParamsFromSetting() {
+        final String overlayPackageJson = mSecureSettings.getStringForUser(
+                Settings.Secure.THEME_CUSTOMIZATION_OVERLAY_PACKAGES,
+                mUserTracker.getUserId());
+
+        if (TextUtils.isEmpty(overlayPackageJson)) {
+            return MonetParams.DEFAULT;
+        }
+
+        try {
+            JSONObject object = new JSONObject(overlayPackageJson);
+
+            // luminance_factor is stored as 1.0 + delta/100 (e.g. +20% → 1.20, -40% → 0.60).
+            // We convert to a tone shift: (factor - 1.0) * 100 → [-95, +100].
+            double luminanceFactor = clampFactor(object.optDouble(OVERLAY_LUMINANCE_FACTOR, 1.0));
+            double luminanceShift = (luminanceFactor - 1.0) * 100.0;
+
+            // chroma_factor uses the same encoding.
+            double chromaFactor = clampFactor(object.optDouble(OVERLAY_CHROMA_FACTOR, 1.0));
+
+            boolean tintBackground = object.optInt(OVERLAY_TINT_BACKGROUND, 0) == 1;
+
+            // bg_color is stored as an ARGB int (not a hex string).
+            int bgColor = 0;
+            if (object.has(OVERLAY_CATEGORY_BG_COLOR)) {
+                bgColor = object.optInt(OVERLAY_CATEGORY_BG_COLOR, 0);
+            }
+
+            boolean fidelity = object.optInt(OVERLAY_FIDELITY, 0) == 1;
+
+            MonetParams params = new MonetParams(
+                    chromaFactor,
+                    luminanceShift,
+                    tintBackground,
+                    bgColor,
+                    fidelity);
+
+            if (DEBUG) Log.d(TAG, "Parsed MonetParams: " + params);
+            return params;
+
+        } catch (JSONException e) {
+            Log.w(TAG, "Failed to parse monet params from THEME_CUSTOMIZATION_OVERLAY_PACKAGES", e);
+            return MonetParams.DEFAULT;
+        }
+    }
+
+    private static double clampFactor(double factor) {
+        if (Double.isNaN(factor) || Double.isInfinite(factor)) {
+            return 1.0;
+        }
+        return Math.max(MIN_FACTOR, Math.min(MAX_FACTOR, factor));
     }
 
     protected Pair<Integer, String> getHardwareColorSetting() {
@@ -1015,5 +1134,6 @@ public class ThemeOverlayController implements CoreStartable, Dumpable {
         pw.println("mAcceptColorEvents=" + mAcceptColorEvents);
         pw.println("mDeferredThemeEvaluation=" + mDeferredThemeEvaluation);
         pw.println("mThemeStyle=" + mThemeStyle);
+        pw.println("mMonetParams=" + mMonetParams);
     }
 }
