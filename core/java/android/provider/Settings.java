@@ -15855,6 +15855,13 @@ public final class Settings {
         public static final String QS_PANEL_SCRIM_ALPHA = "qs_panel_scrim_alpha";
 
         /**
+         * Quick Settings panel blur intensity, 0–100 (100 = full blur radius).
+         * Read by {@code NotificationShadeDepthController}.
+         * @hide
+         */
+        public static final String QS_PANEL_BLUR_INTENSITY = "qs_panel_blur_intensity";
+
+        /**
          * Toggle for whether to redact OTP notification while connected to wifi. Defaults to
          * false/0.
          * @hide
