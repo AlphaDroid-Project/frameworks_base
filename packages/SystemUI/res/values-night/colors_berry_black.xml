@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+     Berry black (Settings.Secure.BERRY_BLACK_THEME) + night: scrim colors are selected in
+     ShadeColors when this mode is active.
+
+     Blur on: QS = composite(shade_berry_qs_fg, shade_berry_qs_bg) ± scrim behind; notifications
+     use notification_scrim_base_berry at 50% alpha (same formula as classic accent path).
+
+     Blur off: QS = blend(fg, bg, 0.7) like classic; notifications use the same 50% scrim as
+     blur-on so battery-saver matches transparency path.
+-->
+<resources>
+    <!-- Blur on — QS stack (framework shade_panel_* equivalent). -->
+    <color name="shade_berry_qs_fg">#00000000</color>
+    <color name="shade_berry_qs_bg">#FF000000</color>
+    <color name="shade_berry_scrim_behind">#FF000000</color>
+
+    <!-- Blur on/off — notification scrim base (lighter than pure black). -->
+    <color name="notification_scrim_base_berry">@android:color/system_neutral1_800</color>
+
+    <!-- Blur off — QS fallback (same blend shape as cr_colors / classic; both black → black). -->
+    <color name="shade_panel_fallback_fg_berry">#FF000000</color>
+    <color name="shade_panel_fallback_bg_berry">#FF000000</color>
+</resources>
