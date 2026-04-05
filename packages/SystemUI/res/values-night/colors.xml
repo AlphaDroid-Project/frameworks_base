@@ -130,8 +130,7 @@
 
     <color name="people_tile_background">@color/material_dynamic_secondary20</color>
 
-    <!-- Dark theme base colors for notification shade/scrim, the alpha component is adjusted
-     programmatically to match the spec -->
+    <!-- Dark theme base colors for notification shade/scrim (alpha applied in ShadeColors). -->
     <color name="notification_scrim_base">@android:color/system_accent1_800</color>
 
     <!-- Dark theme fallback colors for notification shade/scrim -->
