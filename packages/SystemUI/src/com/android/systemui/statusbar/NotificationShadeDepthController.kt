@@ -20,7 +20,13 @@ import android.animation.Animator
 import android.animation.AnimatorListenerAdapter
 import android.animation.ValueAnimator
 import android.app.WindowConfiguration
+import android.content.Context
+import android.database.ContentObserver
+import android.os.Handler
+import android.os.Looper
 import android.os.SystemClock
+import android.os.UserHandle
+import android.provider.Settings
 import android.util.IndentingPrintWriter
 import android.util.Log
 import android.util.MathUtils
@@ -77,6 +83,7 @@ import kotlinx.coroutines.launch
 class NotificationShadeDepthController
 @Inject
 constructor(
+    private val context: Context,
     private val statusBarStateController: StatusBarStateController,
     private val blurUtils: BlurUtils,
     private val biometricUnlockController: BiometricUnlockController,
@@ -109,6 +116,24 @@ constructor(
         private const val PUSHBACK_SCALE_FOR_APP = 0.025f
 
         private const val TAG = "DepthController"
+
+        private const val QS_PANEL_BLUR_INTENSITY_DEFAULT = 100
+    }
+
+    /** User scale (0–1) for shade blur radius from [Settings.Secure.QS_PANEL_BLUR_INTENSITY]. */
+    private var blurIntensityScale = 1f
+
+    private fun refreshBlurIntensityScale() {
+        val pct = MathUtils.constrain(
+            Settings.Secure.getIntForUser(
+                context.contentResolver,
+                Settings.Secure.QS_PANEL_BLUR_INTENSITY,
+                QS_PANEL_BLUR_INTENSITY_DEFAULT,
+                UserHandle.USER_CURRENT,
+            ),
+            0, 100,
+        )
+        blurIntensityScale = pct / 100f
     }
 
     lateinit var root: View
@@ -315,6 +340,8 @@ constructor(
             blur = 0
         }
 
+        blur = (blur * blurIntensityScale).toInt()
+
         return Pair(blur, zoomOut)
     }
 
@@ -485,6 +512,18 @@ constructor(
 
     init {
         dumpManager.registerCriticalDumpable(javaClass.name, this)
+        refreshBlurIntensityScale()
+        context.contentResolver.registerContentObserver(
+            Settings.Secure.getUriFor(Settings.Secure.QS_PANEL_BLUR_INTENSITY),
+            false,
+            object : ContentObserver(Handler(Looper.getMainLooper())) {
+                override fun onChange(selfChange: Boolean) {
+                    refreshBlurIntensityScale()
+                    scheduleUpdate()
+                }
+            },
+            UserHandle.USER_ALL,
+        )
         if (WAKE_UP_ANIMATION_ENABLED) {
             keyguardStateController.addCallback(keyguardStateCallback)
         }
@@ -738,6 +777,7 @@ constructor(
             it.println("qsPanelExpansion: $qsPanelExpansion")
             it.println("transitionToFullShadeProgress: $transitionToFullShadeProgress")
             it.println("lastAppliedBlur: $lastAppliedBlur")
+            it.println("blurIntensityScale: $blurIntensityScale")
         }
     }
 
