@@ -32,8 +32,11 @@ import android.animation.ValueAnimator;
 import android.annotation.IntDef;
 import android.annotation.SuppressLint;
 import android.content.Context;
+import android.database.ContentObserver;
 import android.graphics.Color;
 import android.os.Handler;
+import android.os.UserHandle;
+import android.provider.Settings;
 import android.util.Log;
 import android.util.MathUtils;
 import android.util.Pair;
@@ -200,6 +203,26 @@ public class ScrimController implements ViewTreeObserver.OnPreDrawListener, Dump
         return getDefaultScrimAlpha(false);
     }
 
+    private void refreshQsPanelScrimAlphaScale() {
+        int pct = Settings.Secure.getIntForUser(
+                mContext.getContentResolver(),
+                Settings.Secure.QS_PANEL_SCRIM_ALPHA,
+                QS_PANEL_SCRIM_ALPHA_DEFAULT,
+                UserHandle.USER_CURRENT);
+        pct = MathUtils.constrain(pct, 0, 100);
+        final float t = pct / 100f;
+        // Gamma > 1: more visible change across 1–100% than linear mapping (perceived flatness).
+        mQsPanelScrimAlphaScale = (float) Math.pow(t, QS_PANEL_SCRIM_ALPHA_SLIDER_GAMMA);
+    }
+
+    /**
+     * Default scrim alpha scaled by {@link Settings.Secure#QS_PANEL_SCRIM_ALPHA} for QS/shade panel
+     * background.
+     */
+    private float getQsAdjustedDefaultScrimAlpha() {
+        return getDefaultScrimAlpha() * mQsPanelScrimAlphaScale;
+    }
+
     @IntDef(prefix = {"VISIBILITY_"}, value = {
             TRANSPARENT,
             SEMI_TRANSPARENT,
@@ -214,6 +237,15 @@ public class ScrimController implements ViewTreeObserver.OnPreDrawListener, Dump
      * This should not be lower than 0.54, otherwise we won't pass GAR.
      */
     public static final float BUSY_SCRIM_ALPHA = 1f;
+
+    /** Secure setting {@link Settings.Secure#QS_PANEL_SCRIM_ALPHA}: 0–100, default 100. */
+    private static final int QS_PANEL_SCRIM_ALPHA_DEFAULT = 100;
+
+    /**
+     * Maps normalized slider (0–1) to effective scrim scale via pow(t, gamma). Values above 1
+     * spread perceived transparency across the full range more evenly than linear t.
+     */
+    private static final float QS_PANEL_SCRIM_ALPHA_SLIDER_GAMMA = 1.75f;
 
     static final int TAG_KEY_ANIM = R.id.scrim;
     private static final int TAG_START_ALPHA = R.id.scrim_alpha_start;
@@ -373,6 +405,14 @@ public class ScrimController implements ViewTreeObserver.OnPreDrawListener, Dump
 
     private boolean mViewsAttached;
 
+    /**
+     * User scale (0–1) from {@link Settings.Secure#QS_PANEL_SCRIM_ALPHA}, applied to default scrim
+     * alpha where the QS / shade panel background is drawn.
+     */
+    private float mQsPanelScrimAlphaScale = 1f;
+
+    private final ContentObserver mQsPanelScrimAlphaObserver;
+
     @Inject
     public ScrimController(
             LightBarController lightBarController,
@@ -443,6 +483,22 @@ public class ScrimController implements ViewTreeObserver.OnPreDrawListener, Dump
         mKeyguardTransitionInteractor = keyguardTransitionInteractor;
         mKeyguardInteractor = keyguardInteractor;
         mMainDispatcher = mainDispatcher;
+
+        mQsPanelScrimAlphaObserver = new ContentObserver(mHandler) {
+            @Override
+            public void onChange(boolean selfChange) {
+                refreshQsPanelScrimAlphaScale();
+                if (mViewsAttached) {
+                    applyAndDispatchState();
+                }
+            }
+        };
+        refreshQsPanelScrimAlphaScale();
+        mContext.getContentResolver().registerContentObserver(
+                Settings.Secure.getUriFor(Settings.Secure.QS_PANEL_SCRIM_ALPHA),
+                false,
+                mQsPanelScrimAlphaObserver,
+                UserHandle.USER_ALL);
     }
 
     /**
@@ -481,6 +537,7 @@ public class ScrimController implements ViewTreeObserver.OnPreDrawListener, Dump
         hydrateStateInternally(behindScrim);
 
         mViewsAttached = true;
+        refreshQsPanelScrimAlphaScale();
     }
 
     private void hydrateStateInternally(ScrimView behindScrim) {
@@ -1066,21 +1123,23 @@ public class ScrimController implements ViewTreeObserver.OnPreDrawListener, Dump
                     float behindFraction = getInterpolatedFraction();
                     behindFraction = (float) Math.pow(behindFraction, 0.8f);
                     mBehindAlpha = 1;
-                    mNotificationsAlpha = behindFraction * getDefaultScrimAlpha();
+                    mNotificationsAlpha = behindFraction * getQsAdjustedDefaultScrimAlpha();
                 } else {
                     if (Flags.notificationShadeBlur() && isBlurCurrentlySupported()) {
                         // TODO (b/390730594): match any spec for controlling alpha based on shade
                         //  expansion fraction.
-                        mBehindAlpha = mState.getBehindAlpha() * mPanelExpansionFraction;
+                        mBehindAlpha = mState.getBehindAlpha() * mPanelExpansionFraction
+                                * mQsPanelScrimAlphaScale;
                         mBehindTint = mState.getBehindTint();
-                        mNotificationsAlpha = mState.getNotifAlpha() * mPanelExpansionFraction;
+                        mNotificationsAlpha = mState.getNotifAlpha() * mPanelExpansionFraction
+                                * mQsPanelScrimAlphaScale;
                         mNotificationsTint = mState.getNotifTint();
                     } else {
                         mBehindAlpha = mLargeScreenShadeInterpolator.getBehindScrimAlpha(
-                                mPanelExpansionFraction * getDefaultScrimAlpha());
+                                mPanelExpansionFraction * getQsAdjustedDefaultScrimAlpha());
                         mNotificationsAlpha =
                                 mLargeScreenShadeInterpolator.getNotificationScrimAlpha(
-                                        mPanelExpansionFraction);
+                                        mPanelExpansionFraction) * mQsPanelScrimAlphaScale;
                     }
                 }
                 mBehindTint = mState.getBehindTint();
@@ -1183,7 +1242,7 @@ public class ScrimController implements ViewTreeObserver.OnPreDrawListener, Dump
         float behindAlpha;
         int behindTint = state.getBehindTint();
         if (mDarkenWhileDragging) {
-            behindAlpha = MathUtils.lerp(getDefaultScrimAlpha(), stateBehind,
+            behindAlpha = MathUtils.lerp(getQsAdjustedDefaultScrimAlpha(), stateBehind,
                     interpolatedFract);
         } else {
             behindAlpha = MathUtils.lerp(0 /* start */, stateBehind,
@@ -1199,7 +1258,7 @@ public class ScrimController implements ViewTreeObserver.OnPreDrawListener, Dump
             }
         }
         if (mQsExpansion > 0) {
-            behindAlpha = MathUtils.lerp(behindAlpha, getDefaultScrimAlpha(), mQsExpansion);
+            behindAlpha = MathUtils.lerp(behindAlpha, getQsAdjustedDefaultScrimAlpha(), mQsExpansion);
             float tintProgress = mQsExpansion;
             if (mStatusBarKeyguardViewManager.isPrimaryBouncerInTransit()) {
                 // this is case of - on lockscreen - going from expanded QS to bouncer.
@@ -1748,6 +1807,8 @@ public class ScrimController implements ViewTreeObserver.OnPreDrawListener, Dump
 
         pw.print("  mDefaultScrimAlpha=");
         pw.println(getDefaultScrimAlpha());
+        pw.print("  mQsPanelScrimAlphaScale=");
+        pw.println(mQsPanelScrimAlphaScale);
         pw.print("  mPanelExpansionFraction=");
         pw.println(mPanelExpansionFraction);
         pw.print("  mExpansionAffectsAlpha=");
