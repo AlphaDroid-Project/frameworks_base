@@ -1014,6 +1014,16 @@ public class ThemeOverlayController implements CoreStartable, Dumpable {
 
             boolean tintBackground = object.optInt(OVERLAY_TINT_BACKGROUND, 0) == 1;
 
+            // Berry black + night disables neutral overlays; custom background tint must be off
+            // or it fights the black-theme neutral suppression.
+            final int userId = mUserTracker.getUserId();
+            final boolean isBlackMode = (Settings.Secure.getIntForUser(
+                    mContext.getContentResolver(), Settings.Secure.BERRY_BLACK_THEME,
+                    0, userId) == 1) && isNightMode();
+            if (isBlackMode) {
+                tintBackground = false;
+            }
+
             // bg_color is stored as an ARGB int (not a hex string).
             int bgColor = 0;
             if (object.has(OVERLAY_CATEGORY_BG_COLOR)) {
