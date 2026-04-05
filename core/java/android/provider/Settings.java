@@ -15848,6 +15848,13 @@ public final class Settings {
         public static final String BERRY_BLACK_THEME = "berry_black_theme";
 
         /**
+         * Quick Settings panel scrim background opacity, 0–100 (100 = fully opaque).
+         * Read by {@code ScrimController}.
+         * @hide
+         */
+        public static final String QS_PANEL_SCRIM_ALPHA = "qs_panel_scrim_alpha";
+
+        /**
          * Toggle for whether to redact OTP notification while connected to wifi. Defaults to
          * false/0.
          * @hide
