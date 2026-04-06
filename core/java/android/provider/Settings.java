@@ -7528,24 +7528,6 @@ public final class Settings {
         public static final String VOLUME_SLIDER_GRADIENT = "volume_slider_gradient";
 
         /**
-         * Gradient color mode
-         * @hide
-         */
-        public static final String CUSTOM_GRADIENT_COLOR_MODE = "custom_gradient_color_mode";
-
-        /**
-         * Gradient start color
-         * @hide
-         */
-        public static final String CUSTOM_GRADIENT_START_COLOR = "custom_gradient_start_color";
-
-        /**
-         * Gradient end color
-         * @hide
-         */
-        public static final String CUSTOM_GRADIENT_END_COLOR = "custom_gradient_end_color";
-
-        /**
          * Whether to use classic QS panel style for tiles
          * @hide
          */
@@ -18668,7 +18650,7 @@ public final class Settings {
          * Force LTE Carrier Aggregation setting per SIM slot.
          * Use FORCE_LTE_CA_0 for SIM slot 0 (first SIM)
          * Use FORCE_LTE_CA_1 for SIM slot 1 (second SIM)
-         * 
+         *
          * Type: int (0 = disabled, 1 = enabled)
          * @hide
          */

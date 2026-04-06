@@ -171,15 +171,6 @@ fun BrightnessSlider(
 
     val trackShape = RoundedCornerShape(trackCornerDp)
     val brightnessGradient = brightnessSliderGradient()
-    val thumbColorOverride: Color? =
-        if (!rememberSliderGradient()) {
-            null
-        } else if (rememberGradientColorMode() == 1) {
-            val (customStart, _) = rememberGradientCustomColors()
-            customStart
-        } else {
-            MaterialTheme.colorScheme.primary
-        }
 
     var value by remember(gammaValue) { mutableIntStateOf(gammaValue) }
     val animatedValue by
@@ -331,9 +322,7 @@ fun BrightnessSlider(
                     interactionSource = interactionSource,
                     enabled = enabled,
                     thumbSize = DpSize(ThumbWidth, ThumbHeight),
-                    colors = SliderDefaults.colors(
-                        thumbColor = thumbColorOverride ?: SliderDefaults.colors().thumbColor
-                    )
+                    colors = colors,
                 )
             },
             track = { sliderState ->
@@ -558,106 +547,13 @@ private fun rememberSliderGradient(): Boolean {
 }
 
 @Composable
-private fun rememberGradientColorMode(): Int {
-    val contentResolver = LocalContext.current.contentResolver
-
-    fun readMode(): Int = try {
-        Settings.System.getIntForUser(
-            contentResolver, Settings.System.CUSTOM_GRADIENT_COLOR_MODE, 0,
-            UserHandle.USER_CURRENT
-        )
-    } catch (_: Throwable) {
-        0
-    }
-
-    var mode by remember { mutableIntStateOf(readMode()) }
-
-    DisposableEffect(contentResolver) {
-        val observer = object : ContentObserver(null) {
-            override fun onChange(selfChange: Boolean) {
-                mode = readMode()
-            }
-        }
-
-        contentResolver.registerContentObserver(
-            Settings.System.getUriFor(Settings.System.CUSTOM_GRADIENT_COLOR_MODE),
-            false, observer, UserHandle.USER_ALL
-        )
-
-        onDispose {
-            contentResolver.unregisterContentObserver(observer)
-        }
-    }
-
-    return mode
-}
-
-@Composable
-private fun rememberGradientCustomColors(): Pair<Color, Color> {
-    val contentResolver = LocalContext.current.contentResolver
-
-    fun readStart(): Int = try {
-        Settings.System.getIntForUser(
-            contentResolver, Settings.System.CUSTOM_GRADIENT_START_COLOR, 0,
-            UserHandle.USER_CURRENT
-        )
-    } catch (_: Throwable) {
-        0
-    }
-
-    fun readEnd(): Int = try {
-        Settings.System.getIntForUser(
-            contentResolver, Settings.System.CUSTOM_GRADIENT_END_COLOR, 0,
-            UserHandle.USER_CURRENT
-        )
-    } catch (_: Throwable) {
-        0
-    }
-
-    var startInt by remember { mutableIntStateOf(readStart()) }
-    var endInt by remember { mutableIntStateOf(readEnd()) }
-
-    DisposableEffect(contentResolver) {
-        val observer = object : ContentObserver(null) {
-            override fun onChange(selfChange: Boolean) {
-                startInt = readStart()
-                endInt = readEnd()
-            }
-        }
-
-        contentResolver.registerContentObserver(
-            Settings.System.getUriFor(Settings.System.CUSTOM_GRADIENT_START_COLOR),
-            false, observer, UserHandle.USER_ALL
-        )
-        contentResolver.registerContentObserver(
-            Settings.System.getUriFor(Settings.System.CUSTOM_GRADIENT_END_COLOR),
-            false, observer, UserHandle.USER_ALL
-        )
-
-        onDispose {
-            contentResolver.unregisterContentObserver(observer)
-        }
-    }
-
-    val start = if (startInt != 0) Color(startInt) else MaterialTheme.colorScheme.primary
-    val end = if (endInt != 0) Color(endInt) else MaterialTheme.colorScheme.secondary
-    return start to end
-}
-
-@Composable
 private fun brightnessSliderGradient(): BrightnessGradient? {
     if (!rememberSliderGradient()) return null
 
-    val mode = rememberGradientColorMode()
-    val colors = if (mode == 1) {
-        val (start, end) = rememberGradientCustomColors()
-        listOf(start, end)
-    } else {
-        listOf(
-            MaterialTheme.colorScheme.primary,
-            MaterialTheme.colorScheme.secondary
-        )
-    }
+    val colors = listOf(
+        MaterialTheme.colorScheme.primary,
+        MaterialTheme.colorScheme.secondary
+    )
 
     return BrightnessGradient(
         brush = Brush.horizontalGradient(colors)
@@ -716,11 +612,9 @@ private fun drawAutoBrightnessButton(
         3 -> RoundedCornerShape(0.dp)
         else -> RoundedCornerShape(animatedCornerRadius)
     }
-    val brightnessGradient = brightnessSliderGradient()
-    val autoIconBrush: Brush? = if (autoMode) brightnessGradient?.brush else null
     val backgroundColor by animateColorAsState(
         targetValue = if (autoMode) {
-            if (autoIconBrush == null) MaterialTheme.colorScheme.primary else Color.Unspecified
+            MaterialTheme.colorScheme.primary
         } else {
             LocalAndroidColorScheme.current.surfaceEffect1
         }
@@ -747,13 +641,7 @@ private fun drawAutoBrightnessButton(
         modifier = Modifier
             .size(45.dp)
             .clip(autoIconShape)
-            .then(
-                if (autoIconBrush != null) {
-                    Modifier.background(autoIconBrush)
-                } else {
-                    Modifier.background(backgroundColor)
-                }
-            )
+            .background(backgroundColor)
             .clickable(
                 interactionSource = remember { MutableInteractionSource() },
                 indication = null, // Disable ripple effect

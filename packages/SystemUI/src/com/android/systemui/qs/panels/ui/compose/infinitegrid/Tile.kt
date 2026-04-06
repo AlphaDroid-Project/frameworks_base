@@ -266,8 +266,8 @@ fun ContentScope.Tile(
             modifier =
                 modifier
                     .then(surfaceRevealModifier)
-                    .thenIf(!wantCircle) { 
-                        modifier.borderOnFocus(color = focusBorderColor, outerShape.topEnd) 
+                    .thenIf(!wantCircle) {
+                        modifier.borderOnFocus(color = focusBorderColor, outerShape.topEnd)
                     }
                     .fillMaxWidth()
                     .height(tileHeight)
@@ -731,93 +731,6 @@ fun rememberQsGradient(): Boolean {
 }
 
 @Composable
-private fun rememberGradientColorMode(): Int {
-    val contentResolver = LocalContext.current.contentResolver
-
-    fun readMode(): Int = try {
-        Settings.System.getIntForUser(
-            contentResolver, Settings.System.CUSTOM_GRADIENT_COLOR_MODE, 0,
-            UserHandle.USER_CURRENT
-        )
-    } catch (_: Throwable) {
-        0
-    }
-
-    var mode by remember { mutableIntStateOf(readMode()) }
-
-    DisposableEffect(contentResolver) {
-        val observer = object : ContentObserver(null) {
-            override fun onChange(selfChange: Boolean) {
-                mode = readMode()
-            }
-        }
-
-        contentResolver.registerContentObserver(
-            Settings.System.getUriFor(Settings.System.CUSTOM_GRADIENT_COLOR_MODE),
-            false, observer, UserHandle.USER_ALL
-        )
-
-        onDispose {
-            contentResolver.unregisterContentObserver(observer)
-        }
-    }
-
-    return mode
-}
-
-@Composable
-private fun rememberGradientCustomColors(): Pair<Color, Color> {
-    val contentResolver = LocalContext.current.contentResolver
-
-    fun readStart(): Int = try {
-        Settings.System.getIntForUser(
-            contentResolver, Settings.System.CUSTOM_GRADIENT_START_COLOR, 0,
-            UserHandle.USER_CURRENT
-        )
-    } catch (_: Throwable) {
-        0
-    }
-
-    fun readEnd(): Int = try {
-        Settings.System.getIntForUser(
-            contentResolver, Settings.System.CUSTOM_GRADIENT_END_COLOR, 0,
-            UserHandle.USER_CURRENT
-        )
-    } catch (_: Throwable) {
-        0
-    }
-
-    var startInt by remember { mutableIntStateOf(readStart()) }
-    var endInt by remember { mutableIntStateOf(readEnd()) }
-
-    DisposableEffect(contentResolver) {
-        val observer = object : ContentObserver(null) {
-            override fun onChange(selfChange: Boolean) {
-                startInt = readStart()
-                endInt = readEnd()
-            }
-        }
-
-        contentResolver.registerContentObserver(
-            Settings.System.getUriFor(Settings.System.CUSTOM_GRADIENT_START_COLOR),
-            false, observer, UserHandle.USER_ALL
-        )
-        contentResolver.registerContentObserver(
-            Settings.System.getUriFor(Settings.System.CUSTOM_GRADIENT_END_COLOR),
-            false, observer, UserHandle.USER_ALL
-        )
-
-        onDispose {
-            contentResolver.unregisterContentObserver(observer)
-        }
-    }
-
-    val start = if (startInt != 0) Color(startInt) else MaterialTheme.colorScheme.primary
-    val end = if (endInt != 0) Color(endInt) else MaterialTheme.colorScheme.secondary
-    return start to end
-}
-
-@Composable
 fun rememberQSPanelStyle(): Boolean {
     val context = LocalContext.current
     val contentResolver = context.contentResolver
@@ -1088,19 +1001,11 @@ private object TileDefaults {
     fun qsTileBackgroundBrush(enabled: Boolean): Brush? {
         if (!enabled) return null
 
-        val mode = rememberGradientColorMode()
-        val colors = if (mode == 1) {
-            val (start, end) = rememberGradientCustomColors()
-            listOf(start, end)
-        } else {
-            listOf(
+        return Brush.linearGradient(
+            colors = listOf(
                 MaterialTheme.colorScheme.primary,
                 MaterialTheme.colorScheme.secondary
-            )
-        }
-
-        return Brush.linearGradient(
-            colors = colors,
+            ),
             start = Offset(0f, 0f),
             end = Offset.Infinite
         )
