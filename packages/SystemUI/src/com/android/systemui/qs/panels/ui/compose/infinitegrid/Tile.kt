@@ -191,7 +191,9 @@ fun ContentScope.Tile(
 ) {
     trace(tile.traceName) {
         val classicStyle = rememberQSPanelStyle()
-        val styleRenderer = if (classicStyle) null else rememberQsTileStyleRenderer()
+        val iconShapeKey = rememberQSTileIconShapeKey()
+        val isThemeableShape = iconShapeKey in QSTileIconShapes.THEMEABLE_KEYS
+        val styleRenderer = if (!isThemeableShape) null else rememberQsTileStyleRenderer()
 
         val currentBounceableInfo by rememberUpdatedState(bounceableInfo)
         val resources = resources()
@@ -222,7 +224,6 @@ fun ContentScope.Tile(
                null
             }
 
-        val iconShapeKey = rememberQSTileIconShapeKey()
         val labelHide = classicStyle && rememberQSTileLabelHide()
         val tileHeight = if (!classicStyle || labelHide) {
             CommonTileDefaults.TileHeight
@@ -383,6 +384,8 @@ fun ContentScope.Tile(
                                     iconShapeKey = iconShapeKey,
                                     colors = colors,
                                     labelHide = labelHide,
+                                    styleRenderer = styleRenderer,
+                                    state = uiState.state,
                                     modifier =
                                         Modifier.align(Alignment.Center).bounceScale {
                                             contentBounceable.iconBounceScale
@@ -537,7 +540,10 @@ fun LargeStaticTile(
     modifier: Modifier = Modifier,
 ) {
     val shapeMode = rememberTileShapeMode()
-    val styleRenderer = if (rememberQSPanelStyle()) null else rememberQsTileStyleRenderer()
+    val classicStyle = rememberQSPanelStyle()
+    val iconShapeKey = rememberQSTileIconShapeKey()
+    val isThemeableShape = iconShapeKey in QSTileIconShapes.THEMEABLE_KEYS
+    val styleRenderer = if (!isThemeableShape) null else rememberQsTileStyleRenderer()
     val colors = TileDefaults.getColorForState(uiState = uiState, iconOnly = false)
     val tileShape = TileDefaults.animateTileShapeAsState(state = uiState.state, shapeMode = shapeMode).value
     val animatedColor by animateColorAsState(colors.background, label = "StaticTileBackground")

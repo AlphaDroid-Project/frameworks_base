@@ -14,10 +14,13 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Outline
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.drawscope.translate
 import androidx.compose.ui.unit.Density
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.core.graphics.ColorUtils
 import com.android.systemui.alpha.style.common.GradientHelper
 import com.android.internal.alpha.style.UserStyleSettings
@@ -80,12 +83,12 @@ class QSOutlineStyleRenderer(
             end = gradEnd
         )
 
-        drawRoundRect(
+        drawShapeStroke(
+            shape = shape,
+            bounds = tileBounds,
+            density = density,
+            strokeWidthPx = strokeWidthPx,
             brush = gradientBrush,
-            topLeft = Offset(tileBounds.left + halfStroke, tileBounds.top + halfStroke),
-            size = Size(tileBounds.width - strokeWidthPx, tileBounds.height - strokeWidthPx),
-            cornerRadius = CornerRadius((cornerRadius - halfStroke).coerceAtLeast(0f)),
-            style = Stroke(width = strokeWidthPx)
         )
     }
 
@@ -122,13 +125,62 @@ class QSOutlineStyleRenderer(
             end = gradEnd
         )
 
-        drawRoundRect(
+        drawShapeStroke(
+            shape = shape,
+            bounds = iconBackgroundBounds,
+            density = density,
+            strokeWidthPx = strokeWidthPx,
             brush = gradientBrush,
-            topLeft = Offset(iconBackgroundBounds.left + halfStroke, iconBackgroundBounds.top + halfStroke),
-            size = Size(iconBackgroundBounds.width - strokeWidthPx, iconBackgroundBounds.height - strokeWidthPx),
-            cornerRadius = CornerRadius((cornerRadius - halfStroke).coerceAtLeast(0f)),
-            style = Stroke(width = strokeWidthPx)
         )
+    }
+
+    private fun DrawScope.drawShapeStroke(
+        shape: Shape,
+        bounds: Rect,
+        density: Density,
+        strokeWidthPx: Float,
+        brush: Brush,
+    ) {
+        if (strokeWidthPx <= 0f) return
+        val halfStroke = strokeWidthPx / 2f
+        val insetWidth = (bounds.width - strokeWidthPx).coerceAtLeast(0f)
+        val insetHeight = (bounds.height - strokeWidthPx).coerceAtLeast(0f)
+        if (insetWidth <= 0f || insetHeight <= 0f) return
+
+        val outline =
+            shape.createOutline(
+                size = Size(insetWidth, insetHeight),
+                layoutDirection = LayoutDirection.Ltr,
+                density = density,
+            )
+        translate(left = bounds.left + halfStroke, top = bounds.top + halfStroke) {
+            when (outline) {
+                is Outline.Rectangle -> {
+                    drawRect(
+                        brush = brush,
+                        topLeft = Offset.Zero,
+                        size = outline.rect.size,
+                        style = Stroke(width = strokeWidthPx),
+                    )
+                }
+                is Outline.Rounded -> {
+                    drawRoundRect(
+                        brush = brush,
+                        topLeft = Offset.Zero,
+                        size =
+                            Size(
+                                width = outline.roundRect.right - outline.roundRect.left,
+                                height = outline.roundRect.bottom - outline.roundRect.top,
+                            ),
+                        cornerRadius = outline.roundRect.topLeftCornerRadius,
+                        style = Stroke(width = strokeWidthPx),
+                    )
+                }
+                is Outline.Generic -> {
+                    drawPath(path = outline.path, brush = brush, style = Stroke(width = strokeWidthPx))
+                }
+            }
+        }
     }
 
     private fun tuneColor(color: Color): Color {
