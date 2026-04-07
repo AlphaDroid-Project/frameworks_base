@@ -69,6 +69,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.graphicsLayer
@@ -107,6 +108,11 @@ import com.android.systemui.qs.footer.ui.compose.rememberSystemSettingEnabled
 import com.android.systemui.qs.footer.ui.viewmodel.FooterActionsButtonViewModel
 import com.android.systemui.qs.footer.ui.viewmodel.FooterActionsForegroundServicesButtonViewModel
 import com.android.systemui.qs.footer.ui.viewmodel.FooterActionsSecurityButtonViewModel
+import com.android.systemui.alpha.style.common.AlphaColorScheme
+import com.android.systemui.alpha.style.common.defaultAlphaColorScheme
+import com.android.systemui.alpha.style.qs.QSTileStyleWrapper
+import com.android.systemui.alpha.style.qs.rememberQSTileStyleRenderer
+import com.android.systemui.alpha.style.qs.renderers.QSTileStyleRenderer
 import com.android.systemui.qs.footer.ui.viewmodel.FooterActionsViewModel
 import com.android.systemui.qs.footer.ui.viewmodel.FooterTextButtonViewModel
 import com.android.systemui.qs.panels.ui.viewmodel.TextFeedbackViewModel
@@ -116,6 +122,8 @@ import com.android.systemui.qs.ui.compose.borderOnFocus
 import com.android.systemui.res.R
 import kotlin.math.roundToInt
 import kotlinx.coroutines.launch
+
+private const val FOOTER_TILE_STATE_INACTIVE = 1
 
 @Composable
 fun ContentScope.FooterActionsWithAnimatedVisibility(
@@ -181,6 +189,12 @@ fun FooterActions(viewModel: FooterActionsViewModel, modifier: Modifier = Modifi
     // Collect alphas as soon as we are composed, even when not visible.
     val alpha by viewModel.alpha.collectAsStateWithLifecycle()
     val backgroundAlpha = viewModel.backgroundAlpha.collectAsStateWithLifecycle()
+
+    val qsStyleRenderer = rememberQSTileStyleRenderer(viewModel.qsTileStyleManager)
+    val defaultScheme = defaultAlphaColorScheme()
+    val styledScheme = remember(defaultScheme, qsStyleRenderer) {
+        qsStyleRenderer?.produceColorScheme(defaultScheme)
+    }
 
     var security by remember { mutableStateOf<FooterActionsSecurityButtonViewModel?>(null) }
     var foregroundServices by remember {
@@ -279,12 +293,15 @@ fun FooterActions(viewModel: FooterActionsViewModel, modifier: Modifier = Modifi
             ForegroundServicesNumberButton(
                 { foregroundServices.takeIf { it?.displayText == false } },
                 useModifierBasedExpandable,
+                qsStyleRenderer,
             )
 
             IconButton(
                 { userSwitcher },
                 useModifierBasedExpandable,
                 Modifier.sysuiResTag("multi_user_switch"),
+                qsStyleRenderer,
+                styledScheme,
             )
 
             val showSettings by rememberSystemSettingEnabled(Settings.System.QS_FOOTER_SHOW_SETTINGS)
@@ -295,6 +312,8 @@ fun FooterActions(viewModel: FooterActionsViewModel, modifier: Modifier = Modifi
                     { settings },
                     useModifierBasedExpandable,
                     Modifier.sysuiResTag("settings_button_container"),
+                    qsStyleRenderer,
+                    styledScheme,
                 )
             }
 
@@ -303,6 +322,8 @@ fun FooterActions(viewModel: FooterActionsViewModel, modifier: Modifier = Modifi
                     { viewModel.power },
                     useModifierBasedExpandable,
                     Modifier.sysuiResTag("pm_lite"),
+                    qsStyleRenderer,
+                    styledScheme,
                 )
             }
         }
@@ -390,6 +411,7 @@ private fun AnimatedFooterTextButton(
 private fun ForegroundServicesNumberButton(
     model: () -> FooterActionsForegroundServicesButtonViewModel?,
     useModifierBasedExpandable: Boolean,
+    styleRenderer: QSTileStyleRenderer?,
 ) {
     val transition = updateTransition(model())
     val alpha by transition.animateFloat { if (it == null) 0f else 1f }
@@ -406,6 +428,7 @@ private fun ForegroundServicesNumberButton(
             showNewDot = it.hasNewChanges,
             onClick = onClick,
             useModifierBasedExpandable,
+            styleRenderer = styleRenderer,
             modifier = Modifier.graphicsLayer { this.alpha = alpha },
         )
     }
@@ -417,9 +440,11 @@ private fun IconButton(
     model: () -> FooterActionsButtonViewModel?,
     useModifierBasedExpandable: Boolean,
     modifier: Modifier = Modifier,
+    styleRenderer: QSTileStyleRenderer?,
+    styledScheme: AlphaColorScheme? = null,
 ) {
     val viewModel = model() ?: return
-    IconButton(viewModel, useModifierBasedExpandable, modifier)
+    IconButton(viewModel, useModifierBasedExpandable, modifier, styleRenderer, styledScheme)
 }
 
 /** A button with an icon. */
@@ -428,14 +453,21 @@ private fun IconButton(
     model: FooterActionsButtonViewModel,
     useModifierBasedExpandable: Boolean,
     modifier: Modifier = Modifier,
+    styleRenderer: QSTileStyleRenderer?,
+    styledScheme: AlphaColorScheme? = null,
 ) {
-    val colors = buttonColorsForModel(model)
+    val colors = if (styledScheme != null && model is FooterActionsButtonViewModel.PowerActionViewModel) {
+        ButtonColors(icon = styledScheme.onAccent, background = styledScheme.accent)
+    } else {
+        buttonColorsForModel(model)
+    }
     CircleExpandable(
         color = colors.background,
         onClick = model.onClick,
         onLongClick = model.onLongClick,
         modifier = modifier,
         useModifierBasedImplementation = useModifierBasedExpandable,
+        styleRenderer = styleRenderer,
     ) {
         FooterIcon(model.icon, Modifier.size(20.dp), colors.icon)
     }
@@ -461,6 +493,7 @@ private fun NumberButton(
     showNewDot: Boolean,
     onClick: (Expandable) -> Unit,
     useModifierBasedExpandable: Boolean,
+    styleRenderer: QSTileStyleRenderer?,
     modifier: Modifier = Modifier,
 ) {
     // By default Expandable will show a ripple above its content when clicked, and clip the content
@@ -477,6 +510,8 @@ private fun NumberButton(
         interactionSource = interactionSource,
         modifier = modifier,
         useModifierBasedImplementation = useModifierBasedExpandable,
+        styleRenderer = styleRenderer,
+        styleOverlayState = FOOTER_TILE_STATE_INACTIVE,
     ) {
         Box(Modifier.size(FooterButtonHeight)) {
             Box(
@@ -515,24 +550,53 @@ private fun CircleExpandable(
     onLongClick: ((Expandable) -> Unit)? = null,
     interactionSource: MutableInteractionSource? = null,
     useModifierBasedImplementation: Boolean,
+    styleRenderer: QSTileStyleRenderer? = null,
+    styleOverlayState: Int = FOOTER_TILE_STATE_INACTIVE,
     content: @Composable (Expandable) -> Unit,
 ) {
+    val focusModifier =
+        modifier.borderOnFocus(
+            color = MaterialTheme.colorScheme.secondary,
+            cornerSize = CornerSize(percent = 50),
+        )
     Expandable(
-        color = color,
+        color = if (styleRenderer != null) Color.Transparent else color,
         contentColor = contentColor,
         borderStroke = borderStroke,
         shape = CircleShape,
         onClick = onClick,
         onLongClick = onLongClick,
         interactionSource = interactionSource,
-        modifier =
-            modifier.borderOnFocus(
-                color = MaterialTheme.colorScheme.secondary,
-                cornerSize = CornerSize(percent = 50),
-            ),
+        modifier = focusModifier,
         useModifierBasedImplementation = useModifierBasedImplementation,
-        content = content,
-    )
+    ) { expandable ->
+        if (styleRenderer != null) {
+            // Explicit size so that matchParentSize() / fillMaxSize() inside have a concrete
+            // reference — same pattern as CommonTile / Tile.kt.
+            Box(Modifier.size(FooterActionsDefaults.FooterButtonHeight)) {
+                QSTileStyleWrapper(
+                    renderer = styleRenderer,
+                    shape = CircleShape,
+                    state = styleOverlayState,
+                    materialColor = color,
+                    isSmallTile = true,
+                    modifier = Modifier.matchParentSize(),
+                ) {
+                    Box(
+                        Modifier
+                            .fillMaxSize()
+                            .clip(CircleShape)
+                            .drawBehind { drawRect(color) }
+                    )
+                }
+                Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    content(expandable)
+                }
+            }
+        } else {
+            content(expandable)
+        }
+    }
 }
 
 /** A dot that indicates new changes. */

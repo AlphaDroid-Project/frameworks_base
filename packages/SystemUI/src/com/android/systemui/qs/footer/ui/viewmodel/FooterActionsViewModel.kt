@@ -41,6 +41,7 @@ import com.android.systemui.qs.footer.domain.model.SecurityButtonConfig
 import com.android.systemui.qs.footer.ui.viewmodel.FooterActionsButtonViewModel.PowerActionViewModel
 import com.android.systemui.qs.footer.ui.viewmodel.FooterActionsButtonViewModel.SettingsActionViewModel
 import com.android.systemui.qs.footer.ui.viewmodel.FooterActionsButtonViewModel.UserSwitcherViewModel
+import com.android.systemui.alpha.style.qs.QSTileStyleManager
 import com.android.systemui.qs.panels.domain.interactor.TextFeedbackInteractor
 import com.android.systemui.qs.panels.domain.model.TextFeedbackModel
 import com.android.systemui.qs.panels.ui.viewmodel.TextFeedbackContentViewModel.Companion.load
@@ -97,6 +98,9 @@ class FooterActionsViewModel(
      * function must be cancelled when that fragment is destroyed.
      */
     val observeDeviceMonitoringDialogRequests: suspend (quickSettingsContext: Context) -> Unit,
+
+    /** For QS tile UI style overlays on circular footer icon / number buttons. */
+    val qsTileStyleManager: QSTileStyleManager,
 ) {
     /** The alpha the UI rendering this ViewModel should have. */
     private val _alpha = MutableStateFlow(1f)
@@ -135,7 +139,8 @@ class FooterActionsViewModel(
         private val selectedUserInteractor: SelectedUserInteractor,
         private val hsum: HeadlessSystemUserMode,
         @Named(PM_LITE_ENABLED) private val showPowerButton: Boolean,
-        private val keyguardStateController: KeyguardStateController
+        private val keyguardStateController: KeyguardStateController,
+        private val qsTileStyleManager: QSTileStyleManager,
     ) {
         /** Create a [FooterActionsViewModel] bound to the lifecycle of [lifecycleOwner]. */
         fun create(lifecycleOwner: LifecycleOwner): FooterActionsViewModel {
@@ -166,6 +171,7 @@ class FooterActionsViewModel(
                 selectedUserInteractor,
                 hsum,
                 keyguardStateController,
+                qsTileStyleManager,
             )
         }
 
@@ -194,6 +200,7 @@ class FooterActionsViewModel(
                 selectedUserInteractor,
                 hsum,
                 keyguardStateController,
+                qsTileStyleManager,
             )
         }
     }
@@ -209,7 +216,8 @@ fun createFooterActionsViewModel(
     showPowerButton: Boolean,
     selectedUserInteractor: SelectedUserInteractor,
     hsum: HeadlessSystemUserMode,
-    keyguardStateController: KeyguardStateController
+    keyguardStateController: KeyguardStateController,
+    qsTileStyleManager: QSTileStyleManager,
 ): FooterActionsViewModel {
     suspend fun observeDeviceMonitoringDialogRequests(quickSettingsContext: Context) {
         footerActionsInteractor.deviceMonitoringDialogRequests.collect {
@@ -339,8 +347,9 @@ fun createFooterActionsViewModel(
         userSwitcher = userSwitcher,
         settings = settings,
         power = power,
-        observeDeviceMonitoringDialogRequests = ::observeDeviceMonitoringDialogRequests,
         textFeedback = textFeedback,
+        observeDeviceMonitoringDialogRequests = ::observeDeviceMonitoringDialogRequests,
+        qsTileStyleManager = qsTileStyleManager,
     )
 }
 
