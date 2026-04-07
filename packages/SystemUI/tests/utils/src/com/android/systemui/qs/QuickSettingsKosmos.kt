@@ -38,6 +38,7 @@ import com.android.systemui.qs.footer.domain.interactor.FakeFooterActionInteract
 import com.android.systemui.qs.footer.domain.interactor.FooterActionsInteractor
 import com.android.systemui.qs.footer.domain.interactor.FooterActionsInteractorImpl
 import com.android.systemui.qs.footer.foregroundServicesRepository
+import com.android.systemui.alpha.style.qs.QSTileStyleManager
 import com.android.systemui.qs.footer.ui.viewmodel.FooterActionsViewModel
 import com.android.systemui.qs.panels.domain.interactor.textFeedbackInteractor
 import com.android.systemui.security.data.repository.securityRepository
@@ -111,9 +112,11 @@ val Kosmos.footerActionsViewModelFactory by Fixture {
         globalActionsDialogLiteProvider = { mock() },
         activityStarter = activityStarter,
         textFeedbackInteractor = textFeedbackInteractor,
-        showPowerButton = true,
         selectedUserInteractor = selectedUserInteractor,
         hsum = headlessSystemUserMode,
+        showPowerButton = true,
+        keyguardStateController = keyguardStateController,
+        qsTileStyleManager = mock<QSTileStyleManager>(),
     )
 }
 

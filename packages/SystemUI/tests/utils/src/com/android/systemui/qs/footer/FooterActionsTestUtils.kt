@@ -33,6 +33,7 @@ import com.android.systemui.classifier.FalsingManagerFake
 import com.android.systemui.dagger.qualifiers.Application
 import com.android.systemui.globalactions.GlobalActionsDialogLite
 import com.android.systemui.plugins.ActivityStarter
+import com.android.systemui.alpha.style.qs.QSTileStyleManager
 import com.android.systemui.plugins.FalsingManager
 import com.android.systemui.qs.FakeFgsManagerController
 import com.android.systemui.qs.FgsManagerController
@@ -106,6 +107,8 @@ class FooterActionsTestUtils(
         showPowerButton: Boolean = true,
         selectedUserInteractor: SelectedUserInteractor = mock(),
         hsum: HeadlessSystemUserMode = mock(),
+        keyguardStateController: KeyguardStateController = mock(),
+        qsTileStyleManager: QSTileStyleManager = mock(),
     ): FooterActionsViewModel {
         return createFooterActionsViewModel(
             context,
@@ -117,6 +120,8 @@ class FooterActionsTestUtils(
             showPowerButton,
             selectedUserInteractor,
             hsum,
+            keyguardStateController,
+            qsTileStyleManager,
         )
     }
 
