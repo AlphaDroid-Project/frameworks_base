@@ -11,13 +11,14 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Path
-import androidx.compose.ui.graphics.PathFillType
+import androidx.compose.ui.graphics.Outline
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.drawscope.translate
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.core.graphics.ColorUtils
 import com.android.systemui.alpha.style.common.AlphaColorScheme
 import com.android.internal.alpha.style.UserStyleSettings
@@ -76,7 +77,7 @@ class QSBevelStyleRenderer(
     ) {
         drawBevel(
             bounds = tileBounds,
-            cornerRadius = cornerRadius,
+            shape = shape,
             isActive = state == TileState.STATE_ACTIVE,
             density = density
         )
@@ -92,7 +93,7 @@ class QSBevelStyleRenderer(
     ) {
         drawBevel(
             bounds = iconBackgroundBounds,
-            cornerRadius = cornerRadius,
+            shape = shape,
             isActive = state == TileState.STATE_ACTIVE,
             density = density
         )
@@ -100,7 +101,7 @@ class QSBevelStyleRenderer(
 
     private fun DrawScope.drawBevel(
         bounds: Rect,
-        cornerRadius: Float,
+        shape: Shape,
         isActive: Boolean,
         density: Density
     ) {
@@ -114,39 +115,17 @@ class QSBevelStyleRenderer(
         }
 
         if (bevelWidthPx > 0f && (highlightColor.alpha > 0f || shadowColor.alpha > 0f)) {
-            val outerRadius = cornerRadius
-            val innerRadius = (outerRadius - bevelWidthPx).coerceAtLeast(0f)
-
-            val borderPath = Path().apply {
-                fillType = PathFillType.EvenOdd
-                addRoundRect(
-                    androidx.compose.ui.geometry.RoundRect(
-                        left = bounds.left,
-                        top = bounds.top,
-                        right = bounds.right,
-                        bottom = bounds.bottom,
-                        cornerRadius = androidx.compose.ui.geometry.CornerRadius(outerRadius)
-                    )
-                )
-                addRoundRect(
-                    androidx.compose.ui.geometry.RoundRect(
-                        left = bounds.left + bevelWidthPx,
-                        top = bounds.top + bevelWidthPx,
-                        right = bounds.right - bevelWidthPx,
-                        bottom = bounds.bottom - bevelWidthPx,
-                        cornerRadius = androidx.compose.ui.geometry.CornerRadius(innerRadius)
-                    )
-                )
-            }
-
             val (bevelStart, bevelEnd) = calculateGradientOffsets(bounds, theme.bevelAngle + userSettings.angle)
-            drawPath(
-                path = borderPath,
+            drawShapeStroke(
+                shape = shape,
+                bounds = bounds,
+                density = density,
+                strokeWidthPx = bevelWidthPx,
                 brush = Brush.linearGradient(
                     colors = listOf(highlightColor, shadowColor),
                     start = bevelStart,
-                    end = bevelEnd
-                )
+                    end = bevelEnd,
+                ),
             )
         }
 
@@ -168,12 +147,12 @@ class QSBevelStyleRenderer(
             val halfOutline = outlineWidthPx / 2f
             val outlineAlpha = if (isActive) theme.outlineActiveAlpha else theme.outlineInactiveAlpha
 
-            drawRoundRect(
+            drawShapeStroke(
+                shape = shape,
+                bounds = bounds,
+                density = density,
+                strokeWidthPx = outlineWidthPx,
                 color = Color.Black.copy(alpha = outlineAlpha),
-                topLeft = Offset(bounds.left + halfOutline, bounds.top + halfOutline),
-                size = Size(bounds.width - outlineWidthPx, bounds.height - outlineWidthPx),
-                cornerRadius = androidx.compose.ui.geometry.CornerRadius((cornerRadius - halfOutline).coerceAtLeast(0f)),
-                style = Stroke(width = outlineWidthPx)
             )
         }
 
@@ -207,5 +186,87 @@ class QSBevelStyleRenderer(
         val endY = centerY + dy
 
         return Offset(startX, startY) to Offset(endX, endY)
+    }
+
+    private fun DrawScope.drawShapeStroke(
+        shape: Shape,
+        bounds: Rect,
+        density: Density,
+        strokeWidthPx: Float,
+        color: Color? = null,
+        brush: Brush? = null,
+    ) {
+        if (strokeWidthPx <= 0f) return
+        val halfStroke = strokeWidthPx / 2f
+        val insetWidth = (bounds.width - strokeWidthPx).coerceAtLeast(0f)
+        val insetHeight = (bounds.height - strokeWidthPx).coerceAtLeast(0f)
+        if (insetWidth <= 0f || insetHeight <= 0f) return
+
+        val outline =
+            shape.createOutline(
+                size = Size(insetWidth, insetHeight),
+                layoutDirection = LayoutDirection.Ltr,
+                density = density,
+            )
+        translate(left = bounds.left + halfStroke, top = bounds.top + halfStroke) {
+            when {
+                brush != null -> {
+                    when (outline) {
+                        is Outline.Rectangle -> {
+                            drawRect(
+                                brush = brush,
+                                topLeft = Offset.Zero,
+                                size = outline.rect.size,
+                                style = Stroke(width = strokeWidthPx),
+                            )
+                        }
+                        is Outline.Rounded -> {
+                            drawRoundRect(
+                                brush = brush,
+                                topLeft = Offset.Zero,
+                                size =
+                                    Size(
+                                        width = outline.roundRect.right - outline.roundRect.left,
+                                        height = outline.roundRect.bottom - outline.roundRect.top,
+                                    ),
+                                cornerRadius = outline.roundRect.topLeftCornerRadius,
+                                style = Stroke(width = strokeWidthPx),
+                            )
+                        }
+                        is Outline.Generic -> {
+                            drawPath(path = outline.path, brush = brush, style = Stroke(width = strokeWidthPx))
+                        }
+                    }
+                }
+                color != null -> {
+                    when (outline) {
+                        is Outline.Rectangle -> {
+                            drawRect(
+                                color = color,
+                                topLeft = Offset.Zero,
+                                size = outline.rect.size,
+                                style = Stroke(width = strokeWidthPx),
+                            )
+                        }
+                        is Outline.Rounded -> {
+                            drawRoundRect(
+                                color = color,
+                                topLeft = Offset.Zero,
+                                size =
+                                    Size(
+                                        width = outline.roundRect.right - outline.roundRect.left,
+                                        height = outline.roundRect.bottom - outline.roundRect.top,
+                                    ),
+                                cornerRadius = outline.roundRect.topLeftCornerRadius,
+                                style = Stroke(width = strokeWidthPx),
+                            )
+                        }
+                        is Outline.Generic -> {
+                            drawPath(path = outline.path, color = color, style = Stroke(width = strokeWidthPx))
+                        }
+                    }
+                }
+            }
+        }
     }
 }

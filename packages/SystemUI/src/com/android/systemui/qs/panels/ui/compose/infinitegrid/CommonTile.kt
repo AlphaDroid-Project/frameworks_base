@@ -17,14 +17,11 @@
 package com.android.systemui.qs.panels.ui.compose.infinitegrid
 
 import android.content.Context
-import android.graphics.Matrix
-import android.graphics.Path as AndroidPath
 import android.graphics.drawable.Animatable
 import android.graphics.drawable.AnimatedVectorDrawable
 import android.graphics.drawable.Drawable
 import android.service.quicksettings.Tile.STATE_INACTIVE
 import android.text.TextUtils
-import android.util.PathParser
 import androidx.annotation.VisibleForTesting
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.graphics.res.animatedVectorResource
@@ -76,7 +73,6 @@ import androidx.compose.ui.graphics.ColorProducer
 import androidx.compose.ui.graphics.CompositingStrategy
 import androidx.compose.ui.graphics.DefaultAlpha
 import androidx.compose.ui.graphics.TransformOrigin
-import androidx.compose.ui.graphics.asComposePath
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.painter.Painter
@@ -138,28 +134,15 @@ fun ClassicTileContent(
     iconShapeKey: String,
     colors: TileColors,
     labelHide: Boolean,
+    styleRenderer: QSTileStyleRenderer? = null,
+    state: Int = STATE_INACTIVE,
     modifier: Modifier = Modifier,
 ) {
-    val isNoBackground = iconShapeKey in QSTileIconShapes.NO_BACKGROUND_KEYS
     val iconShape = remember(iconShapeKey) {
         QSTileIconShapes.shapeForKey(iconShapeKey)
     }
 
-    val overlayPathData = remember(iconShapeKey) {
-        QSTileIconShapes.OVERLAY_BY_KEY[iconShapeKey]
-    }
-    val overlayPath = remember(overlayPathData) {
-        overlayPathData?.let { pathData ->
-            try {
-                PathParser.createPathFromPathData(pathData)
-            } catch (_: RuntimeException) {
-                null
-            }
-        }
-    }
-
     val animatedColor by animateColorAsState(colors.background, label = "QSTileCircleBgColor")
-    val animatedOutlineColor by animateColorAsState(colors.outline, label = "QSTileOutlineColor")
     val animatedLabelColor by animateColorAsState(colors.label, label = "QSTileClassicLabelColor")
 
     val (tileHeight, iconSize) = remember(labelHide) {
@@ -175,33 +158,26 @@ fun ClassicTileContent(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = modifier.fillMaxWidth(),
     ) {
-        Box(
-            modifier = Modifier
-                .size(tileHeight)
-                .thenIf(!isNoBackground) {
-                    Modifier
+        Box(modifier = Modifier.size(tileHeight)) {
+            QSTileStyleWrapper(
+                renderer = styleRenderer,
+                shape = iconShape,
+                state = state,
+                materialColor = animatedColor,
+                isSmallTile = true,
+                modifier = Modifier.fillMaxSize(),
+            ) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
                         .clip(iconShape)
-                        .drawBehind { drawRect(color = animatedColor) }
-                }
-                .thenIf(overlayPath != null) {
-                    Modifier.drawWithContent {
-                        drawContent()
-                        overlayPath?.let { path ->
-                            val scaledPath = AndroidPath(path)
-                            val matrix = Matrix()
-                            matrix.setScale(size.width / 100f, size.height / 100f)
-                            scaledPath.transform(matrix)
-                            drawPath(
-                                path = scaledPath.asComposePath(),
-                                color = animatedOutlineColor,
-                            )
-                        }
-                    }
-                },
-        ) {
+                        .drawBehind { drawRect(color = animatedColor) },
+                )
+            }
+
             SmallTileContent(
                 iconProvider = iconProvider,
-                color = if (!isNoBackground) colors.icon else animatedOutlineColor,
+                color = colors.icon,
                 size = { iconSize },
                 modifier = Modifier.align(Alignment.Center),
             )
