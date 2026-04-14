@@ -16,6 +16,9 @@
     <!-- SystemUI restart dialog -->
     <java-symbol type="string" name="systemui_restart_title"/>
     <java-symbol type="string" name="systemui_restart_message"/>
+    <java-symbol type="string" name="systemui_restart_yes"/>
+    <java-symbol type="string" name="systemui_restart_not_now"/>
+    <java-symbol type="string" name="systemui_restart_process"/>
     <!-- Launcher restart dialog -->
     <java-symbol type="string" name="launcher_restart_title"/>
     <java-symbol type="string" name="launcher_restart_message"/>

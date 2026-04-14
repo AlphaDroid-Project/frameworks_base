@@ -171,12 +171,12 @@ public class SystemRestartUtils {
         new AlertDialog.Builder(context)
                 .setTitle(R.string.systemui_restart_title)
                 .setMessage(R.string.systemui_restart_message)
-                .setPositiveButton(R.string.ok, new DialogInterface.OnClickListener() {
+                .setPositiveButton(R.string.systemui_restart_yes, new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int id) {
                         restartSystemUi(context);
                     }
                 })
-                .setNegativeButton(R.string.cancel, null)
+                .setNegativeButton(R.string.systemui_restart_not_now, null)
                 .show();
     }
 

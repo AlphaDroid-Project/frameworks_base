@@ -17,6 +17,9 @@
     <!-- SystemUI Restart -->
     <string name="systemui_restart_title">Rendszerfelület-újraindítás szükséges</string>
     <string name="systemui_restart_message">For all changes to take effect, a SystemUI restart is required. Restart SystemUI now?</string>
+    <string name="systemui_restart_yes">Igen</string>
+    <string name="systemui_restart_not_now">Most nem</string>
+    <string name="systemui_restart_process">Rendszerfelület-újraindítás a változások életbe léptetéséhez...</string>
     <!-- Launcher Restart -->
     <string name="launcher_restart_title">Launcher restart required</string>
     <string name="launcher_restart_message">For all changes to take effect, a Launcher restart is required. Restart Launcher now?</string>

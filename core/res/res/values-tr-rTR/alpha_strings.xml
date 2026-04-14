@@ -17,6 +17,9 @@
     <!-- SystemUI Restart -->
     <string name="systemui_restart_title">Sistem arayüzünü yeniden başlatmak gerekli</string>
     <string name="systemui_restart_message">Tüm değişikliklerin etkili olabilmesi için, sistem arayüzü yeniden başlatılmalı. Yeniden başlatmak ister misiniz?</string>
+    <string name="systemui_restart_yes">Evet</string>
+    <string name="systemui_restart_not_now">Şimdi değil</string>
+    <string name="systemui_restart_process">Değişiklikleri uygulamak için sistem arayüzü yeniden başlatılıyor...</string>
     <!-- Launcher Restart -->
     <string name="launcher_restart_title">Başlatıcının yeniden başlatılması gerekiyor</string>
     <string name="launcher_restart_message">Tüm değişikliklerin etkili olması için başlatıcının yeniden başlatılması gerekiyor. Başlatıcıyı şimdi yeniden başlatmak ister misiniz?</string>
