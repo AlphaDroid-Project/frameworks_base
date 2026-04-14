@@ -230,7 +230,8 @@ public class StatusBarManagerService extends IStatusBarService.Stub implements D
             Set.of(
                     "com.android.wallpaper",
                     "com.android.launcher3",
-                    "com.android.settings");
+                    "com.android.settings",
+                    "com.alpha.settings.ui");
 
     private boolean isCallerWhitelisted() {
         final int callingUid = Binder.getCallingUid();
