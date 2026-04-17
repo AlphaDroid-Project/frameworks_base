@@ -17,9 +17,6 @@
     <!-- SystemUI Restart -->
     <string name="systemui_restart_title">Необходима перезагрузка интерфейса</string>
     <string name="systemui_restart_message">Чтобы все изменения вступили в силу, требуется перезагрузка пользовательского интерфейса. Перезагрузить интерфейс?</string>
-    <string name="systemui_restart_yes">Да</string>
-    <string name="systemui_restart_not_now">Не сейчас</string>
-    <string name="systemui_restart_process">Перезапустите интерфейс для применения изменений...</string>
     <!-- Launcher Restart -->
     <string name="launcher_restart_title">Требуется перезапуск лаунчера</string>
     <string name="launcher_restart_message">Чтобы все изменения вступили в силу, требуется перезагрузка лаунчера. Перезапустить лаунчер сейчас?</string>
