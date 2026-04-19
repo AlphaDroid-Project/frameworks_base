@@ -138,8 +138,6 @@ constructor(
         if (clock == null) {
             return
         }
-        (clock.smallClock.view as? AxClockView)?.onFidgetTapListener = null
-        (clock.largeClock.view as? AxClockView)?.onFidgetTapListener = null
         smallClockOnAttachStateChangeListener?.let {
             clock.smallClock.view.removeOnAttachStateChangeListener(it)
             smallClockFrame?.viewTreeObserver?.removeOnGlobalLayoutListener(onGlobalLayoutListener)
@@ -158,9 +156,6 @@ constructor(
 
         clock.eventListeners.attach(clockListener)
         clock.initialize(isDarkTheme(), dozeAmount.value, 0f)
-
-        (clock.smallClock.view as? AxClockView)?.onFidgetTapListener = ::handleFidgetTap
-        (clock.largeClock.view as? AxClockView)?.onFidgetTapListener = ::handleFidgetTap
 
         if (!regionSamplingEnabled) {
             updateColors()
@@ -723,14 +718,6 @@ constructor(
             resources.getDimensionPixelSize(clocksR.dimen.presentation_clock_text_size).toFloat()
         } else {
             resources.getDimensionPixelSize(clocksR.dimen.large_clock_text_size).toFloat()
-        }
-    }
-
-    fun handleFidgetTap(x: Float, y: Float) {
-        if (isPreview) return
-        clock?.run {
-            smallClock.animations.onFidgetTap(x, y)
-            largeClock.animations.onFidgetTap(x, y)
         }
     }
 
