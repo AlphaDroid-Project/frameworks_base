@@ -22,6 +22,7 @@ import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.content.pm.PackageManager.ResolveInfoFlags
 import android.content.res.Resources
 import android.os.UserHandle
 import android.util.Log
@@ -238,12 +239,39 @@ constructor(
         persistScrollPosition("edit done")
     }
 
+    /**
+     * Returns the package that should handle the communal hub widget picker ([Intent.ACTION_PICK]).
+     *
+     * Prefer the **current default home app**; merged [R.string.launcher_overlayable_package] can
+     * stay stale (e.g. static RRO / overlay lookup) relative to [PackageManager] state after
+     * launcher switches, so relying only on injected [launcherPackage] breaks widget pick on
+     * Launcher3 when resources still resolve to another launcher package.
+     */
+    private fun resolveWidgetPickerHostPackage(): String {
+        val homeIntent =
+            Intent(Intent.ACTION_MAIN).apply { addCategory(Intent.CATEGORY_HOME) }
+        val ri =
+            packageManager.resolveActivity(
+                homeIntent,
+                ResolveInfoFlags.of(PackageManager.MATCH_DEFAULT_ONLY.toLong()),
+            )
+        val pkg = ri?.activityInfo?.packageName
+        if (
+            pkg.isNullOrEmpty() ||
+                pkg == "android" ||
+                pkg.startsWith("com.android.internal")
+        ) {
+            return launcherPackage
+        }
+        return pkg
+    }
+
     private fun getWidgetPickerActivityIntent(
         resources: Resources,
         excludeList: ArrayList<AppWidgetProviderInfo>,
     ): Intent? {
         return Intent(Intent.ACTION_PICK).apply {
-            setPackage(launcherPackage)
+            setPackage(resolveWidgetPickerHostPackage())
             putExtra(
                 EXTRA_DESIRED_WIDGET_WIDTH,
                 resources.getDimensionPixelSize(R.dimen.communal_widget_picker_desired_width),
