@@ -45,7 +45,7 @@ public final class AttestationService extends SystemService {
 
     private static final String TAG = AttestationService.class.getSimpleName();
 
-    private static final String API = "https://raw.githubusercontent.com/crdroidandroid/android_vendor_certification/refs/heads/15.0/gms_certified_props.json";
+    private static final String API = "https://raw.githubusercontent.com/alphadroid-project/vendor_certification/refs/heads/alpha-16.2/gms_certified_props.json";
     private static final String DATA_FILE = "gms_certified_props.json";
     private static final long INITIAL_DELAY = 0; // Start immediately on boot
     private static final long INTERVAL = 8; // Interval in hours
