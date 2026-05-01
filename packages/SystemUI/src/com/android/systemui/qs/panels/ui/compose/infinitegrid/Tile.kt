@@ -220,6 +220,7 @@ fun ContentScope.Tile(
             }
 
         // TODO(b/361789146): Draw the shapes instead of clipping
+        val animationStyle = rememberQSTileAnimationStyle()
         val tileShape =
             tileShapeOverride ?: TileDefaults.animateTileShapeAsState(uiState.state).value
         val animatedColor by animateColorAsState(colors.background, label = "QSTileBackgroundColor")
@@ -248,6 +249,7 @@ fun ContentScope.Tile(
                 modifier
                     .then(surfaceRevealModifier)
                     .fillMaxWidth()
+                    .tileToggleAnimation(animationStyle, uiState.state)
                     .thenIf(currentBounceableInfo != null) {
                         Modifier.bounceable(
                             currentBounceableInfo!!.bounceable,
