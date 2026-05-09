@@ -44,41 +44,7 @@ import com.android.systemui.axdynamicbar.model.IslandEvent
 import com.android.systemui.axdynamicbar.shared.*
 import com.android.systemui.res.R
 
-@Composable
-internal fun ChargingExpanded(event: IslandEvent.Charging) {
-    ExpandedCardLayout(
-        accentColor = GreenAccent,
-        icon = {
-            Icon(Icons.Filled.BatteryChargingFull, null, tint = GreenAccent, modifier = Modifier.size(30.dp))
-        },
-        title = {
-            Text(
-                if (event.isWireless) stringResource(R.string.ax_dynamic_bar_wireless_charging)
-                else stringResource(R.string.ax_dynamic_bar_charging),
-                color = OnCardText,
-                style = MaterialTheme.typography.titleMedium,
-            )
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(SpaceMd),
-            ) {
-                StatusChip("${event.level}%", GreenAccent)
-                if (event.isPowerSave) {
-                    StatusChip(stringResource(R.string.ax_dynamic_bar_battery_saver), OrangeAccent)
-                }
-            }
-        },
-        trailing = if (!event.timeRemaining.isNullOrEmpty()) {
-            {
-                Text(
-                    "${event.timeRemaining} ${stringResource(R.string.ax_dynamic_bar_until_full)}",
-                    color = SubtleGray,
-                    style = MaterialTheme.typography.labelMedium,
-                )
-            }
-        } else null,
-    )
-}
+
 
 @Composable
 internal fun BluetoothExpanded(event: IslandEvent.Bluetooth, interactor: IslandActions) {
@@ -314,39 +280,7 @@ internal fun RowScope.CompactHotspotRow(event: IslandEvent.Hotspot) {
     PulsingDot(color = OrangeAccent, size = 7.dp)
 }
 
-@Composable
-internal fun RowScope.CompactChargingRow(event: IslandEvent.Charging) {
-    Box(
-        modifier =
-            Modifier.size(SizeCompactIcon).clip(ShapeCompact).background(GreenAccent.copy(alpha = AlphaIconBg)),
-        contentAlignment = Alignment.Center,
-    ) {
-        Icon(
-            Icons.Filled.BatteryChargingFull,
-            null,
-            tint = GreenAccent,
-            modifier = Modifier.size(18.dp),
-        )
-    }
-    Spacer(Modifier.width(SpaceLg))
-    Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(SpaceXxs)) {
-        Text(
-            if (event.isWireless) stringResource(R.string.ax_dynamic_bar_wireless_charging)
-            else stringResource(R.string.ax_dynamic_bar_charging),
-            color = OnCardText,
-            style = MaterialTheme.typography.bodySmall,
-        )
-        val saverLabel = if (event.isPowerSave) stringResource(R.string.ax_dynamic_bar_saver) else null
-        Text(
-            buildString {
-                append("${event.level}%")
-                saverLabel?.let { append(" · $it") }
-            },
-            color = if (event.isPowerSave) OrangeAccent else GreenAccent,
-            style = MaterialTheme.typography.labelSmall,
-        )
-    }
-}
+
 
 @Composable
 internal fun RowScope.CompactRingerRow(event: IslandEvent.RingerMode) {

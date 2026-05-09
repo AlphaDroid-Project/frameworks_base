@@ -13,6 +13,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -216,6 +217,7 @@ fun NotificationAlertCard(
                         onEnd = interactor::onNotificationAlertInteractionEnd,
                     )
                 }
+                .pointerInput(Unit) { detectTapGestures {} }
                 .clip(ShapeCard)
                 .background(CardBg)
                 .border(1.dp, CardBorderBrush, ShapeCard),
