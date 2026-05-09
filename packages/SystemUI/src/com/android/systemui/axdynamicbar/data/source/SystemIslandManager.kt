@@ -19,8 +19,6 @@ import com.android.systemui.dagger.SysUISingleton
 import com.android.systemui.dagger.qualifiers.Application
 import com.android.systemui.dagger.qualifiers.Background
 import com.android.systemui.dagger.qualifiers.Main
-import com.android.systemui.statusbar.pipeline.battery.domain.interactor.BatteryInteractor
-import com.android.systemui.statusbar.policy.BatteryController
 import java.io.File
 import javax.inject.Inject
 import kotlinx.coroutines.CoroutineDispatcher
@@ -29,8 +27,6 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
 import org.json.JSONArray
 import org.json.JSONObject
@@ -43,8 +39,7 @@ constructor(
     @Application private val applicationScope: CoroutineScope,
     @Background private val backgroundDispatcher: CoroutineDispatcher,
     @Main private val mainHandler: Handler,
-    private val batteryInteractor: BatteryInteractor,
-    private val batteryController: BatteryController,
+    private val chargingEventSource: com.android.systemui.axdynamicbar.data.ChargingEventSource,
 ) {
     companion object {
         private const val TAG = "SystemIslandManager"
@@ -55,16 +50,24 @@ constructor(
         private const val FILE_PROVIDER_AUTHORITY = "com.android.systemui.fileprovider"
     }
 
-    private val _chargingEvent = MutableStateFlow<IslandEvent.Charging?>(null)
-    val chargingEvent: StateFlow<IslandEvent.Charging?> = _chargingEvent.asStateFlow()
+    // ── Charging — delegated to ChargingEventSource (Task 2 migration) ───────
+    // IslandEventRepository reads chargingEvent and calls startCharging/stopCharging/clearCharging.
+    // These now delegate to ChargingEventSource, which is the sole owner of charging state.
+    val chargingEvent: StateFlow<IslandEvent.Charging?> get() = chargingEventSource.chargingEvent
+
+    var onChargingStarted: ((IslandEvent.Charging) -> Unit)?
+        get() = chargingEventSource.onChargingStarted
+        set(value) { chargingEventSource.onChargingStarted = value }
+
+    var chargingDismissed: Boolean
+        get() = chargingEventSource.chargingDismissed
+        set(value) { chargingEventSource.chargingDismissed = value }
 
     private val _ringerEvent = MutableStateFlow<IslandEvent.RingerMode?>(null)
     val ringerEvent: StateFlow<IslandEvent.RingerMode?> = _ringerEvent.asStateFlow()
 
     private val _clipboardEvent = MutableStateFlow<IslandEvent.Clipboard?>(null)
     val clipboardEvent: StateFlow<IslandEvent.Clipboard?> = _clipboardEvent.asStateFlow()
-
-    var onChargingStarted: ((IslandEvent.Charging) -> Unit)? = null
 
     var onRingerChanged: ((IslandEvent.RingerMode) -> Unit)? = null
 
@@ -74,10 +77,7 @@ constructor(
         context.getSystemService(ClipboardManager::class.java)
     }
 
-    private var wasCharging = false
-    @Volatile var chargingDismissed = false
     private var lastRingerMode = -1
-    private var batteryJob: Job? = null
 
     private var listening = false
     @Volatile private var suppressNextClipEvent = false
@@ -241,56 +241,13 @@ constructor(
     private var clipboardListening = false
 
     fun startCharging() {
-        if (chargingListening) return
-        chargingListening = true
-        wasCharging = batteryController.isPluggedIn
-        batteryJob?.cancel()
-        batteryJob =
-            applicationScope.launch(backgroundDispatcher) {
-                combine(
-                        batteryInteractor.isCharging,
-                        batteryInteractor.level,
-                        batteryInteractor.powerSave,
-                        batteryInteractor.batteryTimeRemainingEstimate,
-                    ) { isCharging: Boolean, level: Int?, isPowerSave: Boolean, timeEst: String? ->
-                        ChargingSnapshot(isCharging, level, isPowerSave, timeEst)
-                    }
-                    .distinctUntilChanged()
-                    .collect { snap ->
-                        val wasChargingBefore = wasCharging
-                        wasCharging = snap.isCharging
-                        if (snap.isCharging && !wasChargingBefore && snap.level != null) {
-                            chargingDismissed = false
-                            val event =
-                                IslandEvent.Charging(
-                                    level = snap.level,
-                                    isWireless = batteryController.isWirelessCharging,
-                                    isPowerSave = snap.isPowerSave,
-                                    timeRemaining = snap.timeEst,
-                                )
-                            _chargingEvent.value = event
-                            onChargingStarted?.invoke(event)
-                        } else if (snap.isCharging && wasChargingBefore && !chargingDismissed) {
-                            _chargingEvent.value =
-                                _chargingEvent.value?.copy(
-                                    level = snap.level ?: _chargingEvent.value?.level ?: 0,
-                                    isPowerSave = snap.isPowerSave,
-                                    timeRemaining = snap.timeEst,
-                                )
-                        } else if (!snap.isCharging && wasChargingBefore) {
-                            chargingDismissed = false
-                            _chargingEvent.value = null
-                        }
-                    }
-            }
+        // Delegated to ChargingEventSource (Task 2).
+        chargingEventSource.startListening()
     }
 
     fun stopCharging() {
-        if (!chargingListening) return
-        chargingListening = false
-        batteryJob?.cancel()
-        batteryJob = null
-        _chargingEvent.value = null
+        // Delegated to ChargingEventSource (Task 2).
+        chargingEventSource.stopListening()
     }
 
     fun startRinger() {
@@ -379,8 +336,8 @@ constructor(
     }
 
     fun clearCharging() {
-        chargingDismissed = true
-        _chargingEvent.value = null
+        // Delegated to ChargingEventSource (Task 2).
+        chargingEventSource.clearCharging()
     }
 
     fun removeClipboardItem(id: Long) {
@@ -504,10 +461,4 @@ constructor(
         }
     }
 
-    private data class ChargingSnapshot(
-        val isCharging: Boolean,
-        val level: Int?,
-        val isPowerSave: Boolean,
-        val timeEst: String?,
-    )
 }

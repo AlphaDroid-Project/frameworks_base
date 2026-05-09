@@ -8,6 +8,7 @@ import android.content.Intent
 import android.graphics.drawable.Drawable
 import androidx.core.graphics.ColorUtils
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
@@ -49,6 +50,7 @@ import androidx.compose.ui.text.PlatformTextStyle
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -90,6 +92,34 @@ internal val SizeStrokeWidth = 2.dp
 internal val SizeStrokeThin = 1.5f
 internal val SizeCompactIcon = 40.dp
 internal val SizeActionHeight = 48.dp
+
+// ── Pill width tokens ──
+internal val StatusBarIconWidth = 14.dp
+internal val StatusBarBadgeWidth = StatusBarIconWidth
+internal val StatusBarContentWidth = 74.dp
+internal val StatusBarPillWidth = 88.dp
+// Reserved icon lane for centered cutout pills.
+// 18dp (largest chip icon, e.g. media art) + 4dp + 4dp lane paddings + 2dp breathing room.
+internal val CutoutCenterIconAreaWidth = 28.dp
+// Right text lane for centered cutout pills.
+internal val CutoutCenterContentAreaWidth = StatusBarContentWidth
+// Explicit status widths by state.
+internal val StatusBarPillWidthWithBadge = StatusBarPillWidth + StatusBarBadgeWidth
+// Cutout geometry paddings around the physical cutout bounds.
+internal val CutoutPadTop = 4.dp
+internal val CutoutPadBottom = 3.dp
+internal val CutoutPadSide = 3.dp
+internal val CutoutPillContentMin = 80.dp
+internal val CutoutPillContentMax = 140.dp
+internal val KeyguardPillMinWidth = 88.dp
+internal val KeyguardPillMaxWidth = 136.dp
+internal val KeyguardEventPillMaxWidth = 220.dp
+internal val CenterSideMaxWidth = 120.dp
+internal val PillTextMaxWidth = 80.dp
+// Minimum width for ticking-text containers (timer, stopwatch, recording).
+// Covers the widest standard format ("00:00.0" = 7 mono chars) so the
+// text container never shrinks per-tick, eliminating centering jitter.
+internal val TickingTextMinWidth = 48.dp
 
 internal const val AlphaSecondary = 0.7f
 internal const val AlphaTertiary = 0.5f
@@ -183,10 +213,7 @@ internal val ShapeCompact = RoundedCornerShape(12.dp)
 
 internal fun accentColorFor(event: IslandEvent): Color = eventStyleFor(event).accent
 
-internal fun chipContentColorOn(background: Color): Color {
-    val luminance = ColorUtils.calculateLuminance(background.toArgb())
-    return if (luminance > 0.4) ChipContentDark else Color.White
-}
+internal fun chipContentColorOn(background: Color): Color = Color.White
 
 internal fun darkenColor(color: Color, keep: Float = 0.35f): Color =
     Color(
@@ -460,8 +487,8 @@ internal fun formatStopwatch(ms: Long): String {
     val mins = (totalSecs % 3600) / 60
     val secs = totalSecs % 60
     val tenths = ((ms % 1000) / 100).coerceIn(0, 9)
-    return if (hrs > 0) "%d:%02d:%02d.%d".format(hrs, mins, secs, tenths)
-    else "%d:%02d.%d".format(mins, secs, tenths)
+    return if (hrs > 0) "%02d:%02d:%02d.%d".format(hrs, mins, secs, tenths)
+    else "%02d:%02d.%d".format(mins, secs, tenths)
 }
 
 internal fun formatTimeAgo(timestampMs: Long, res: android.content.res.Resources): String {
@@ -513,7 +540,13 @@ internal fun iconKeyFor(event: IslandEvent): Any =
 
 internal fun textKeyFor(event: IslandEvent): Any =
     when (event) {
-        is IslandEvent.Media -> "${event.track}|${event.artist}"
+        is IslandEvent.Media -> {
+            val actionsKey = event.customActions.joinToString(separator = ",") { "${it.action}:${it.label}" }
+            "${event.track}|${event.artist}|${event.isPlaying}|${event.outputDeviceName}|$actionsKey"
+        }
+        is IslandEvent.Sports -> "${event.id}|${event.score1}|${event.score2}|${event.team1Name}|${event.team2Name}"
+        is IslandEvent.Charging -> "${event.id}|${event.level}|${event.isCharging}"
+        is IslandEvent.Notification -> "${event.id}|${event.title}|${event.text}"
         is IslandEvent.Timer,
         is IslandEvent.Stopwatch,
         is IslandEvent.AudioRecording -> "tick_text"
@@ -558,3 +591,27 @@ internal fun PendingIntent.sendWithBal(context: Context, fillIntent: Intent? = n
     send(context, 0, fillIntent, null, null, null, options.toBundle())
 }
 
+
+@Composable
+internal fun IslandStackCountBadge(
+    count: Int,
+    modifier: Modifier = Modifier,
+    backgroundColor: Color = Color.Black,
+) {
+    Box(
+        modifier = modifier
+            .background(backgroundColor, CircleShape)
+            .border(1.dp, Color.White, CircleShape)
+            .padding(horizontal = 6.dp, vertical = 1.dp)
+    ) {
+        Text(
+            text = count.toString(),
+            style = TsBadge.copy(
+                fontSize = 9.sp,
+                fontWeight = FontWeight.Black,
+                letterSpacing = (-0.5).sp
+            ),
+            color = Color.White
+        )
+    }
+}

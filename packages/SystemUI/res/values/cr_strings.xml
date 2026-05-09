@@ -196,7 +196,13 @@
     <string name="ax_dynamic_bar_vibrate">Vibrate</string>
     <string name="ax_dynamic_bar_ring">Ring</string>
     <string name="ax_dynamic_bar_charging">Charging</string>
+    <string name="ax_dynamic_bar_charging_rapidly">Charging rapidly</string>
+    <string name="ax_dynamic_bar_charging_slowly">Charging slowly</string>
+    <string name="ax_dynamic_bar_fully_charged">Charged</string>
+    <string name="ax_dynamic_bar_fast_charging">Fast Charging</string>
+    <string name="ax_dynamic_bar_wireless_charging">Wireless Charging</string>
     <string name="ax_dynamic_bar_wireless">Wireless</string>
+    <string name="ax_dynamic_bar_charging_time_remaining">%s until full</string>
     <string name="ax_dynamic_bar_saver">Saver</string>
     <string name="ax_dynamic_bar_music">Music</string>
     <string name="ax_dynamic_bar_copied">Copied</string>
@@ -233,7 +239,6 @@
     <string name="ax_dynamic_bar_microphone">Microphone</string>
     <string name="ax_dynamic_bar_camera_mic_short">Camera &amp; Mic</string>
     <string name="ax_dynamic_bar_hotspot_devices"><xliff:g id="count" example="3">%d</xliff:g> devices</string>
-    <string name="ax_dynamic_bar_wireless_charging">Wireless Charging</string>
     <string name="ax_dynamic_bar_until_full">until full</string>
     <string name="ax_dynamic_bar_battery_saver">Battery Saver</string>
     <string name="ax_dynamic_bar_call">Call</string>

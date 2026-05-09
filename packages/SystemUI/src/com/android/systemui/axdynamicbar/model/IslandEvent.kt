@@ -16,8 +16,10 @@ enum class RecordingState {
 const val NOTIFICATION_DECAY_MS = 5000L
 const val NOTIFICATION_FRESH_PRIORITY = 75
 const val NOTIFICATION_STALE_PRIORITY = 15
-const val MEDIA_PLAYING_PRIORITY = 70
-const val MEDIA_PAUSED_PRIORITY = 20
+/** Immediately below Alarm (48), Timer (45), Stopwatch (44) — first slot after compact time events. */
+const val MEDIA_PLAYING_PRIORITY = 43
+/** Below playing media; stacks with NowPlaying (42); still above charging. */
+const val MEDIA_PAUSED_PRIORITY = 42
 
 data class EventBehavior(
     val autoDismissMs: Long? = null,
@@ -25,6 +27,54 @@ data class EventBehavior(
     val autoShowsIsland: Boolean = true,
 )
 
+/**
+ * One active item in the Dynamic Bar stack. **Higher [priority] wins** when ordering.
+ *
+ * ### Chip / pill “top” event
+ *
+ * [IslandUiState.events] is sorted with this type’s natural order ([Comparable]): larger
+ * `priority` first. [IslandUiState.topEvent] is `events[pinnedIndex]` else `events.first()`.
+ *
+ * Overrides (not changed by sorting):
+ *
+ * – **Heads-up / alert:** [IslandUiState.notificationAlert], when non-null, becomes the rendered
+ *   chip body (`notificationAlert ?: topEvent`).
+ * – **Pinned card:** User/system may move another stack index forward without changing intrinsic
+ *   priorities (`pinnedEventIndex`).
+ *
+ * ### Reference priority scale (baseline `priority =` on each class)
+ *
+ * | Range / notes | Types |
+ * |---|---|
+ * | 97 | `Torch` |
+ * | 95 | `PromotedOngoing` |
+ * | 90 | `AospChip` (ScreenRecord) |
+ * | 86 | `AospChip` (ShareToApp) |
+ * | 84 | `AudioRecording` |
+ * | 82 | `AospChip` (CastToOtherDevice) |
+ * | 80 | `BiometricUnlock`, `AospChip` (default) |
+ * | 73 | `Sports` |
+ * | 48 | `Alarm` |
+ * | 45 | `Timer` |
+ * | 44 | `Stopwatch` |
+ * | 43 / 42 | `Media` playing / paused (`MEDIA_PLAYING_PRIORITY` / `MEDIA_PAUSED_PRIORITY`) |
+ * | 42 | `NowPlaying` |
+ * | 41 | `Charging` |
+ * | 40 | `Bluetooth` |
+ * | 39 | `Hotspot` |
+ * | 38 | `RingerMode` |
+ * | 35 | `Vpn` |
+ * | 25 | `Clipboard` |
+ * | 75 / 15 | `Notification` fresh vs stale (`NOTIFICATION_FRESH*` + `NOTIFICATION_DECAY_MS`) |
+ * | 10 | `AppSwitch` |
+ * | 5 | `KeyguardIndication` (per-type `EventBehavior` may add `autoDismissMs`) |
+ *
+ * Ties on the same integer are **not** otherwise broken; prefer keeping a stable sort if both exist.
+ *
+ * ### Center-cutout idle collapse
+ *
+ * See [com.android.systemui.axdynamicbar.shared.CutoutCenterCollapsePolicy].
+ */
 sealed class IslandEvent(open val priority: Int, val id: String) : Comparable<IslandEvent> {
 
     open val behavior: EventBehavior
@@ -75,11 +125,11 @@ sealed class IslandEvent(open val priority: Int, val id: String) : Comparable<Is
         val address: String = "",
         val deviceIcon: Drawable? = null,
         val deviceTypeLabel: String = "",
-    ) : IslandEvent(priority = 60, id = "bluetooth") {
+    ) : IslandEvent(priority = 40, id = "bluetooth") {
         override fun withoutDrawables() = copy(deviceIcon = null)
     }
 
-    data class Hotspot(val numDevices: Int) : IslandEvent(priority = 55, id = "hotspot")
+    data class Hotspot(val numDevices: Int) : IslandEvent(priority = 39, id = "hotspot")
 
     data class Charging(
         val level: Int,
@@ -87,12 +137,20 @@ sealed class IslandEvent(open val priority: Int, val id: String) : Comparable<Is
         val isCharging: Boolean = true,
         val isPowerSave: Boolean = false,
         val timeRemaining: String? = null,
-    ) : IslandEvent(priority = 50, id = "charging") {
-        override val behavior = EventBehavior(autoDismissMs = 3000L, suppressOnDismiss = false)
+        val power: String? = null,
+        val current: String? = null,
+        val voltage: String? = null,
+        val temp: String? = null,
+        val chargeType: String? = null,
+    ) : IslandEvent(priority = 41, id = "charging") {
+        // No auto-dismiss — charging persists until the user dismisses it or unplugs.
+        // This ensures the charging card is visible in stack mode and the pill stays
+        // in the status bar when 'show cutout' is off.
+        override val behavior = EventBehavior(autoDismissMs = null, suppressOnDismiss = false)
     }
 
     data class RingerMode(val mode: Int, val label: String) :
-        IslandEvent(priority = 40, id = "ringer_mode") {
+        IslandEvent(priority = 38, id = "ringer_mode") {
         override val behavior = EventBehavior(autoDismissMs = 2500L, suppressOnDismiss = false)
     }
 
@@ -140,7 +198,7 @@ sealed class IslandEvent(open val priority: Int, val id: String) : Comparable<Is
         val actions: List<NotificationAction> = emptyList(),
         val progress: Float = -1f,
         val isIndeterminate: Boolean = false,
-    ) : IslandEvent(priority = 72, id = "promoted_${sbn.key}") {
+    ) : IslandEvent(priority = 95, id = "promoted_${sbn.key}") {
         override fun withoutDrawables() = copy(appIcon = null)
     }
 
