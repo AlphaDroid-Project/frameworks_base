@@ -19,6 +19,7 @@ package com.android.systemui.statusbar.pipeline.shared.domain.interactor
 import android.content.Context
 import android.content.res.Resources
 import android.provider.Settings
+import com.android.systemui.axdynamicbar.domain.AxDynamicBarInteractor
 import com.android.systemui.dagger.SysUISingleton
 import com.android.systemui.dagger.qualifiers.Main
 import com.android.systemui.res.R
@@ -38,6 +39,7 @@ constructor(
     @Main private val context: Context,
     @Main res: Resources,
     secureSettingsRepository: SecureSettingsRepository,
+    private val axDynamicBarInteractor: AxDynamicBarInteractor,
 ) {
     private val defaultBlockedIcons =
         res.getStringArray(R.array.config_collapsed_statusbar_icon_blocklist)
@@ -57,14 +59,15 @@ constructor(
             .distinctUntilChanged()
 
     val iconBlockList: Flow<List<String>> =
-        combine(tunerBlockedIcons, shouldShowVibrateIcon) { tunerSet, showVibrate ->
+        combine(
+            tunerBlockedIcons,
+            shouldShowVibrateIcon,
+            axDynamicBarInteractor.suppressedSlots
+        ) { tunerSet, showVibrate, suppressedSlots ->
             val set = defaultBlockedIcons.toMutableSet()
-
-            // Merge tuner blacklist (this is what hides “clock”, “battery”, etc)
             set.addAll(tunerSet)
+            set.addAll(suppressedSlots)
 
-            // It's possible that the vibrate icon was in the default blocklist, so we manually
-            // merge the setting and list
             if (showVibrate) {
                 set.remove(vibrateIconSlot)
             } else {

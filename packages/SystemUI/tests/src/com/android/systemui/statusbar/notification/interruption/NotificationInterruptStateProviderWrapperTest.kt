@@ -19,6 +19,7 @@ package com.android.systemui.statusbar.notification.interruption
 import android.platform.test.annotations.DisableFlags
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.filters.SmallTest
+import com.android.systemui.axdynamicbar.domain.AxDynamicBarInteractor
 import com.android.systemui.statusbar.notification.collection.NotificationEntryBuilder
 import com.android.systemui.statusbar.notification.interruption.NotificationInterruptStateProvider.FullScreenIntentDecision
 import com.android.systemui.statusbar.notification.interruption.NotificationInterruptStateProvider.FullScreenIntentDecision.FSI_DEVICE_NOT_INTERACTIVE
@@ -28,6 +29,9 @@ import com.android.systemui.statusbar.notification.interruption.NotificationInte
 import com.android.systemui.statusbar.notification.interruption.NotificationInterruptStateProviderWrapper.DecisionImpl
 import com.android.systemui.statusbar.notification.interruption.NotificationInterruptStateProviderWrapper.FullScreenIntentDecisionImpl
 import java.util.Optional
+import org.mockito.kotlin.any
+import org.mockito.kotlin.mock
+import org.mockito.kotlin.whenever
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -38,6 +42,11 @@ import org.junit.runner.RunWith
 @RunWith(AndroidJUnit4::class)
 @DisableFlags(VisualInterruptionRefactor.FLAG_NAME)
 class NotificationInterruptStateProviderWrapperTest : VisualInterruptionDecisionProviderTestBase() {
+    private val axDynamicBarInteractor =
+        mock<AxDynamicBarInteractor>().apply {
+            whenever(shouldSuppressHeadsUpForMirroredNotification(any())).thenReturn(false)
+        }
+
     override val provider by lazy {
         NotificationInterruptStateProviderWrapper(
             NotificationInterruptStateProviderImpl(
@@ -57,7 +66,8 @@ class NotificationInterruptStateProviderWrapperTest : VisualInterruptionDecision
                 systemClock,
                 globalSettings,
                 eventLog,
-                Optional.of(bubbles)
+                Optional.of(bubbles),
+                axDynamicBarInteractor,
             )
         )
     }

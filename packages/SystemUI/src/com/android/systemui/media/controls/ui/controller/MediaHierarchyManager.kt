@@ -37,6 +37,7 @@ import com.android.app.animation.Interpolators
 import com.android.app.tracing.coroutines.launchTraced as launch
 import com.android.app.tracing.traceSection
 import com.android.systemui.Dumpable
+import com.android.systemui.axdynamicbar.domain.AxDynamicBarSettings
 import com.android.systemui.communal.ui.viewmodel.CommunalTransitionViewModel
 import com.android.systemui.dagger.SysUISingleton
 import com.android.systemui.dagger.qualifiers.Application
@@ -130,6 +131,9 @@ constructor(
     private var allowMediaPlayerOnLockScreen: Boolean = true
     private val lockScreenMediaPlayerUri =
         secureSettings.getUriFor(Settings.Secure.MEDIA_CONTROLS_LOCK_SCREEN)
+    private val dynamicBarEnabledUri = secureSettings.getUriFor(AxDynamicBarSettings.KEY_ENABLED)
+    private val dynamicBarKeyguardEnabledUri =
+        secureSettings.getUriFor(AxDynamicBarSettings.KEY_KEYGUARD_ENABLED)
 
     /**
      * Whether we "skip" QQS during panel expansion.
@@ -649,18 +653,29 @@ constructor(
         val settingsObserver: ContentObserver =
             object : ContentObserver(handler) {
                 override fun onChange(selfChange: Boolean, uri: Uri?) {
-                    if (uri == lockScreenMediaPlayerUri) {
-                        allowMediaPlayerOnLockScreen =
-                            secureSettings.getBoolForUser(
-                                Settings.Secure.MEDIA_CONTROLS_LOCK_SCREEN,
-                                true,
-                                UserHandle.USER_CURRENT,
-                            )
+                    if (
+                        uri == lockScreenMediaPlayerUri ||
+                            uri == dynamicBarEnabledUri ||
+                            uri == dynamicBarKeyguardEnabledUri
+                    ) {
+                        updateLockscreenMediaSetting()
+                        updateDesiredLocation(forceNoAnimation = true)
+                        updateUserVisibility()
                     }
                 }
             }
         secureSettings.registerContentObserverForUserAsync(
             Settings.Secure.MEDIA_CONTROLS_LOCK_SCREEN,
+            settingsObserver,
+            UserHandle.USER_ALL,
+        )
+        secureSettings.registerContentObserverForUserAsync(
+            AxDynamicBarSettings.KEY_ENABLED,
+            settingsObserver,
+            UserHandle.USER_ALL,
+        )
+        secureSettings.registerContentObserverForUserAsync(
+            AxDynamicBarSettings.KEY_KEYGUARD_ENABLED,
             settingsObserver,
             UserHandle.USER_ALL,
         )
@@ -700,12 +715,30 @@ constructor(
                 R.dimen.lockscreen_shade_media_transition_distance
             )
         inSplitShade = splitShadeStateController.shouldUseSplitNotificationShade(context.resources)
-        allowMediaPlayerOnLockScreen =
+        updateLockscreenMediaSetting()
+    }
+
+    private fun updateLockscreenMediaSetting() {
+        val mediaLockscreenEnabled =
             secureSettings.getBoolForUser(
                 Settings.Secure.MEDIA_CONTROLS_LOCK_SCREEN,
                 true,
-                UserHandle.USER_CURRENT
+                UserHandle.USER_CURRENT,
             )
+        val dynamicBarEnabled =
+            secureSettings.getBoolForUser(
+                AxDynamicBarSettings.KEY_ENABLED,
+                false,
+                UserHandle.USER_CURRENT,
+            )
+        val dynamicBarLockscreenEnabled =
+            secureSettings.getBoolForUser(
+                AxDynamicBarSettings.KEY_KEYGUARD_ENABLED,
+                true,
+                UserHandle.USER_CURRENT,
+            )
+        val suppressMediaOnLockscreen = dynamicBarEnabled && dynamicBarLockscreenEnabled
+        allowMediaPlayerOnLockScreen = mediaLockscreenEnabled && !suppressMediaOnLockscreen
     }
 
     /**

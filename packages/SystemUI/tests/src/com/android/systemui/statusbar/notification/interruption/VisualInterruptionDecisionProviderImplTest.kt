@@ -41,10 +41,13 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.mockito.ArgumentMatchers.any
 import org.mockito.ArgumentMatchers.anyInt
+import com.android.systemui.axdynamicbar.domain.AxDynamicBarInteractor
 import org.mockito.Mockito.anyString
 import org.mockito.Mockito.times
 import org.mockito.Mockito.verify
 import org.mockito.Mockito.`when`
+import org.mockito.kotlin.any
+import org.mockito.kotlin.mock
 import org.mockito.kotlin.never
 import org.mockito.kotlin.whenever
 
@@ -52,6 +55,11 @@ import org.mockito.kotlin.whenever
 @RunWith(AndroidJUnit4::class)
 @EnableFlags(VisualInterruptionRefactor.FLAG_NAME)
 class VisualInterruptionDecisionProviderImplTest : VisualInterruptionDecisionProviderTestBase() {
+    private val axDynamicBarInteractor =
+        mock<AxDynamicBarInteractor>().apply {
+            whenever(shouldSuppressHeadsUpForMirroredNotification(any())).thenReturn(false)
+        }
+
     override val provider by lazy {
         VisualInterruptionDecisionProviderImpl(
             ambientDisplayConfiguration,
@@ -77,6 +85,7 @@ class VisualInterruptionDecisionProviderImplTest : VisualInterruptionDecisionPro
             notificationManager,
             settingsInteractor,
             kosmos.deviceProvisioningInteractor,
+            axDynamicBarInteractor,
         )
     }
 

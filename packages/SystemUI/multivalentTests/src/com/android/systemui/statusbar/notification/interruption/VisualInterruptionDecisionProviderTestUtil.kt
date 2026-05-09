@@ -37,7 +37,11 @@ import com.android.systemui.util.settings.GlobalSettings
 import com.android.systemui.util.settings.SystemSettings
 import com.android.systemui.util.time.SystemClock
 import com.android.wm.shell.bubbles.Bubbles
+import com.android.systemui.axdynamicbar.domain.AxDynamicBarInteractor
 import java.util.Optional
+import org.mockito.kotlin.any
+import org.mockito.kotlin.mock
+import org.mockito.kotlin.whenever
 
 object VisualInterruptionDecisionProviderTestUtil {
     fun createProviderByFlag(
@@ -67,6 +71,9 @@ object VisualInterruptionDecisionProviderTestUtil {
         settingsInteractor: NotificationSettingsInteractor,
         deviceProvisioningInteractor: DeviceProvisioningInteractor,
     ): VisualInterruptionDecisionProvider {
+        val axDynamicBarInteractor = mock<AxDynamicBarInteractor>().apply {
+            whenever(shouldSuppressHeadsUpForMirroredNotification(any())).thenReturn(false)
+        }
         return if (VisualInterruptionRefactor.isEnabled) {
             VisualInterruptionDecisionProviderImpl(
                 ambientDisplayConfiguration,
@@ -92,6 +99,7 @@ object VisualInterruptionDecisionProviderTestUtil {
                 notificationManager,
                 settingsInteractor,
                 deviceProvisioningInteractor,
+                axDynamicBarInteractor,
             )
         } else {
             NotificationInterruptStateProviderWrapper(
@@ -113,6 +121,7 @@ object VisualInterruptionDecisionProviderTestUtil {
                     globalSettings,
                     eventLog,
                     bubbles,
+                    axDynamicBarInteractor,
                 )
             )
         }

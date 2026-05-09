@@ -77,7 +77,7 @@ constructor(
     private val notificationManager: NotificationManager,
     private val settingsInteractor: NotificationSettingsInteractor,
     private val deviceProvisioningInteractor: DeviceProvisioningInteractor,
-    private val axDynamicBarSettings: com.android.systemui.axdynamicbar.domain.AxDynamicBarSettings,
+    private val axDynamicBarInteractor: com.android.systemui.axdynamicbar.domain.AxDynamicBarInteractor,
 ) : VisualInterruptionDecisionProvider {
 
     init {
@@ -167,7 +167,7 @@ constructor(
         check(!started)
 
         addCondition(PeekDisabledSuppressor(globalSettings, headsUpManager, logger, mainHandler))
-        addCondition(PeekAxDynamicBarSuppressor(axDynamicBarSettings))
+        addFilter(PeekMirroredInDynamicBarSuppressor(axDynamicBarInteractor))
         addCondition(PulseDisabledSuppressor(ambientDisplayConfiguration, userTracker))
         addCondition(PulseBatterySaverSuppressor(batteryController))
         addFilter(PeekPackageSnoozedSuppressor(headsUpManager))

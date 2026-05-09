@@ -26,6 +26,7 @@ import androidx.annotation.VisibleForTesting
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
@@ -44,6 +45,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.boundsInWindow
+import androidx.compose.ui.layout.layout
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.onLayoutRectChanged
 import androidx.compose.ui.platform.ComposeView
@@ -55,6 +57,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.android.compose.theme.PlatformTheme
 import com.android.compose.theme.colorAttr
 import com.android.keyguard.AlphaOptimizedLinearLayout
@@ -257,6 +260,8 @@ fun StatusBarRoot(
         )
         return
     }
+
+    val axEnabled by axDynamicBarChipViewModel.interactor.settings.isEnabled.collectAsState()
 
     Box { // TODO(b/433578931): Remove this Box once the full solution for b/433578931 is settled.
         AndroidView(
@@ -494,8 +499,9 @@ private fun addStartSideComposable(
                         )
                     }
 
-                val axEnabled by axDynamicBarChipViewModel.interactor.settings.isEnabled.collectAsState()
-                if (axEnabled) {
+                val axEnabled by axDynamicBarChipViewModel.interactor.settings.isEnabled.collectAsStateWithLifecycle()
+                val useCutoutDisplay by axDynamicBarChipViewModel.interactor.isCutoutDisplayEnabled.collectAsStateWithLifecycle()
+                if (axEnabled && !useCutoutDisplay) {
                     AxDynamicBarChip(
                         viewModel = axDynamicBarChipViewModel,
                         modifier = Modifier.widthIn(max = chipsMaxWidth),

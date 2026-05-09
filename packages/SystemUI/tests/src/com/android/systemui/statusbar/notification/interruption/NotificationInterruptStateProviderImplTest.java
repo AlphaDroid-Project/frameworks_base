@@ -79,6 +79,7 @@ import com.android.systemui.statusbar.notification.interruption.NotificationInte
 import com.android.systemui.statusbar.policy.BatteryController;
 import com.android.systemui.statusbar.policy.DeviceProvisionedController;
 import com.android.systemui.statusbar.policy.KeyguardStateController;
+import com.android.systemui.axdynamicbar.domain.AxDynamicBarInteractor;
 import com.android.systemui.util.FakeEventLog;
 import com.android.systemui.util.settings.FakeGlobalSettings;
 import com.android.systemui.util.settings.FakeGlobalSettingsKosmosKt;
@@ -134,6 +135,8 @@ public class NotificationInterruptStateProviderImplTest extends SysuiTestCase {
     DeviceProvisionedController mDeviceProvisionedController;
     @Mock
     Bubbles mBubbles;
+    @Mock
+    AxDynamicBarInteractor mAxDynamicBarInteractor;
     FakeSystemClock mSystemClock;
     FakeGlobalSettings mGlobalSettings;
     FakeEventLog mEventLog;
@@ -145,6 +148,8 @@ public class NotificationInterruptStateProviderImplTest extends SysuiTestCase {
         MockitoAnnotations.initMocks(this);
         when(mUserTracker.getUserId()).thenReturn(ActivityManager.getCurrentUser());
         when(mBubbles.canShowBubbleNotification()).thenReturn(true);
+        when(mAxDynamicBarInteractor.shouldSuppressHeadsUpForMirroredNotification(any()))
+                .thenReturn(false);
 
         mUiEventLoggerFake = new UiEventLoggerFake();
         mSystemClock = new FakeSystemClock();
@@ -170,7 +175,8 @@ public class NotificationInterruptStateProviderImplTest extends SysuiTestCase {
                         mSystemClock,
                         mGlobalSettings,
                         mEventLog,
-                        Optional.of(mBubbles));
+                        Optional.of(mBubbles),
+                        mAxDynamicBarInteractor);
         mNotifInterruptionStateProvider.mUseHeadsUp = true;
         GeneralKosmosKt.runCurrent(mKosmos);
     }

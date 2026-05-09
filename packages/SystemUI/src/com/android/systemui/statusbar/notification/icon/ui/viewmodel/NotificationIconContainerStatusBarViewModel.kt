@@ -20,10 +20,12 @@ import android.graphics.Rect
 import com.android.systemui.dagger.qualifiers.Background
 import com.android.systemui.dagger.qualifiers.Main
 import com.android.systemui.dump.DumpManager
+import com.android.systemui.axdynamicbar.model.IslandEvent
 import com.android.systemui.keyguard.domain.interactor.KeyguardInteractor
 import com.android.systemui.plugins.DarkIconDispatcher
 import com.android.systemui.res.R
 import com.android.systemui.shade.domain.interactor.ShadeInteractor
+import com.android.systemui.statusbar.notification.data.repository.ActiveNotificationListRepository
 import com.android.systemui.statusbar.headsup.shared.StatusBarNoHunBehavior
 import com.android.systemui.statusbar.notification.domain.interactor.HeadsUpNotificationIconInteractor
 import com.android.systemui.statusbar.notification.icon.domain.interactor.StatusBarNotificationIconsInteractor
@@ -58,6 +60,8 @@ constructor(
     keyguardInteractor: KeyguardInteractor,
     @Main resources: Resources,
     shadeInteractor: ShadeInteractor,
+    private val activeNotificationListRepository: ActiveNotificationListRepository,
+    private val axDynamicBarInteractor: com.android.systemui.axdynamicbar.domain.AxDynamicBarInteractor,
 ) : FlowDumperImpl(dumpManager) {
 
     private val maxIcons = resources.getInteger(R.integer.max_notif_static_icons)
@@ -85,13 +89,72 @@ constructor(
 
     /** [NotificationIconsViewData] indicating which icons to display in the view. */
     val icons: Flow<NotificationIconsViewData> =
-        iconsInteractor.statusBarNotifs
-            .map { entries ->
-                NotificationIconsViewData(
+        combine(
+            iconsInteractor.statusBarNotifs,
+            axDynamicBarInteractor.uiState,
+            axDynamicBarInteractor.isEnabled,
+            shadeInteractor.isAnyExpanded,
+            activeNotificationListRepository.activeNotifications,
+        ) { entries, dbState, isEnabled, _, activeNotifsStore ->
+            if (!isEnabled) {
+                return@combine NotificationIconsViewData(
                     visibleIcons = entries.mapNotNull { it.toIconInfo(it.statusBarIcon) },
                     iconLimit = maxIcons,
                 )
             }
+
+            val shouldSuppress = dbState.shouldShow
+            val suppressedKeys = mutableSetOf<String>()
+            val suppressedPackages = mutableSetOf<String>()
+
+            if (shouldSuppress) {
+                fun addSuppressedForMirroredIslandEvent(event: IslandEvent) {
+                    when (event) {
+                        is IslandEvent.Notification -> {
+                            suppressedKeys.add(event.sbn.key)
+                        }
+                        is IslandEvent.PromotedOngoing -> {
+                            // Only suppress the tray icon for the same SB N as the mirrored pill /
+                            // expanded row. Concurrent promoted ongoings (e.g. Telegram upload vs
+                            // download) remain different keys — do not iterate all backend events or
+                            // their tray icons disappear for activities not pinned in the pill.
+                            suppressedKeys.add(event.sbn.key)
+                        }
+                        is IslandEvent.Media -> {
+                            // Media events carry no SBN key — use package-based suppression.
+                            // This correctly hides the media notification icon for the active
+                            // session; collateral suppression of other notifications from the
+                            // same player app is acceptable since those are rare.
+                            if (event.packageName.isNotEmpty()) {
+                                suppressedPackages.add(event.packageName)
+                            }
+                        }
+                        is IslandEvent.Timer, is IslandEvent.Stopwatch, is IslandEvent.Alarm -> {
+                            suppressedPackages.add("com.android.deskclock")
+                            suppressedPackages.add("com.google.android.deskclock")
+                        }
+                        is IslandEvent.Sports -> {
+                            event.sbn?.packageName?.let { suppressedPackages.add(it) }
+                        }
+                        else -> {}
+                    }
+                }
+
+                dbState.topEvent?.let { addSuppressedForMirroredIslandEvent(it) }
+                dbState.notificationAlert?.let { suppressedKeys.add(it.sbn.key) }
+            }
+
+            val filteredEntries = entries.filter { entry ->
+                val packageName = activeNotifsStore.individuals[entry.notifKey]?.packageName
+                    ?: activeNotifsStore.groups[entry.notifKey]?.summary?.packageName
+                entry.notifKey !in suppressedKeys && packageName !in suppressedPackages
+            }
+
+            NotificationIconsViewData(
+                visibleIcons = filteredEntries.mapNotNull { it.toIconInfo(it.statusBarIcon) },
+                iconLimit = maxIcons,
+            )
+        }
             .flowOn(bgContext)
             .conflate()
             .distinctUntilChanged()
