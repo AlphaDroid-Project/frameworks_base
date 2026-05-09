@@ -20,6 +20,8 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
@@ -39,6 +41,7 @@ import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Mic
 import androidx.compose.material.icons.filled.MicOff
 import androidx.compose.material.icons.filled.Notifications
+import androidx.compose.material.icons.filled.BatteryChargingFull
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
@@ -54,11 +57,15 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.input.pointer.PointerEventPass
+import androidx.compose.ui.input.pointer.awaitPointerEvent
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.rotate
@@ -68,12 +75,16 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.res.stringResource
+import com.android.compose.animation.rememberExpandableController
 import com.android.systemui.axdynamicbar.model.IslandEvent
 import com.android.systemui.axdynamicbar.model.RecordingState
 import com.android.systemui.axdynamicbar.shared.*
 import androidx.compose.ui.graphics.graphicsLayer
+import com.android.systemui.axdynamicbar.ui.AxDynamicBarChipState
+import com.android.systemui.axdynamicbar.ui.AxDynamicBarChipViewModel
 import com.android.systemui.res.R
 import kotlin.math.PI
+import kotlin.math.abs
 import kotlin.math.cos
 import kotlin.math.sin
 import java.lang.Math.toRadians
@@ -97,7 +108,7 @@ internal fun PillEventIcon(
         is IslandEvent.NowPlaying -> AnimatedNowPlayingIcon(tint ?: MintAccent)
         is IslandEvent.Bluetooth -> AnimatedBluetoothIcon(tint ?: BlueAccent)
         is IslandEvent.Hotspot -> AnimatedHotspotIcon(tint ?: TealAccent)
-        is IslandEvent.Charging -> AnimatedBoltIcon(tint ?: GreenAccent)
+        is IslandEvent.Charging -> ChargingPillIcon(tint ?: GreenAccent)
         is IslandEvent.Alarm -> AnimatedBellIcon(tint ?: OrangeAccent, isAnimating = event.isRinging)
         is IslandEvent.Timer -> AnimatedHourglassIcon(tint ?: BlueAccent, isAnimating = !event.isPaused)
         is IslandEvent.Stopwatch -> AnimatedTickIcon(tint ?: MintAccent, isRunning = event.isRunning)
@@ -280,6 +291,8 @@ private fun BlinkingDotIcon(color: Color, isAnimating: Boolean = true) {
     }
 }
 
+
+
 @Composable
 private fun AnimatedTrophyIcon(color: Color) {
     val transition = rememberInfiniteTransition(label = "trophy")
@@ -377,6 +390,47 @@ private fun AnimatedHotspotIcon(color: Color) {
             )
         }
         drawCircle(color, radius = size.minDimension * 0.1f, center = Offset(cx, cy))
+    }
+}
+
+@Composable
+private fun AnimatedCastIcon(color: Color) {
+    val transition = rememberInfiniteTransition(label = "cast")
+    val sweep by
+        transition.animateFloat(
+            initialValue = 0f,
+            targetValue = 3f,
+            animationSpec =
+                infiniteRepeatable(tween(2000, easing = LinearEasing), RepeatMode.Restart),
+            label = "cast_sweep",
+        )
+    Canvas(modifier = Modifier.size(16.dp)) {
+        val sw = SizeStrokeThin.dp.toPx()
+        val w = size.width
+        val h = size.height
+        drawRoundRect(
+            color = color.copy(alpha = 0.5f),
+            topLeft = Offset(0f, h * 0.15f),
+            size = Size(w, h * 0.7f),
+            cornerRadius = CornerRadius(w * 0.12f),
+            style = Stroke(sw),
+        )
+        val bx = w * 0.15f
+        val by = h * 0.85f
+        for (i in 0 until 3) {
+            val r = w * (0.1f + i * 0.12f)
+            val a = if (sweep > i) ((sweep - i).coerceIn(0f, 1f) * 0.7f) else AlphaFaint
+            drawArc(
+                color = color.copy(alpha = a),
+                startAngle = 180f,
+                sweepAngle = 90f,
+                useCenter = false,
+                topLeft = Offset(bx - r, by - r),
+                size = Size(r * 2, r * 2),
+                style = Stroke(sw, cap = StrokeCap.Round),
+            )
+        }
+        drawCircle(color, radius = w * 0.06f, center = Offset(bx, by))
     }
 }
 
@@ -535,6 +589,23 @@ private fun AnimatedBoltIcon(color: Color) {
         boltPath.close()
         drawPath(boltPath, color.copy(alpha = glow))
     }
+}
+
+@Composable
+private fun ChargingPillIcon(color: Color) {
+    val transition = rememberInfiniteTransition(label = "charging_battery")
+    val pulse by transition.animateFloat(
+        initialValue = 0.7f,
+        targetValue = 1f,
+        animationSpec = infiniteRepeatable(tween(900, easing = FastOutSlowInEasing), RepeatMode.Reverse),
+        label = "charging_pulse",
+    )
+    Icon(
+        Icons.Filled.BatteryChargingFull,
+        contentDescription = null,
+        tint = color.copy(alpha = pulse),
+        modifier = Modifier.size(SizeBadge),
+    )
 }
 
 @Composable
@@ -1098,6 +1169,31 @@ private fun KeyguardIndicationIcon(event: IslandEvent.KeyguardIndication, tint: 
     }
 }
 
+
+
+@Composable
+private fun OngoingPhoneCallNotificationTimer(
+    event: IslandEvent.Notification,
+    modifier: Modifier,
+    overrideColor: Color? = null,
+) {
+    var elapsedMs by remember(event.callStartTimeMs) {
+        mutableLongStateOf((System.currentTimeMillis() - event.callStartTimeMs).coerceAtLeast(0L))
+    }
+    LaunchedEffect(event.callStartTimeMs) {
+        while (true) {
+            delay(1000)
+            elapsedMs = (System.currentTimeMillis() - event.callStartTimeMs).coerceAtLeast(0L)
+        }
+    }
+    Text(
+        formatElapsedTime(elapsedMs),
+        color = overrideColor ?: GreenAccent,
+        style = PillMono,
+        modifier = Modifier.widthIn(min = TickingTextMinWidth).then(modifier),
+    )
+}
+
 @Composable
 internal fun PillEventText(
     event: IslandEvent,
@@ -1123,7 +1219,7 @@ internal fun PillEventText(
                 overrideColor ?: TealAccent,
                 modifier,
             )
-        is IslandEvent.Charging -> MarqueeLabel("${event.level}%", overrideColor ?: GreenAccent, modifier)
+        is IslandEvent.Charging -> MarqueeLabel(event.formatBatteryInfo(), overrideColor ?: GreenAccent, modifier)
         is IslandEvent.Alarm ->
             MarqueeLabel(event.label.ifEmpty { stringResource(R.string.ax_dynamic_bar_alarm) }, overrideColor ?: OrangeAccent, modifier)
         is IslandEvent.Timer -> TimerText(event, modifier, overrideColor)
@@ -1140,11 +1236,19 @@ internal fun PillEventText(
             }
         }
         is IslandEvent.Notification -> {
-            val name = event.title
-            if (name != null) {
-                MarqueeLabel(name, overrideColor ?: BlueAccent, modifier)
+            if (event.callStartTimeMs > 0L && event.appName.startsWith("Phone:")) {
+                OngoingPhoneCallNotificationTimer(event, modifier, overrideColor)
             } else {
-                NotifBellBadge(modifier, notifCount)
+                val name = event.senderName ?: if (event.isConversation) event.title else null
+                if (name != null) {
+                    val label =
+                        if (event.isGroupConversation && event.conversationTitle != null)
+                            "$name · ${event.conversationTitle}"
+                        else name
+                    MarqueeLabel(label, overrideColor ?: BlueAccent, modifier)
+                } else {
+                    NotifBellBadge(modifier, notifCount)
+                }
             }
         }
         is IslandEvent.AppSwitch ->
@@ -1480,6 +1584,69 @@ fun WaveformAnimation(color: Color, modifier: Modifier = Modifier.size(34.dp, 20
                 strokeWidth = barW,
                 cap = StrokeCap.Round,
             )
+        }
+    }
+}
+
+/**
+ * Horizontal swipe cycles the Dynamic Bar stack; vertical / tap opens the expanded panel.
+ * AOSP ongoing chips delegate to [AxDynamicBarChipViewModel.handleAospChipTap] when applicable.
+ */
+@Composable
+internal fun Modifier.islandGestures(
+    chipState: AxDynamicBarChipState,
+    viewModel: AxDynamicBarChipViewModel,
+    touchSlop: Float,
+    expandableShape: Shape,
+): Modifier {
+    val expandableController =
+        rememberExpandableController(color = Color.Transparent, shape = expandableShape)
+    val expandable = expandableController.expandable
+    return this.pointerInput(chipState, viewModel, touchSlop, expandable) {
+        awaitEachGesture {
+            val down = awaitFirstDown(pass = PointerEventPass.Initial)
+            val startX = down.position.x
+            val startY = down.position.y
+            var dragging = false
+            var totalDx = 0f
+            var decided = false
+            while (true) {
+                val eventPtr = awaitPointerEvent(PointerEventPass.Initial)
+                val change = eventPtr.changes.firstOrNull() ?: break
+                if (!change.pressed) {
+                    if (dragging) {
+                        change.consume()
+                        if (totalDx > 0) viewModel.cyclePrev() else viewModel.cycleNext()
+                    } else if (!decided) {
+                        change.consume()
+                        val current = chipState.notificationAlert ?: chipState.event
+                        if (current is IslandEvent.AospChip) {
+                            if (!viewModel.handleAospChipTap(current, expandable)) {
+                                viewModel.statusBarExpansion.toggle()
+                            }
+                        } else {
+                            viewModel.statusBarExpansion.toggle()
+                        }
+                    }
+                    break
+                }
+                val dx = change.position.x - startX
+                val dy = change.position.y - startY
+                if (!decided && (abs(dx) > touchSlop || abs(dy) > touchSlop)) {
+                    if (abs(dx) >= abs(dy)) {
+                        decided = true
+                        dragging = true
+                        totalDx = dx
+                        change.consume()
+                    } else {
+                        decided = true
+                        break
+                    }
+                } else if (dragging) {
+                    totalDx = dx
+                    change.consume()
+                }
+            }
         }
     }
 }

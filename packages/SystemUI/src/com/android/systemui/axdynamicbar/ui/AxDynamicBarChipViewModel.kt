@@ -14,15 +14,21 @@ import com.android.systemui.statusbar.policy.BatteryController
 import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.drop
+import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import com.android.systemui.axdynamicbar.model.CutoutPlacementHint
 
 data class AxDynamicBarChipState(
     val event: IslandEvent,
@@ -87,6 +93,28 @@ constructor(
     val isEnabled: StateFlow<Boolean> = interactor.settings.isEnabled
     val isKeyguardEnabled: StateFlow<Boolean> = interactor.settings.isKeyguardEnabled
     val keyguardBatteryChipMode: StateFlow<Int> = interactor.settings.keyguardBatteryChipMode
+    val collapseToRing: StateFlow<Boolean> = interactor.settings.collapseToRing
+    val ringGap: StateFlow<Float> = interactor.settings.ringGap
+    val ringScaleX: StateFlow<Float> = interactor.settings.ringScaleX
+    val ringScaleY: StateFlow<Float> = interactor.settings.ringScaleY
+    val ringOffsetXDp: StateFlow<Float> = interactor.settings.ringOffsetXDp
+    val ringOffsetYDp: StateFlow<Float> = interactor.settings.ringOffsetYDp
+    val ringOpacity: StateFlow<Int> = interactor.settings.ringOpacity
+    val ringStrokeDp: StateFlow<Float> = interactor.settings.ringStrokeDp
+
+    /** Hardware-derived cutout placement hint — used by OverlayContent for pill alignment. */
+    val cutoutPlacementHint: StateFlow<CutoutPlacementHint> =
+        interactor.cutoutPlacementHint
+            .stateIn(
+                applicationScope,
+                SharingStarted.Eagerly,
+                CutoutPlacementHint.CENTER,
+            )
+
+    /** Physical cutout bounding rect in screen pixels — null when cutout mode is off. */
+    val cutoutRectPx: StateFlow<android.graphics.Rect?> =
+        interactor.cutoutRectPx
+            .stateIn(applicationScope, SharingStarted.Eagerly, null)
 
     val keyguardBatteryInfo: StateFlow<KeyguardBatteryInfo> =
         combine(
@@ -170,11 +198,75 @@ constructor(
 
     val isExpanded: StateFlow<Boolean> = statusBarExpansion.isExpanded
 
+    /** True when the user tapped expand-all (full stack UI). */
+    private val _showAllEvents = MutableStateFlow(false)
+    val showAllEvents: StateFlow<Boolean> = _showAllEvents.asStateFlow()
+
     val isKeyguardExpanded: StateFlow<Boolean> = keyguardExpansion.isExpanded
 
-    fun cycleNext() = interactor.cycleNext()
+    @Volatile private var collapseOnNullJob: Job? = null
 
-    fun cyclePrev() = interactor.cyclePrev()
+    init {
+        chipState.onEach { state ->
+            if (state == null) {
+                collapseOnNullJob?.cancel()
+                collapseOnNullJob = applicationScope.launch {
+                    delay(200)
+                    collapseDynamicBarPanel()
+                }
+            } else {
+                collapseOnNullJob?.cancel()
+                collapseOnNullJob = null
+            }
+        }.launchIn(applicationScope)
+
+        interactor.isPanelExpanded.onEach { if (it) collapseDynamicBarPanel() }.launchIn(applicationScope)
+        interactor.qsExpansion.map { it > 0f }.distinctUntilChanged().onEach { if (it) collapseDynamicBarPanel() }.launchIn(applicationScope)
+        isBouncerShowing.onEach { if (it) collapseDynamicBarPanel() }.launchIn(applicationScope)
+        isOnKeyguard.onEach { if (!it) collapseDynamicBarPanel() }.launchIn(applicationScope)
+        combine(interactor.legacyShadeExpansion, isOnKeyguard) { expansion, onKg ->
+            onKg && expansion < 0.95f
+        }.onEach { dismissing -> if (dismissing) collapseDynamicBarPanel() }.launchIn(applicationScope)
+        interactor.isDozing.drop(1).onEach { collapseDynamicBarPanel() }.launchIn(applicationScope)
+        interactor.dozeAmount.map { it > 0f }.distinctUntilChanged().onEach { if (it) collapseDynamicBarPanel() }.launchIn(applicationScope)
+    }
+
+    private fun collapseDynamicBarPanel() {
+        statusBarExpansion.collapse()
+        _showAllEvents.value = false
+    }
+
+    fun expandPanel() {
+        if (chipState.value != null) statusBarExpansion.expand()
+    }
+
+    fun collapsePanel() = collapseDynamicBarPanel()
+
+    fun expandAll() {
+        if (chipState.value != null) {
+            _showAllEvents.value = true
+            statusBarExpansion.expand()
+        }
+    }
+
+    fun togglePanel() {
+        if (isExpanded.value) collapsePanel() else expandPanel()
+    }
+
+    fun cycleNext() {
+        if (_showAllEvents.value) _showAllEvents.value = false
+        interactor.cycleNext()
+    }
+
+    fun cyclePrev() {
+        if (_showAllEvents.value) _showAllEvents.value = false
+        interactor.cyclePrev()
+    }
+
+    fun openSettings() {
+        collapsePanel()
+        interactor.openSettings()
+    }
 
     fun dismissEvent(event: IslandEvent) = interactor.dismissEvent(event)
 
