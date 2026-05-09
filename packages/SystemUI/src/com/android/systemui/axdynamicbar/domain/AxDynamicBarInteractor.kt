@@ -1,12 +1,18 @@
 package com.android.systemui.axdynamicbar.domain
 
 import android.app.Notification
+import android.content.ComponentName
+import android.content.Context
+import android.content.Intent
 import android.media.AudioManager
 import android.net.Uri
+import android.os.UserHandle
 import android.provider.Settings.Global
 import com.android.systemui.axdynamicbar.data.IslandEventRepository
+import com.android.systemui.axdynamicbar.model.CutoutPlacementHint
 import com.android.systemui.axdynamicbar.model.IslandEvent
 import com.android.systemui.axdynamicbar.model.IslandState
+import com.android.systemui.axdynamicbar.model.mirroredStatusBarNotificationKeys
 import com.android.systemui.axdynamicbar.model.IslandUiState
 import com.android.systemui.axdynamicbar.model.RecordingState
 import com.android.systemui.axdynamicbar.shared.IslandActions
@@ -27,20 +33,32 @@ import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
+import android.hardware.display.DisplayManager
+import android.graphics.Path
+import android.graphics.Rect
+import android.graphics.RectF
+import android.os.Handler
+import android.os.Looper
+import android.view.DisplayCutout
+import android.view.WindowManager
+import kotlin.math.min
 
 @SysUISingleton
 class AxDynamicBarInteractor
 @Inject
 constructor(
-    @Application private val applicationScope: CoroutineScope,
+    @Application val applicationScope: CoroutineScope,
+    @Application private val context: Context,
     private val repository: IslandEventRepository,
     val settings: AxDynamicBarSettings,
     private val statusBarStateController: StatusBarStateController,
@@ -59,6 +77,9 @@ constructor(
 
     private val autoDismissJobs = ConcurrentHashMap<String, Job>()
     @Volatile private var notifAlertJob: Job? = null
+    @Volatile private var transientPinJob: Job? = null
+    @Volatile private var transientPinnedEventId: String? = null
+    @Volatile private var lastOnKeyguard: Boolean? = null
 
     private val dismissedEventIds: MutableSet<String> = ConcurrentHashMap.newKeySet()
 
@@ -68,13 +89,97 @@ constructor(
 
     private var isInitialized = false
 
+    private val _isCutoutDisplayEnabled = MutableStateFlow(false)
+    val isCutoutDisplayEnabled: StateFlow<Boolean> = _isCutoutDisplayEnabled.asStateFlow()
+
+    /** Hardware-derived placement hint computed from the display cutout geometry. */
+    private val _cutoutPlacementHint = MutableStateFlow(CutoutPlacementHint.CENTER)
+    val cutoutPlacementHint: StateFlow<CutoutPlacementHint> = _cutoutPlacementHint.asStateFlow()
+
+    /** Tight physical cutout hole bounds in screen pixels (path outline or circle fallback). */
+    private val _cutoutRectPx = MutableStateFlow<Rect?>(null)
+    val cutoutRectPx: StateFlow<Rect?> = _cutoutRectPx.asStateFlow()
+
     @Volatile private var panelBlocking = false
     private val _isPanelExpanded = MutableStateFlow(false)
-    
+
     val isPanelExpanded: StateFlow<Boolean> = _isPanelExpanded.asStateFlow()
-    
+    @get:JvmName("getIsEnabled")
+    val isEnabled: StateFlow<Boolean> = settings.isEnabled
+
     val qsExpansion: StateFlow<Float> = shadeInteractor.qsExpansion
     
+    /** Java-friendly listener for isEnabled changes. */
+    fun addIsEnabledListener(listener: java.util.function.Consumer<Boolean>): Job {
+        return isEnabled
+            .onEach { listener.accept(it) }
+            .launchIn(applicationScope)
+    }
+
+    /** Java-friendly listener for suppressedSlots changes. */
+    fun addSuppressedSlotsListener(listener: java.util.function.Consumer<Set<String>>): Job {
+        return suppressedSlots
+            .onEach { listener.accept(it) }
+            .launchIn(applicationScope)
+    }
+
+    /**
+     * True if a heads-up for this status bar notification key would duplicate what is already shown
+     * in the Dynamic Bar (pinned chip or notification alert).
+     */
+    fun shouldSuppressHeadsUpForMirroredNotification(sbnKey: String): Boolean {
+        if (!settings.isEnabled.value) return false
+        return sbnKey in _uiState.value.mirroredStatusBarNotificationKeys()
+    }
+
+    val suppressedSlots: Flow<Set<String>> = combine(settings.isEnabled, _uiState, _isPanelExpanded) { isEnabled, state, isPanelExpanded ->
+        if (!isEnabled || (!state.shouldShow && !isPanelExpanded)) {
+            return@combine emptySet<String>()
+        }
+        val suppressed = mutableSetOf<String>()
+        state.events.forEach { event ->
+            when (event) {
+                is IslandEvent.AospChip -> {
+                    when (event.active.key) {
+                        "ScreenRecord" -> suppressed.add("screenrecord")
+                        "CastToOtherDevice" -> suppressed.add("cast")
+                    }
+                }
+                is IslandEvent.Vpn -> suppressed.add("vpn")
+                is IslandEvent.Hotspot -> suppressed.add("hotspot")
+                is IslandEvent.Bluetooth -> suppressed.add("bluetooth")
+                is IslandEvent.RingerMode -> {
+                    suppressed.add("mute")
+                    suppressed.add("volume")
+                }
+                is IslandEvent.Alarm, is IslandEvent.Timer, is IslandEvent.Stopwatch -> {
+                    suppressed.add("alarm_clock")
+                    suppressed.add("clock")
+                    suppressed.add("timer")
+                }
+                else -> {}
+            }
+        }
+        suppressed
+    }.distinctUntilChanged()
+
+    fun isSlotSuppressed(slot: String): Boolean {
+        if (!settings.isEnabled.value) return false
+        val state = _uiState.value
+        if (!state.shouldShow && !_isPanelExpanded.value) return false
+        
+        return when (slot) {
+            "screenrecord" -> state.events.any { it is IslandEvent.AospChip && it.active.key == "ScreenRecord" }
+            "vpn" -> state.events.any { it is IslandEvent.Vpn }
+            "hotspot" -> state.events.any { it is IslandEvent.Hotspot }
+            "cast" -> state.events.any { it is IslandEvent.AospChip && it.active.key == "CastToOtherDevice" }
+            "bluetooth" -> state.events.any { it is IslandEvent.Bluetooth }
+            "mute", "volume" -> state.events.any { it is IslandEvent.RingerMode }
+            "alarm_clock", "clock", "timer" -> state.events.any { it is IslandEvent.Alarm || it is IslandEvent.Timer || it is IslandEvent.Stopwatch }
+            else -> false
+        }
+    }
+
     val legacyShadeExpansion: StateFlow<Float> = shadeRepository.legacyShadeExpansion
     private val _isOnKeyguard = MutableStateFlow(false)
     val isOnKeyguard: StateFlow<Boolean> = _isOnKeyguard.asStateFlow()
@@ -85,7 +190,7 @@ constructor(
     private val _isDozing = MutableStateFlow(statusBarStateController.isDozing)
     val isDozing: StateFlow<Boolean> = _isDozing.asStateFlow()
     private val _dozeAmount = MutableStateFlow(0f)
-    
+
     val dozeAmount: StateFlow<Float> = _dozeAmount.asStateFlow()
     @Volatile private var isDreaming = false
 
@@ -109,6 +214,39 @@ constructor(
         isInitialized = true
 
         settings.init()
+
+        applicationScope.launch {
+            settings.showInCutout.collect { _isCutoutDisplayEnabled.value = it }
+        }
+
+        // Derive hardware cutout placement hint from the display cutout geometry.
+        // LEFT  — cutout centerX < screenWidth / 3
+        // RIGHT — cutout centerX > 2 * screenWidth / 3
+        // CENTER — otherwise (includes no-cutout devices)
+        applicationScope.launch {
+            _isCutoutDisplayEnabled.collect { enabled ->
+                if (enabled) {
+                    refreshCutoutGeometry()
+                } else {
+                    _cutoutRectPx.value = null
+                }
+            }
+        }
+
+        // Re-derive cutout geometry whenever the display changes (rotation, fold/unfold).
+        val displayManager = context.getSystemService(DisplayManager::class.java)
+        displayManager?.registerDisplayListener(
+            object : DisplayManager.DisplayListener {
+                override fun onDisplayChanged(displayId: Int) {
+                    if (_isCutoutDisplayEnabled.value) {
+                        refreshCutoutGeometry()
+                    }
+                }
+                override fun onDisplayAdded(displayId: Int) {}
+                override fun onDisplayRemoved(displayId: Int) {}
+            },
+            Handler(Looper.getMainLooper()),
+        )
 
         repository.system.onChargingStarted = { scheduleAutoDismiss(it) }
         repository.system.onRingerChanged = { scheduleAutoDismiss(it) }
@@ -218,16 +356,21 @@ constructor(
             }
         }
 
+
+
         applicationScope.launch {
             settings.isEnabled.collect { enabled ->
                 if (enabled) repository.startListening()
                 else {
+                    // Clear UI state FIRST so all synchronous queries
+                    // (shouldSuppressHeadsUp, isSlotSuppressed) see empty state
+                    // before any refresh callbacks or teardown flows fire.
+                    _uiState.value = IslandUiState()
                     repository.stopListening()
                     autoDismissJobs.values.forEach { it.cancel() }
                     autoDismissJobs.clear()
                     dismissedEventIds.clear()
                     repository.clearAllIndicationEvents()
-                    _uiState.value = IslandUiState()
                 }
             }
         }
@@ -253,16 +396,18 @@ constructor(
                 raw.filter { settings.isEventEnabled(it) } to kg
             }.collect { (rawEvents, onKeyguard) ->
                 if (!settings.isEnabled.value) return@collect
+                val keyguardModeChanged = lastOnKeyguard?.let { it != onKeyguard } ?: false
+                lastOnKeyguard = onKeyguard
                 dismissedEventIds.removeAll { id -> rawEvents.none { it.id == id } }
                 val events = rawEvents.filter { e ->
                     e.id !in dismissedEventIds &&
-                        
+
                         !(onKeyguard && e is IslandEvent.Notification) &&
-                        
+
                         !(onKeyguard && e is IslandEvent.Charging) &&
-                        
+
                         !(onKeyguard && e is IslandEvent.AppSwitch) &&
-                        
+
                         !(!onKeyguard && e is IslandEvent.KeyguardIndication)
                 }
 
@@ -298,9 +443,11 @@ constructor(
                 val prevPinnedId =
                     current.events.getOrNull(current.pinnedEventIndex)?.id
 
+                val shouldTransientPinNewEvent = hasNewEvents && !keyguardModeChanged
+
                 val pinnedIndex =
                     when {
-                        hasNewEvents -> {
+                        shouldTransientPinNewEvent -> {
                             val currentIds = current.events.map { it.id }.toSet()
                             events.indexOfFirst { it.id !in currentIds }.coerceAtLeast(0)
                         }
@@ -333,6 +480,16 @@ constructor(
                         forceVisible = false,
                         notificationAlert = current.notificationAlert,
                     )
+
+                if (shouldTransientPinNewEvent) {
+                    val newEvent =
+                        events.getOrNull(pinnedIndex)?.takeIf { e ->
+                            current.events.none { it.id == e.id }
+                        }
+                    if (newEvent != null) {
+                        scheduleTransientPinReset(newEvent.id)
+                    }
+                }
             }
         }
     }
@@ -349,6 +506,17 @@ constructor(
         if (current.events.size <= 1) return
         val prev = (current.pinnedEventIndex - 1 + current.events.size) % current.events.size
         _uiState.value = current.copy(pinnedEventIndex = prev)
+    }
+
+    fun openSettings() {
+        val intent = Intent("alpha.settings.DINAMIC_BAR_SETTINGS").apply {
+            component = ComponentName(
+                "com.android.settings",
+                "com.alpha.settings.trampoline.DynamicBarSettingsActivity",
+            )
+            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
+        }
+        activityStarter.startActivity(intent, true /* dismissShade */)
     }
 
     fun pinEventAt(index: Int) {
@@ -576,6 +744,94 @@ constructor(
         return current.pinnedEventIndex.coerceAtMost(
             (events.size - 1).coerceAtLeast(0)
         )
+    }
+
+    private fun scheduleTransientPinReset(eventId: String) {
+        transientPinJob?.cancel()
+        transientPinnedEventId = eventId
+        transientPinJob =
+            applicationScope.launch {
+                delay(NOTIF_ALERT_DURATION_MS)
+                val current = _uiState.value
+                val pinnedId = current.events.getOrNull(current.pinnedEventIndex)?.id
+                if (pinnedId == transientPinnedEventId) {
+                    _uiState.value = current.copy(pinnedEventIndex = 0)
+                }
+            }
+    }
+
+    private fun refreshCutoutGeometry() {
+        _cutoutPlacementHint.value = deriveCutoutPlacementHint()
+        val wm = context.getSystemService(WindowManager::class.java) ?: run {
+            _cutoutRectPx.value = null
+            return
+        }
+        val displayCutout = wm.currentWindowMetrics.windowInsets.displayCutout ?: run {
+            _cutoutRectPx.value = null
+            return
+        }
+        _cutoutRectPx.value = physicalCutoutHoleBounds(displayCutout)
+    }
+
+    fun getCutoutRect(): Rect? {
+        val wm = context.getSystemService(WindowManager::class.java) ?: return null
+        val displayCutout = wm.currentWindowMetrics.windowInsets.displayCutout ?: return null
+        return physicalCutoutHoleBounds(displayCutout)
+    }
+
+    /**
+     * Same outline source as legacy Cutout Progress Ring (`CutoutRingView`): prefer
+     * [DisplayCutout.getCutoutPath] bounds (display coordinates), otherwise approximate the first
+     * [DisplayCutout.getBoundingRects] entry as a circle with radius min(w,h)/2 (CPR fallback).
+     *
+     * [CutoutChip] pads this rect by **2dp on all sides** (including top; symmetric vs notch).
+     */
+    private fun physicalCutoutHoleBounds(displayCutout: DisplayCutout): Rect? {
+        val outline = Path()
+        val nativePath = displayCutout.cutoutPath
+        val rects = displayCutout.boundingRects
+        when {
+            nativePath != null && !nativePath.isEmpty -> outline.set(nativePath)
+            rects.isNotEmpty() -> {
+                val r = rects[0]
+                outline.addCircle(
+                    r.exactCenterX(),
+                    r.exactCenterY(),
+                    min(r.width(), r.height()).toFloat() / 2f,
+                    Path.Direction.CW,
+                )
+            }
+            else -> return null
+        }
+        val rectF = RectF()
+        outline.computeBounds(rectF, /* exact */ true)
+        if (rectF.width() <= 0f || rectF.height() <= 0f) return null
+        val rect = Rect()
+        rectF.roundOut(rect)
+        return rect
+    }
+
+    /**
+     * Derives the cutout placement hint from the physical display cutout geometry.
+     * LEFT  — cutout centerX < screenWidth / 3
+     * RIGHT — cutout centerX > 2 * screenWidth / 3
+     * CENTER — otherwise, or when no cutout is present
+     */
+    private fun deriveCutoutPlacementHint(): CutoutPlacementHint {
+        val wm = context.getSystemService(WindowManager::class.java)
+            ?: return CutoutPlacementHint.CENTER
+        val displayCutout = wm.currentWindowMetrics.windowInsets.displayCutout
+            ?: return CutoutPlacementHint.CENTER
+        val screenWidthPx = context.resources.displayMetrics.widthPixels
+        val rect = physicalCutoutHoleBounds(displayCutout)
+            ?: return CutoutPlacementHint.CENTER
+        val screenWidth = screenWidthPx.toFloat()
+        val centerX = rect.exactCenterX()
+        return when {
+            centerX < screenWidth / 3f -> CutoutPlacementHint.LEFT
+            centerX > screenWidth * 2f / 3f -> CutoutPlacementHint.RIGHT
+            else -> CutoutPlacementHint.CENTER
+        }
     }
 
     private fun mapIndicationType(type: Int): IslandEvent.KeyguardIndication.IndicationType? =

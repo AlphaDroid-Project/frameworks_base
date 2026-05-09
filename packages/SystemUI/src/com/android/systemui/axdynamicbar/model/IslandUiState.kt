@@ -21,3 +21,23 @@ data class IslandUiState(
     val activeEvents: List<IslandEvent>
         get() = events.filter { it !is IslandEvent.Notification }
 }
+
+/**
+ * Status bar notification keys that are already represented in the Dynamic Bar chip / alert card.
+ * Used to suppress duplicate tray icons and redundant heads-up for the same [StatusBarNotification].
+ */
+fun IslandUiState.mirroredStatusBarNotificationKeys(): Set<String> {
+    if (!shouldShow) return emptySet()
+    val keys = LinkedHashSet<String>()
+    topEvent?.let { ev ->
+        when (ev) {
+            is IslandEvent.PromotedOngoing -> keys.add(ev.sbn.key)
+            is IslandEvent.Notification -> keys.add(ev.sbn.key)
+            is IslandEvent.Sports -> ev.sbn?.let { keys.add(it.key) }
+            is IslandEvent.NowPlaying -> ev.sbn?.let { keys.add(it.key) }
+            else -> {}
+        }
+    }
+    notificationAlert?.let { keys.add(it.sbn.key) }
+    return keys
+}

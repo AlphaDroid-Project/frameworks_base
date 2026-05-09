@@ -146,6 +146,7 @@ constructor(
     private val scrimListener =
         object : ScrimUtils.ScrimEventListener {
             override fun onNotificationRemoved(sbn: StatusBarNotification) {
+                if (!listening) return
                 val pkg = sbn.packageName ?: return
                 seenNotificationKeys.remove(sbn.key)
                 seenMessagingTimestamps.remove(sbn.key)
@@ -192,6 +193,7 @@ constructor(
             }
 
             override fun onNotificationPosted(sbn: StatusBarNotification) {
+                if (!listening) return
                 val pkg = sbn.packageName ?: return
                 val extras = sbn.notification?.extras ?: return
 
@@ -367,14 +369,22 @@ constructor(
                     if (pkg == GOOGLE_PACKAGE) {
                         val groupKey = sbn.groupKey ?: ""
                         val isSportsGroup = groupKey.contains("::sports", ignoreCase = true)
+                            || groupKey.contains("sport", ignoreCase = true)
+                            || groupKey.contains("score", ignoreCase = true)
+                        // Also try pattern-based detection as fallback in case Google changes
+                        // their group key format — forceCapture=false means it only succeeds
+                        // if SCORE_PATTERN or VS_PATTERN actually match the notification text.
                         if (isSportsGroup && handleSportsScore(sbn, extras, forceCapture = true)) return
+                        if (!isSportsGroup && handleSportsScore(sbn, extras, forceCapture = false)) return
                     }
                     if (pkg in SPORTS_PACKAGES && handleSportsScore(sbn, extras, forceCapture = true)) return
                 }
 
                 if (sbn.isOngoing && isPromotable(sbn, extras)) {
-                    if ("promoted_ongoing" !in disabledTypes) handlePromotedOngoing(sbn, extras, pkg)
-                    return
+                    if ("promoted_ongoing" !in disabledTypes) {
+                        handlePromotedOngoing(sbn, extras, pkg)
+                        return
+                    }
                 }
 
                 val indeterminate = extras.getBoolean("android.progressIndeterminate", false)
@@ -387,8 +397,10 @@ constructor(
                             progressRaw >= 0)
 
                 if (sbn.isOngoing && hasProgress) {
-                    if ("promoted_ongoing" !in disabledTypes) handlePromotedOngoing(sbn, extras, pkg)
-                    return
+                    if ("promoted_ongoing" !in disabledTypes) {
+                        handlePromotedOngoing(sbn, extras, pkg)
+                        return
+                    }
                 }
                 if (!sbn.isOngoing) {
                     _promotedOngoingEvents.value =
