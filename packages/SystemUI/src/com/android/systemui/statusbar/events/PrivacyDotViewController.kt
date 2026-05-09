@@ -131,6 +131,7 @@ constructor(
     private val animationScheduler: SystemStatusAnimationScheduler,
     shadeInteractor: ShadeInteractor?,
     avControlsChipInteractor: AvControlsChipInteractor?,
+    private val axDynamicBarInteractor: com.android.systemui.axdynamicbar.domain.AxDynamicBarInteractor,
     @ScreenDecorationsThread val uiExecutor: DelayableExecutor,
     @Assisted private val displayId: Int,
     private val shadeDisplaysInteractor: Lazy<ShadeDisplaysInteractor>?,
@@ -208,6 +209,20 @@ constructor(
                 synchronized(lock) {
                     nextViewState =
                         nextViewState.copy(dotDuplicatedByAvControlsChip = shouldSuppress)
+                }
+            }
+        }
+        scope.launch {
+            // Privacy indicators (mic/cam) are no longer absorbed by the Dynamic Bar,
+            // so the DB never duplicates the privacy dot.
+            combine(
+                axDynamicBarInteractor.uiState,
+                axDynamicBarInteractor.isEnabled
+            ) { _, _ -> false
+            }.collect { shouldSuppress ->
+                synchronized(lock) {
+                    nextViewState =
+                        nextViewState.copy(dotDuplicatedByAxDynamicBar = shouldSuppress)
                 }
             }
         }
@@ -729,6 +744,7 @@ data class ViewState(
     val shadeExpanded: Boolean = false,
     val qsExpanded: Boolean = false,
     val dotDuplicatedByAvControlsChip: Boolean = false,
+    val dotDuplicatedByAxDynamicBar: Boolean = false,
     val portraitRect: Rect? = null,
     val landscapeRect: Rect? = null,
     val upsideDownRect: Rect? = null,
@@ -744,7 +760,8 @@ data class ViewState(
         return systemPrivacyEventIsActive &&
             !shadeExpanded &&
             !qsExpanded &&
-            !dotDuplicatedByAvControlsChip
+            !dotDuplicatedByAvControlsChip &&
+            !dotDuplicatedByAxDynamicBar
     }
 
     fun needsLayout(other: ViewState): Boolean {

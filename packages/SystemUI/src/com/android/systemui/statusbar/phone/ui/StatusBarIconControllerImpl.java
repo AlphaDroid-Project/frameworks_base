@@ -82,6 +82,7 @@ public class StatusBarIconControllerImpl implements Tunable,
     private final ArraySet<String> mIconHideList = new ArraySet<>();
     private final StatusBarPipelineFlags mStatusBarPipelineFlags;
     private final Context mContext;
+    private final com.android.systemui.axdynamicbar.domain.AxDynamicBarInteractor mAxDynamicBarInteractor;
 
     /**  */
     @Inject
@@ -94,11 +95,21 @@ public class StatusBarIconControllerImpl implements Tunable,
             DumpManager dumpManager,
             StatusBarIconList statusBarIconList,
             StatusBarPipelineFlags statusBarPipelineFlags,
-            BindableIconsRegistry modernIconsRegistry
+            BindableIconsRegistry modernIconsRegistry,
+            com.android.systemui.axdynamicbar.domain.AxDynamicBarInteractor axDynamicBarInteractor
     ) {
         mStatusBarIconList = statusBarIconList;
         mContext = context;
         mStatusBarPipelineFlags = statusBarPipelineFlags;
+        mAxDynamicBarInteractor = axDynamicBarInteractor;
+        
+        // Ensure icons refresh when the feature is enabled/disabled or suppressed slots change
+        mAxDynamicBarInteractor.addIsEnabledListener((enabled) -> {
+            refreshIconGroupsCompat();
+        });
+        mAxDynamicBarInteractor.addSuppressedSlotsListener((slots) -> {
+            refreshIconGroupsCompat();
+        });
 
         if (StatusBarConnectedDisplays.isEnabled()) {
             // refresh requests are dispatched by StatusBarIconRefreshInteractor, per display.
@@ -186,6 +197,19 @@ public class StatusBarIconControllerImpl implements Tunable,
         }
     }
 
+    /**
+     * Dispatches an icon refresh to the correct overload based on the current
+     * ConnectedDisplays mode.  Used by AxDynamicBar callbacks that need to
+     * trigger a full icon re-evaluation on single- and multi-display builds.
+     */
+    private void refreshIconGroupsCompat() {
+        if (StatusBarConnectedDisplays.isEnabled()) {
+            refreshIconGroups(android.view.Display.DEFAULT_DISPLAY);
+        } else {
+            refreshIconGroups();
+        }
+    }
+
     /**  */
     @Override
     public void removeIconGroup(IconManager group) {
@@ -238,7 +262,7 @@ public class StatusBarIconControllerImpl implements Tunable,
 
     private void addSystemIcon(String slot, StatusBarIconHolder holder) {
         int viewIndex = mStatusBarIconList.getViewIndex(slot, holder.getTag());
-        boolean hidden = mIconHideList.contains(slot);
+        boolean hidden = mIconHideList.contains(slot) || mAxDynamicBarInteractor.isSlotSuppressed(slot);
 
         mIconGroups.forEach(l -> l.onIconAdded(viewIndex, slot, hidden, holder));
     }

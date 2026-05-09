@@ -79,6 +79,14 @@ class NotificationInterruptLogger @Inject constructor(
         })
     }
 
+    fun logNoHeadsUpMirroredInDynamicBar(entry: NotificationEntry) {
+        buffer.log(TAG, DEBUG, {
+            str1 = entry.logKey
+        }, {
+            "No heads up: same notification mirrored in Dynamic Bar: $str1"
+        })
+    }
+
     fun logNoHeadsUpPackageSnoozed(entry: NotificationEntry) {
         buffer.log(TAG, DEBUG, {
             str1 = entry.logKey
