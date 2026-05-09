@@ -12,11 +12,14 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
 import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -27,9 +30,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.input.pointer.PointerEventPass
-import androidx.compose.ui.input.pointer.changedToDownIgnoreConsumed
 import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.platform.LocalContext
+import kotlin.math.abs
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.unit.dp
@@ -45,11 +47,19 @@ import androidx.savedstate.SavedStateRegistryController
 import androidx.savedstate.SavedStateRegistryOwner
 import androidx.savedstate.setViewTreeSavedStateRegistryOwner
 import com.android.compose.theme.PlatformTheme
-import com.android.systemui.shared.recents.utilities.Utilities
+import com.android.systemui.axdynamicbar.model.CutoutPlacementHint
 import com.android.systemui.axdynamicbar.model.IslandEvent
+import com.android.systemui.axdynamicbar.shared.CutoutCenterContentAreaWidth
+import com.android.systemui.axdynamicbar.shared.CutoutCenterIconAreaWidth
+import com.android.systemui.axdynamicbar.shared.CutoutPadBottom
+import com.android.systemui.axdynamicbar.shared.CutoutPadSide
+import com.android.systemui.axdynamicbar.shared.CutoutPadTop
 import com.android.systemui.axdynamicbar.shared.ExpandedMaxWidth
+import com.android.systemui.axdynamicbar.shared.StatusBarPillWidth
 import com.android.systemui.axdynamicbar.ui.compose.ExpandedIslandContent
+import com.android.systemui.axdynamicbar.ui.compose.CutoutChip
 import com.android.systemui.axdynamicbar.ui.compose.NotificationAlertCard
+import com.android.systemui.axdynamicbar.ui.compose.islandSwipeCapture
 import com.android.systemui.dagger.SysUISingleton
 import com.android.systemui.dagger.qualifiers.Application
 import com.android.systemui.dagger.qualifiers.Main
@@ -64,10 +74,19 @@ import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
+import android.hardware.display.DisplayManager
 import android.view.WindowInsets
-import androidx.compose.ui.input.pointer.PointerEvent
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlin.math.ceil
+import kotlin.math.roundToInt
 
 private const val EXIT_ANIM_DURATION = 300L
+
+// Pill-only cutout overlay — extra space beyond token body so stack badge / offsets are not WM-clipped.
+private const val CUTOUT_WM_HORIZONTAL_GUARD_DP = 72f
+private const val CUTOUT_WM_VERTICAL_BADGE_BLEED_DP = 20f
 
 @SysUISingleton
 class AxDynamicBarExpandedPanel
@@ -83,17 +102,34 @@ constructor(
     private var panelLifecycleOwner: PanelLifecycleOwner? = null
     private var hideOverlayJob: Job? = null
 
+    private val _statusBarHeightPx = MutableStateFlow(0)
+    private val statusBarHeightPx: StateFlow<Int> = _statusBarHeightPx.asStateFlow()
+
     fun init() {
-        viewModel.interactor.onCollapseRequested = { viewModel.statusBarExpansion.collapse() }
+        viewModel.interactor.onCollapseRequested = { viewModel.collapsePanel() }
         viewModel.interactor.onFocusableRequested = { focusable -> setOverlayFocusable(focusable) }
+
+        refreshStatusBarHeight()
+        val displayManager = context.getSystemService(DisplayManager::class.java)
+        displayManager?.registerDisplayListener(
+            object : DisplayManager.DisplayListener {
+                override fun onDisplayChanged(displayId: Int) { refreshStatusBarHeight() }
+                override fun onDisplayAdded(displayId: Int) {}
+                override fun onDisplayRemoved(displayId: Int) {}
+            },
+            mainHandler,
+        )
 
         val needsOverlay =
             combine(
                 viewModel.isExpanded,
                 viewModel.interactor.uiState.map { it.notificationAlert },
                 viewModel.isOnKeyguard,
-            ) { expanded, alert, onKeyguard ->
-                !onKeyguard && (expanded || alert != null)
+                viewModel.chipState,
+                viewModel.interactor.isCutoutDisplayEnabled,
+            ) { expanded, alert, onKeyguard, chipState, cutoutMode ->
+                (!onKeyguard && (expanded || alert != null)) ||
+                    (!onKeyguard && cutoutMode && chipState != null)
             }
 
         needsOverlay
@@ -103,7 +139,7 @@ constructor(
                     hideOverlayJob = null
                     showOverlay()
                 } else {
-                    
+
                     hideOverlayJob?.cancel()
                     hideOverlayJob =
                         applicationScope.launch {
@@ -114,11 +150,36 @@ constructor(
             }
             .launchIn(applicationScope)
 
-        viewModel.isExpanded
-            .onEach { expanded ->
-                updateOverlay(expanded)
-            }
-            .launchIn(applicationScope)
+        combine(
+            viewModel.isExpanded,
+            viewModel.interactor.uiState.map { it.notificationAlert },
+            viewModel.interactor.cutoutRectPx,
+            viewModel.cutoutPlacementHint,
+        ) { expanded, alert, rect, hint ->
+            updateOverlayWindow(expanded, alert != null, rect, hint)
+        }.launchIn(applicationScope)
+
+        // Re-apply window geometry when ring offset/scale settings change (user compensation).
+        combine(
+            viewModel.ringScaleX,
+            viewModel.ringScaleY,
+            viewModel.ringOffsetXDp,
+            viewModel.ringOffsetYDp,
+        ) { _, _, _, _ ->
+            updateOverlayWindow(
+                expanded = viewModel.isExpanded.value,
+                hasAlert = viewModel.interactor.uiState.value.notificationAlert != null,
+                cutoutRect = viewModel.interactor.cutoutRectPx.value,
+                hint = viewModel.cutoutPlacementHint.value,
+            )
+        }.launchIn(applicationScope)
+    }
+
+    private fun refreshStatusBarHeight() {
+        _statusBarHeightPx.value = windowManager.currentWindowMetrics
+            .windowInsets
+            .getInsets(WindowInsets.Type.statusBars())
+            .top
     }
 
     private fun ensureMainThread(action: () -> Unit) {
@@ -138,17 +199,11 @@ constructor(
         lifecycleOwner.handleLifecycleEvent(Lifecycle.Event.ON_START)
         lifecycleOwner.handleLifecycleEvent(Lifecycle.Event.ON_RESUME)
 
-        val windowMetrics = windowManager.currentWindowMetrics
-        val statusBarTop = windowMetrics.windowInsets
-            .getInsets(WindowInsets.Type.statusBars())
-            .top
-        val hasCutout = windowMetrics.windowInsets
-            .getInsets(WindowInsets.Type.displayCutout())
-            .top > 0
+        refreshStatusBarHeight()
 
         val view =
             ComposeView(context).apply {
-                setContent { PlatformTheme { OverlayContent(viewModel, statusBarTop, hasCutout) } }
+                setContent { PlatformTheme { OverlayContent(viewModel, statusBarHeightPx) } }
             }
 
         view.setViewTreeLifecycleOwner(lifecycleOwner)
@@ -157,9 +212,11 @@ constructor(
         panelLifecycleOwner = lifecycleOwner
 
         val isCurrentlyExpanded = viewModel.isExpanded.value
+        // Do not use FLAG_LAYOUT_INSET_DECOR: it shifts the window's content frame below the
+        // status bar. The cutout-mode pill must share the same vertical band as the cutout/CPR
+        // overlay (physical top), not the inset-decor content area below the bar.
         val flags = WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL or
             WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN or
-            WindowManager.LayoutParams.FLAG_LAYOUT_INSET_DECOR or
             WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED or
             if (isCurrentlyExpanded) 0
             else WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE
@@ -174,10 +231,20 @@ constructor(
                 PixelFormat.TRANSLUCENT,
             )
         params.gravity = Gravity.TOP or Gravity.FILL_HORIZONTAL
+        params.layoutInDisplayCutoutMode =
+            WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_ALWAYS
         params.title = "AxDynamicBarExpanded"
 
         windowManager.addView(view, params)
         overlayView = view
+        // Apply the latest geometry immediately so first-render cutout pills get
+        // the badge-safe WM viewport before any subsequent flow emission.
+        updateOverlayWindow(
+            expanded = viewModel.isExpanded.value,
+            hasAlert = viewModel.interactor.uiState.value.notificationAlert != null,
+            cutoutRect = viewModel.interactor.cutoutRectPx.value,
+            hint = viewModel.cutoutPlacementHint.value,
+        )
     }
 
     private fun hideOverlay() {
@@ -201,27 +268,94 @@ constructor(
 
     private var shrinkRunnable: Runnable? = null
 
-    private fun updateOverlay(expanded: Boolean) = ensureMainThread {
-        shrinkRunnable?.let { mainHandler.removeCallbacks(it) }
-        shrinkRunnable = null
+    private fun updateOverlayWindow(
+        expanded: Boolean,
+        hasAlert: Boolean,
+        cutoutRect: android.graphics.Rect?,
+        hint: com.android.systemui.axdynamicbar.model.CutoutPlacementHint,
+    ) = ensureMainThread {
         val view = overlayView ?: return@ensureMainThread
         val params = view.layoutParams as? WindowManager.LayoutParams ?: return@ensureMainThread
-        if (expanded) {
+        val density = context.resources.displayMetrics.density
+        val padSidePx = (CutoutPadSide.value * density).roundToInt()
+        val padBotPx = (CutoutPadBottom.value * density).roundToInt()
+        val padTopPx = (CutoutPadTop.value * density).roundToInt()
+        // Conservative guard: ~12dp badge offset + double-digit count + font scale / density drift.
+        val cutoutWmHorizontalGuardPx =
+            (CUTOUT_WM_HORIZONTAL_GUARD_DP * density).roundToInt().coerceAtLeast(40)
+
+        if (expanded || hasAlert) {
             params.flags = params.flags and WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE.inv()
-            params.height = WindowManager.LayoutParams.MATCH_PARENT
-            windowManager.updateViewLayout(view, params)
-        } else {
+            params.width = WindowManager.LayoutParams.MATCH_PARENT
+            params.height = if (expanded) WindowManager.LayoutParams.MATCH_PARENT 
+                            else WindowManager.LayoutParams.WRAP_CONTENT
+            params.gravity = Gravity.TOP or Gravity.FILL_HORIZONTAL
+            params.x = 0
+            params.y = 0
+        } else if (cutoutRect != null) {
+            // Pill-only mode: shrink window to the chip’s token-sized bounds + badge overflow.
             params.flags = params.flags or WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE
-            windowManager.updateViewLayout(view, params)
-            val runnable = Runnable {
-                val v = overlayView ?: return@Runnable
-                val p = v.layoutParams as? WindowManager.LayoutParams ?: return@Runnable
-                p.height = WindowManager.LayoutParams.WRAP_CONTENT
-                windowManager.updateViewLayout(v, p)
+
+            // Apply user geometry settings to derive the effective cutout rect.
+            // Mirrors the same logic in CutoutChip so WM window and Compose layout agree.
+            val scaleX = viewModel.ringScaleX.value
+            val scaleY = viewModel.ringScaleY.value
+            val offsetXPx = viewModel.ringOffsetXDp.value * density
+            val offsetYPx = viewModel.ringOffsetYDp.value * density
+            val effectiveW = (cutoutRect.width() * scaleX).toInt()
+            val effectiveH = (cutoutRect.height() * scaleY).toInt()
+            val centerX = cutoutRect.centerX() + offsetXPx
+            val centerY = cutoutRect.centerY() + offsetYPx
+            val effectiveRect = android.graphics.Rect(
+                (centerX - effectiveW / 2f).toInt(),
+                (centerY - effectiveH / 2f).toInt(),
+                (centerX + effectiveW / 2f).toInt(),
+                (centerY + effectiveH / 2f).toInt(),
+            )
+
+            val cutoutGapPx = effectiveRect.width() + (padSidePx * 2)
+            val pillTopPx = (effectiveRect.top - padTopPx).coerceAtLeast(0)
+            val pillHeightPx = (effectiveRect.bottom + padBotPx) - pillTopPx
+            val badgeOverflowY =
+                (CUTOUT_WM_VERTICAL_BADGE_BLEED_DP * density).roundToInt().coerceAtLeast(8)
+
+            // Ceil composite body width so fractional Dp→px never underestimates vs Compose layout.
+            val centerBodyPx =
+                ceil(
+                        CutoutCenterIconAreaWidth.value * density + cutoutGapPx.toDouble() +
+                            CutoutCenterContentAreaWidth.value * density,
+                    )
+                    .toInt()
+            val lrBodyPx =
+                ceil(cutoutGapPx.toDouble() + StatusBarPillWidth.value * density.toDouble()).toInt()
+
+            params.gravity = Gravity.TOP or Gravity.START
+            // Window starts at physical top; Compose applies pillTopDp padding inside CutoutChip.
+            params.height = pillTopPx + pillHeightPx + badgeOverflowY
+            params.y = 0
+
+            when (hint) {
+                com.android.systemui.axdynamicbar.model.CutoutPlacementHint.LEFT -> {
+                    params.width = lrBodyPx + cutoutWmHorizontalGuardPx
+                    params.x = effectiveRect.left - padSidePx
+                }
+
+                com.android.systemui.axdynamicbar.model.CutoutPlacementHint.RIGHT -> {
+                    // Badge sits on the left of the pill; reserve space so it isn’t clipped.
+                    params.width = lrBodyPx + cutoutWmHorizontalGuardPx
+                    params.x = (effectiveRect.right + padSidePx) - lrBodyPx - cutoutWmHorizontalGuardPx
+                }
+
+                com.android.systemui.axdynamicbar.model.CutoutPlacementHint.CENTER -> {
+                    // Center the WM window on the cutout so content aligned with TopCenter + fillMaxWidth
+                    // stays anchored (asymmetric params.x broke horizontal alignment when collapsing).
+                    params.width = centerBodyPx + cutoutWmHorizontalGuardPx
+                    params.x = effectiveRect.centerX() - params.width / 2
+                }
             }
-            shrinkRunnable = runnable
-            mainHandler.postDelayed(runnable, EXIT_ANIM_DURATION)
         }
+
+        windowManager.updateViewLayout(view, params)
     }
 
     private fun setOverlayFocusable(focusable: Boolean) = ensureMainThread {
@@ -237,19 +371,21 @@ constructor(
 }
 
 @Composable
-private fun OverlayContent(viewModel: AxDynamicBarChipViewModel, statusBarHeightPx: Int, hasCutout: Boolean) {
+private fun OverlayContent(viewModel: AxDynamicBarChipViewModel, statusBarHeightPx: StateFlow<Int>) {
+    val statusBarHeight by statusBarHeightPx.collectAsStateWithLifecycle()
     val density = LocalDensity.current
-    val isLargeScreen = Utilities.isLargeScreen(LocalContext.current)
-
-    val largeScreenExtra = if (isLargeScreen) 4.dp else 0.dp
-    val topPad = if (hasCutout) largeScreenExtra
-        else with(density) { statusBarHeightPx.toDp() } + largeScreenExtra
+    val topPad = with(density) { statusBarHeight.toDp() } + 8.dp
     val chipState by viewModel.chipState.collectAsStateWithLifecycle()
     val isExpanded by viewModel.isExpanded.collectAsStateWithLifecycle()
     val uiState by viewModel.interactor.uiState.collectAsStateWithLifecycle()
     val isOnKeyguard by viewModel.isOnKeyguard.collectAsStateWithLifecycle()
     val notifAlert = uiState.notificationAlert
     val compactNotifs by viewModel.interactor.settings.compactNotifications.collectAsStateWithLifecycle()
+    val isCutoutMode by viewModel.interactor.isCutoutDisplayEnabled.collectAsStateWithLifecycle()
+    val placementHint by viewModel.cutoutPlacementHint.collectAsStateWithLifecycle()
+
+    val cutoutRectPx by viewModel.cutoutRectPx.collectAsStateWithLifecycle()
+    val showAllEvents by viewModel.showAllEvents.collectAsStateWithLifecycle()
 
     val lastAlert = remember { mutableStateOf<IslandEvent.Notification?>(null) }
     if (notifAlert != null) lastAlert.value = notifAlert
@@ -269,105 +405,137 @@ private fun OverlayContent(viewModel: AxDynamicBarChipViewModel, statusBarHeight
     LaunchedEffect(chipState) {
         val filtered = chipState?.allEvents?.filter { it !is IslandEvent.AospChip }
         if (filtered.isNullOrEmpty() && isExpanded) {
-            viewModel.statusBarExpansion.collapse()
+            viewModel.collapsePanel()
         }
     }
 
     val origin = TransformOrigin(0.5f, 0f)
 
-    AnimatedVisibility(
-        visibleState = expandedVisible,
-        enter = fadeIn(tween(250)) + scaleIn(
-            animationSpec = tween(350),
-            initialScale = 0.4f,
-            transformOrigin = origin,
-        ),
-        exit = fadeOut(tween(200)) + scaleOut(
-            animationSpec = tween(250),
-            targetScale = 0.4f,
-            transformOrigin = origin,
-        ),
+    // In cutout mode the expanded card aligns to the cutout side so it doesn't overlap the notch.
+    // LEFT cutout  → card anchored to the right (TopEnd)
+    // RIGHT cutout → card anchored to the left (TopStart)
+    // CENTER       → centered as normal
+    val expandedAlignment = if (isCutoutMode) when (placementHint) {
+        CutoutPlacementHint.LEFT -> Alignment.TopEnd
+        CutoutPlacementHint.RIGHT -> Alignment.TopStart
+        CutoutPlacementHint.CENTER -> Alignment.TopCenter
+    } else Alignment.TopCenter
+
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .wrapContentHeight(align = Alignment.Top),
     ) {
-        
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .pointerInput(Unit) {
-                    val slop = viewConfiguration.touchSlop
-                    awaitEachGesture {
-                        
-                        var ev: PointerEvent
-                        do {
-                            ev = awaitPointerEvent(PointerEventPass.Final)
-                        } while (!ev.changes.any { it.changedToDownIgnoreConsumed() })
-                        val downPos = ev.changes[0].position
-                        
-                        val downConsumed = ev.changes[0].isConsumed
-                        
-                        while (true) {
-                            val event = awaitPointerEvent(PointerEventPass.Final)
-                            val change = event.changes.firstOrNull() ?: break
-                            if (!change.pressed) {
-                                if (!downConsumed && !change.isConsumed) {
+        AnimatedVisibility(
+            visibleState = expandedVisible,
+            enter = fadeIn(tween(250)) + scaleIn(
+                animationSpec = tween(350),
+                initialScale = 0.4f,
+                transformOrigin = origin,
+            ),
+            exit = fadeOut(tween(200)) + scaleOut(
+                animationSpec = tween(250),
+                targetScale = 0.4f,
+                transformOrigin = origin,
+            ),
+        ) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .pointerInput(Unit) {
+                        val slop = viewConfiguration.touchSlop
+                        awaitEachGesture {
+                            val down = awaitFirstDown(pass = PointerEventPass.Final)
+                            val downPos = down.position
+                            while (true) {
+                                val event = awaitPointerEvent(PointerEventPass.Final)
+                                val change = event.changes.firstOrNull() ?: break
+                                if (!change.pressed) {
                                     val dx = change.position.x - downPos.x
                                     val dy = change.position.y - downPos.y
-                                    if (dx * dx + dy * dy <= slop * slop) {
-                                        viewModel.statusBarExpansion.collapse()
+                                    val isSwipeUp = dy < -slop * 3 && abs(dy) > abs(dx)
+                                    val isTap = dx * dx + dy * dy <= slop * slop
+                                    if (isSwipeUp || isTap) {
+                                        viewModel.collapsePanel()
                                     }
+                                    break
                                 }
-                                break
                             }
                         }
                     }
+                    .padding(top = topPad),
+                contentAlignment = expandedAlignment,
+            ) {
+                chipState?.let { state ->
+                    ExpandedIslandContent(
+                        events = if (showAllEvents) state.allEvents else listOf(state.event),
+                        interactor = viewModel.interactor,
+                        onCollapse = { viewModel.collapsePanel() },
+                        pinnedEventId = if (showAllEvents) null else state.event.id,
+                        stackSize = state.allEvents.size,
+                        onExpandAll = if (!showAllEvents && state.allEvents.size > 1) {
+                            { viewModel.expandAll() }
+                        } else null,
+                        hapticsViewModelFactory = viewModel.interactor.sliderHapticsViewModelFactory,
+                    )
                 }
-                .padding(top = topPad),
-            contentAlignment = Alignment.TopCenter,
-        ) {
-            chipState?.let { state ->
-                val filtered = state.allEvents.filter { it !is IslandEvent.AospChip }
-                if (filtered.isEmpty()) return@let
-                ExpandedIslandContent(
-                    events = filtered,
-                    interactor = viewModel.interactor,
-                    onCollapse = { viewModel.statusBarExpansion.collapse() },
-                    pinnedEventId = state.event.id,
-                    hapticsViewModelFactory = viewModel.interactor.sliderHapticsViewModelFactory,
+            }
+        }
+
+        val alertOrigin = TransformOrigin(0.5f, 0f)
+
+        if (isCutoutMode) {
+            val rect = cutoutRectPx
+            if (rect != null) {
+                CutoutChip(
+                    viewModel = viewModel,
+                    cutoutRectPx = rect,
+                    placementHint = placementHint,
                 )
             }
         }
-    }
 
-    AnimatedVisibility(
-        visibleState = notifVisible,
-        enter = fadeIn(tween(300)) + scaleIn(
-            animationSpec = tween(300),
-            initialScale = 0.4f,
-            transformOrigin = origin,
-        ),
-        exit = fadeOut(tween(250)) + scaleOut(
-            animationSpec = tween(250),
-            targetScale = 0.4f,
-            transformOrigin = origin,
-        ),
-    ) {
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(top = topPad),
-            contentAlignment = Alignment.TopCenter,
+        if (!isCutoutMode && isExpanded) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(40.dp)
+                    .islandSwipeCapture(viewModel = viewModel),
+            )
+        }
+
+        AnimatedVisibility(
+            visibleState = notifVisible,
+            enter = fadeIn(tween(300)) + scaleIn(
+                animationSpec = tween(300),
+                initialScale = 0.4f,
+                transformOrigin = alertOrigin,
+            ),
+            exit = fadeOut(tween(250)) + scaleOut(
+                animationSpec = tween(250),
+                targetScale = 0.4f,
+                transformOrigin = alertOrigin,
+            ),
         ) {
-            val alert = lastAlert.value
-            if (alert != null) {
-                NotificationAlertCard(
-                    notification = alert,
-                    interactor = viewModel.interactor,
-                    onDismiss = { viewModel.interactor.dismissNotificationAlert() },
-                    initiallyCompact = compactNotifs,
-                    modifier =
-                        Modifier.widthIn(max = ExpandedMaxWidth)
-                            .fillMaxWidth()
-                            .padding(horizontal = 12.dp),
-                )
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = topPad),
+                contentAlignment = Alignment.TopCenter,
+            ) {
+                val alert = lastAlert.value
+                if (alert != null) {
+                    NotificationAlertCard(
+                        notification = alert,
+                        interactor = viewModel.interactor,
+                        onDismiss = { viewModel.interactor.dismissNotificationAlert() },
+                        initiallyCompact = compactNotifs,
+                        modifier =
+                            Modifier.widthIn(max = ExpandedMaxWidth)
+                                .fillMaxWidth()
+                                .padding(horizontal = 12.dp),
+                    )
+                }
             }
         }
     }

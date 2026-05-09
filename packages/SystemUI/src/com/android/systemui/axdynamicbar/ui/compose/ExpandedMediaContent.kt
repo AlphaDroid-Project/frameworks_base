@@ -74,7 +74,9 @@ internal fun MediaCard(event: IslandEvent.Media, interactor: IslandActions) {
     val accent = colors.accent
 
     Surface(
-        modifier = Modifier.fillMaxWidth().border(1.dp, CardBorderBrush, ShapeCard),
+        modifier = Modifier.fillMaxWidth()
+            .border(1.dp, CardBorderBrush, ShapeCard)
+            .pointerInput(Unit) { detectTapGestures {} },
         shape = ShapeCard,
         color = CardBg,
     ) {
