@@ -72,9 +72,10 @@ internal fun ChargingExpanded(event: IslandEvent.Charging, interactor: IslandAct
         },
         title = {
             // Row 1: Charging Type (VOOC, Charging slowly, etc.)
-            event.chargeType?.let {
+            event.chargeType?.let { chargeType ->
+                val displayText = if (event.level == 100) stringResource(R.string.ax_dynamic_bar_fully_charged) else chargeType
                 Text(
-                    it,
+                    displayText,
                     color = Color.White.copy(alpha = 0.9f),
                     style = MaterialTheme.typography.titleMedium.copy(
                         fontSize = 13.sp,
@@ -191,7 +192,7 @@ private fun CPRBatteryIcon(level: Int?, modifier: Modifier = Modifier) {
                     bottom = barTop + barH
                 ) {
                     drawRoundRect(
-                        color = fillColor.copy(alpha = pulseMultiplier),
+                        color = fillColor.copy(alpha = if (progress >= 1f) 1f else pulseMultiplier),
                         topLeft = Offset(barLeft, barTop),
                         size = Size(barW, barH),
                         cornerRadius = CornerRadius(3.dp.toPx(), 3.dp.toPx())
