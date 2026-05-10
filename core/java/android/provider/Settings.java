@@ -7217,7 +7217,6 @@ public final class Settings {
          * Whether the service should restart itself or not.
          * @hide
          */
-        public static final String ON_THE_GO_SERVICE_RESTART = "on_the_go_service_restart";
 
         /**
          * The camera instance to use.
