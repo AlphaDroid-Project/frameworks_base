@@ -137,4 +137,3 @@
 # SDK
 -keep,allowoptimization,allowaccessmodification class lineageos.** { *; }
 -keep,allowoptimization,allowaccessmodification class org.lineageos.** { *; }
--keep,allowoptimization,allowaccessmodification class vendor.lineage.** { *; }
