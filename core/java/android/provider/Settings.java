@@ -7466,11 +7466,6 @@ public final class Settings {
         public static final String QS_TILE_GRADIENT = "qs_tile_gradient";
 
         /**
-         * Gradient on QS brightness slider
-         * @hide
-         */
-        public static final String QS_BRIGHTNESS_SLIDER_GRADIENT = "qs_brightness_slider_gradient";
-
         /**
          * Whether to use classic QS panel style for tiles
          * @hide
