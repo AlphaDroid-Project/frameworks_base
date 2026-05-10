@@ -7412,12 +7412,6 @@ public final class Settings {
                 "notification_guts_kill_app_button";
 
         /**
-         * Force full screen for devices with cutout
-         * @hide
-         */
-        public static final String FORCE_FULLSCREEN_CUTOUT_APPS = "force_full_screen_cutout_apps";
-
-        /**
          * Defines the screen-off animation to display
          * @hide
          */

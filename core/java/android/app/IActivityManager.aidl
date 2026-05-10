@@ -1063,12 +1063,6 @@ interface IActivityManager {
     boolean isThreeFingersSwipeActive();
     void setThreeFingersSwipeActive(boolean active);
     void setThreeGestureStateActive(boolean active);
-
-    /**
-     *  Force full screen for devices with cutout
-     */
-    boolean shouldForceCutoutFullscreen(in String packageName);
-
     void releaseMemory(int minAdj, int maxKillCount, boolean includeUIProcesses, boolean skipCamera);
 
     void compactAllSystem();
