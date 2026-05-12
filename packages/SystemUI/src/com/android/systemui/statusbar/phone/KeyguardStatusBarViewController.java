@@ -108,10 +108,13 @@ import com.android.systemui.util.settings.SecureSettings;
 import kotlin.Unit;
 
 import kotlinx.coroutines.CoroutineDispatcher;
+import kotlinx.coroutines.Job;
 
 import java.io.PrintWriter;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.Executor;
 import java.util.function.Consumer;
 
@@ -181,6 +184,9 @@ public class KeyguardStatusBarViewController extends ViewController<KeyguardStat
     private final KeyguardInteractor mKeyguardInteractor;
     private final TunerService mTunerService;
     private final AxDynamicBarChipViewModel mAxDynamicBarChipViewModel;
+
+    @Nullable private Job mSuppressedSlotsJob;
+    private final Set<String> mDynamicBarSuppressedSlots = new HashSet<>();
 
     @Nullable private ComposeView mBatteryComposeView;
     private ViewGroup mSystemIconsContainer;
@@ -575,6 +581,20 @@ public class KeyguardStatusBarViewController extends ViewController<KeyguardStat
                     mSystemIconsContainer.findViewById(R.id.statusIcons);
             SystemStatusIconsLayoutHelper.configurePaddingForNewStatusBarIcons(systemIcons);
         }
+
+        // Observe Dynamic Bar suppressed slots to hide duplicated icons on lockscreen
+        mSuppressedSlotsJob = mAxDynamicBarChipViewModel.getInteractor()
+                .addSuppressedSlotsListener(slots -> {
+                    synchronized (mLock) {
+                        mDynamicBarSuppressedSlots.clear();
+                        mDynamicBarSuppressedSlots.addAll(slots);
+                    }
+                    mMainExecutor.execute(() -> {
+                        if (mTintedIconManager != null) {
+                            mTintedIconManager.setBlockList(getBlockedIcons());
+                        }
+                    });
+                });
     }
 
     private ComposeView createAndBindComposeBattery() {
@@ -616,6 +636,10 @@ public class KeyguardStatusBarViewController extends ViewController<KeyguardStat
             }
         }
         mTunerService.removeTunable(this);
+        if (mSuppressedSlotsJob != null) {
+            mSuppressedSlotsJob.cancel(null);
+            mSuppressedSlotsJob = null;
+        }
     }
 
     @Override
@@ -867,7 +891,9 @@ public class KeyguardStatusBarViewController extends ViewController<KeyguardStat
     @VisibleForTesting
     List<String> getBlockedIcons() {
         synchronized (mLock) {
-            return new ArrayList<>(mBlockedIcons);
+            List<String> result = new ArrayList<>(mBlockedIcons);
+            result.addAll(mDynamicBarSuppressedSlots);
+            return result;
         }
     }
 

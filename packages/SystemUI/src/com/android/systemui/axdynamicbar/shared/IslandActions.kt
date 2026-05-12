@@ -47,6 +47,7 @@ interface IslandActions {
     fun copyUriToClipboard(uri: Uri)
     fun openUrl(url: String)
     fun removeClipboardItem(id: Long)
+    fun stopScreenRecording()
     fun switchToApp(taskId: Int)
     fun onNotificationInteraction(eventId: String)
     fun onNotificationInteractionEnd(eventId: String)

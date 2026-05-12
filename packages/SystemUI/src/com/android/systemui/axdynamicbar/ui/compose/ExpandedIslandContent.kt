@@ -259,7 +259,7 @@ internal fun ExpandedEventContent(
         is IslandEvent.Torch -> TorchExpanded(event, interactor, hapticsViewModelFactory)
         is IslandEvent.BiometricUnlock -> BiometricUnlockExpanded(event)
         is IslandEvent.KeyguardIndication -> {}
-        is IslandEvent.AospChip -> {}
+        is IslandEvent.AospChip -> AospChipExpanded(event, interactor)
     }
 }
 

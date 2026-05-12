@@ -25,6 +25,7 @@ import com.android.systemui.shade.data.repository.ShadeRepository
 import com.android.systemui.shade.domain.interactor.ShadeInteractor
 import com.android.systemui.statusbar.KeyguardIndicationController
 import com.android.systemui.statusbar.StatusBarState
+import com.android.systemui.statusbar.chips.screenrecord.domain.interactor.ScreenRecordChipInteractor
 import com.android.systemui.statusbar.policy.KeyguardStateController
 import com.android.systemui.statusbar.policy.ZenModeController
 import com.android.systemui.util.settings.GlobalSettings
@@ -71,6 +72,7 @@ constructor(
     private val zenModeController: ZenModeController,
     private val globalSettings: GlobalSettings,
     private val audioManager: AudioManager,
+    private val screenRecordChipInteractor: ScreenRecordChipInteractor,
 ) : IslandActions {
     private val _uiState = MutableStateFlow(IslandUiState())
     val uiState: StateFlow<IslandUiState> = _uiState.asStateFlow()
@@ -408,6 +410,8 @@ constructor(
 
                         !(onKeyguard && e is IslandEvent.AppSwitch) &&
 
+                        !(onKeyguard && e is IslandEvent.AospChip && e.active.key == "ScreenRecord") &&
+
                         !(!onKeyguard && e is IslandEvent.KeyguardIndication)
                 }
 
@@ -700,6 +704,8 @@ constructor(
     override fun copyUriToClipboard(uri: Uri) = repository.system.copyUriToClipboard(uri)
 
     override fun removeClipboardItem(id: Long) = repository.system.removeClipboardItem(id)
+
+    override fun stopScreenRecording() = screenRecordChipInteractor.stopRecording()
 
     override fun switchToApp(taskId: Int) = repository.appTracking.switchToApp(taskId)
 
