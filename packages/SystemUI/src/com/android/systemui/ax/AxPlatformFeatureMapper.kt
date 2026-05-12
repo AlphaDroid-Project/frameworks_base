@@ -88,9 +88,6 @@ class AxPlatformFeatureMapper @Inject constructor(
         AxPlatformClient.FEATURE_CAST -> {
             state.getString("deviceName")?.takeIf { it.isNotEmpty() }
         }
-        AxPlatformClient.FEATURE_PROFILES -> {
-            state.getString("profileName")?.takeIf { it.isNotEmpty() }
-        }
         AxPlatformClient.FEATURE_SCREEN_RECORD -> {
             when {
                 state.getBoolean("active") -> context.getString(R.string.quick_settings_screen_record_stop)
@@ -136,7 +133,6 @@ class AxPlatformFeatureMapper @Inject constructor(
             AxPlatformClient.FEATURE_CAFFEINE to R.string.quick_settings_caffeine_label,
             AxPlatformClient.FEATURE_VPN to R.string.quick_settings_vpn_label,
             AxPlatformClient.FEATURE_CAST to R.string.quick_settings_cast_title,
-            AxPlatformClient.FEATURE_PROFILES to R.string.quick_settings_profiles_label,
             AxPlatformClient.FEATURE_SCREEN_RECORD to R.string.quick_settings_screen_record_label,
             AxPlatformClient.FEATURE_SCREENSHOT to R.string.quick_settings_screenshot_label
         )

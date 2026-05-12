@@ -57,9 +57,7 @@ import com.android.systemui.screenrecord.ScreenRecordUxController
 import com.android.systemui.statusbar.policy.SecurityController
 import com.android.systemui.statusbar.policy.ZenModeController
 import com.android.wifitrackerlib.WifiEntry
-import lineageos.app.ProfileManager
 import lineageos.hardware.LineageHardwareManager
-import android.provider.Settings
 import javax.inject.Inject
 
 @SysUISingleton
@@ -87,9 +85,6 @@ class AxPlatformFeatureController @Inject constructor(
 
     internal val wakeLock: PowerManager.WakeLock =
         powerManager.newWakeLock(PowerManager.FULL_WAKE_LOCK, "AxPlatform:Caffeine")
-    private val profileManager: ProfileManager? = try {
-        ProfileManager.getInstance(context)
-    } catch (e: Exception) { null }
 
     private val nfcAdapter: NfcAdapter? = NfcAdapter.getDefaultAdapter(context)
     private val uiModeManager: UiModeManager = context.getSystemService(UiModeManager::class.java)
@@ -131,8 +126,6 @@ class AxPlatformFeatureController @Inject constructor(
             add(AxPlatformClient.FEATURE_VPN)
             add(AxPlatformClient.FEATURE_CAST)
             add(AxPlatformClient.FEATURE_SMART_PIXELS)
-            if (profileManager != null)
-                add(AxPlatformClient.FEATURE_PROFILES)
             add(AxPlatformClient.FEATURE_SCREEN_RECORD)
             add(AxPlatformClient.FEATURE_SCREENSHOT)
         }.toTypedArray()
@@ -258,11 +251,6 @@ class AxPlatformFeatureController @Inject constructor(
                 val active = castController.castDevices.firstOrNull { it.isCasting }
                 active?.let { castController.stopCasting(it, StopReason.STOP_QS_TILE) }
             }
-            AxPlatformClient.FEATURE_PROFILES -> {
-                val current = profilesEnabled()
-                setProfilesEnabled(!current)
-                stateManager.broadcastBool(feature, !current)
-            }
             AxPlatformClient.FEATURE_SMART_PIXELS ->
                 stateManager.toggleSecure(SETTING_SMART_PIXELS)
             AxPlatformClient.FEATURE_SCREEN_RECORD -> {
@@ -383,10 +371,6 @@ class AxPlatformFeatureController @Inject constructor(
                         ?.let { castController.stopCasting(it, StopReason.STOP_QS_TILE) }
                 }
             }
-            AxPlatformClient.FEATURE_PROFILES -> {
-                setProfilesEnabled(enabled)
-                stateManager.broadcastBool(feature, enabled)
-            }
             AxPlatformClient.FEATURE_SMART_PIXELS ->
                 stateManager.setSecureBool(SETTING_SMART_PIXELS, enabled)
             AxPlatformClient.FEATURE_SCREEN_RECORD -> {
@@ -428,21 +412,6 @@ class AxPlatformFeatureController @Inject constructor(
     fun getAllBluetoothDevices(): Collection<CachedBluetoothDevice> =
         localBluetoothManager?.cachedDeviceManager?.cachedDevicesCopy
             ?: bluetoothController.connectedDevices
-
-    private fun profilesEnabled(): Boolean =
-        Settings.System.getIntForUser(
-            context.contentResolver,
-            Settings.System.SYSTEM_PROFILES_ENABLED,
-            1, UserHandle.USER_CURRENT
-        ) == 1
-
-    private fun setProfilesEnabled(enabled: Boolean) {
-        Settings.System.putIntForUser(
-            context.contentResolver,
-            Settings.System.SYSTEM_PROFILES_ENABLED,
-            if (enabled) 1 else 0, UserHandle.USER_CURRENT
-        )
-    }
 
     companion object {
         private const val TAG = "AxPlatformFeatureCtrl"
