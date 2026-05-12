@@ -76,9 +76,7 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import lineageos.app.ProfileManager
 import lineageos.hardware.LineageHardwareManager
-import android.provider.Settings
 import java.util.concurrent.Executor
 import javax.inject.Inject
 
@@ -158,7 +156,6 @@ class AxPlatformObservers @Inject constructor(
         registerCaffeine()
         registerVpn()
         registerCast()
-        registerProfiles()
         registerSmartPixels()
         registerScreenRecord()
         registerAmbientIndication()
@@ -770,67 +767,6 @@ class AxPlatformObservers @Inject constructor(
             }
         )
     }
-
-    private fun registerProfiles() {
-        val profileManager = try {
-            ProfileManager.getInstance(context)
-        } catch (e: Exception) { return }
-
-        val activeProfile = profileManager.activeProfile
-        stateManager.broadcastState(
-            AxPlatformClient.FEATURE_PROFILES,
-            Bundle().apply {
-                val enabled = profilesEnabled()
-                putBoolean("enabled", enabled)
-                putBoolean("active", enabled)
-                putString("profileName", activeProfile?.name ?: "")
-            }
-        )
-
-        val filter = IntentFilter().apply {
-            addAction(ProfileManager.INTENT_ACTION_PROFILE_SELECTED)
-            addAction(ProfileManager.INTENT_ACTION_PROFILE_UPDATED)
-        }
-        broadcastDispatcher.registerReceiver(object : BroadcastReceiver() {
-            override fun onReceive(ctx: Context, intent: Intent) {
-                val profile = profileManager.activeProfile
-                stateManager.broadcastState(
-                    AxPlatformClient.FEATURE_PROFILES,
-                    Bundle().apply {
-                        val enabled = profilesEnabled()
-                        putBoolean("enabled", enabled)
-                        putBoolean("active", enabled)
-                        putString("profileName", profile?.name ?: "")
-                    }
-                )
-            }
-        }, filter)
-
-        val uri = Settings.System.getUriFor(
-            Settings.System.SYSTEM_PROFILES_ENABLED
-        )
-        resolver.registerContentObserver(uri, false, object : ExecutorContentObserver(mainExecutor) {
-            override fun onChange(selfChange: Boolean) {
-                val profile = profileManager.activeProfile
-                stateManager.broadcastState(
-                    AxPlatformClient.FEATURE_PROFILES,
-                    Bundle().apply {
-                        val enabled = profilesEnabled()
-                        putBoolean("enabled", enabled)
-                        putBoolean("active", enabled)
-                        putString("profileName", profile?.name ?: "")
-                    }
-                )
-            }
-        }, UserHandle.USER_CURRENT)
-    }
-
-    private fun profilesEnabled(): Boolean =
-        Settings.System.getIntForUser(
-            resolver,
-            Settings.System.SYSTEM_PROFILES_ENABLED,
-            1, UserHandle.USER_CURRENT
-        ) == 1
 
     private fun registerSmartPixels() {
         stateManager.observeSecure(
