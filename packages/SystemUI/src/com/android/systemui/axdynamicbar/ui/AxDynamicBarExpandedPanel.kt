@@ -285,16 +285,32 @@ constructor(
             (CUTOUT_WM_HORIZONTAL_GUARD_DP * density).roundToInt().coerceAtLeast(40)
 
         if (expanded || hasAlert) {
-            params.flags = params.flags and WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE.inv()
+            params.flags = if (expanded) {
+                params.flags and WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE.inv() or
+                    WindowManager.LayoutParams.FLAG_BLUR_BEHIND
+            } else {
+                // Notification alert: keep NOT_FOCUSABLE so we don't steal focus from the app
+                // (which would dismiss the keyboard and block IME re-appearance).
+                params.flags or WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE
+            }
+            if (expanded) {
+                params.setBlurBehindRadius(20)
+            } else {
+                params.setBlurBehindRadius(0)
+            }
             params.width = WindowManager.LayoutParams.MATCH_PARENT
-            params.height = if (expanded) WindowManager.LayoutParams.MATCH_PARENT 
+            params.height = if (expanded) WindowManager.LayoutParams.MATCH_PARENT
                             else WindowManager.LayoutParams.WRAP_CONTENT
             params.gravity = Gravity.TOP or Gravity.FILL_HORIZONTAL
             params.x = 0
             params.y = 0
         } else if (cutoutRect != null) {
             // Pill-only mode: shrink window to the chip’s token-sized bounds + badge overflow.
-            params.flags = params.flags or WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE
+            params.flags = (params.flags or WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE) and
+                (WindowManager.LayoutParams.FLAG_DIM_BEHIND or
+                    WindowManager.LayoutParams.FLAG_BLUR_BEHIND).inv()
+            params.dimAmount = 0f
+            params.setBlurBehindRadius(0)
 
             // Apply user geometry settings to derive the effective cutout rect.
             // Mirrors the same logic in CutoutChip so WM window and Compose layout agree.
