@@ -32,6 +32,7 @@ import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.pointerInput
 import kotlin.math.abs
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.unit.dp
@@ -411,6 +412,11 @@ private fun OverlayContent(viewModel: AxDynamicBarChipViewModel, statusBarHeight
     val notifVisible = remember { MutableTransitionState(false) }
 
     LaunchedEffect(isExpanded) {
+        if (isExpanded && isCutoutMode) {
+            // Wait one frame for the window to resize from pill bounds to MATCH_PARENT
+            // before starting the enter animation, preventing clipping.
+            kotlinx.coroutines.delay(32)
+        }
         expandedVisible.targetState = isExpanded
     }
 
@@ -419,13 +425,24 @@ private fun OverlayContent(viewModel: AxDynamicBarChipViewModel, statusBarHeight
     }
 
     LaunchedEffect(chipState) {
-        val filtered = chipState?.allEvents?.filter { it !is IslandEvent.AospChip }
-        if (filtered.isNullOrEmpty() && isExpanded) {
+        if (chipState?.allEvents.isNullOrEmpty() && isExpanded) {
             viewModel.collapsePanel()
         }
     }
 
-    val origin = TransformOrigin(0.5f, 0f)
+    val origin = if (isCutoutMode && cutoutRectPx != null) {
+        // Animation originates from the cutout position
+        val screenWidthPx = with(density) {
+            LocalConfiguration.current.screenWidthDp.dp.toPx()
+        }
+        val cutoutCenterX = cutoutRectPx!!.centerX().toFloat()
+        TransformOrigin(
+            (cutoutCenterX / screenWidthPx).coerceIn(0f, 1f),
+            0f,
+        )
+    } else {
+        TransformOrigin(0.5f, 0f)
+    }
 
     // In cutout mode the expanded card aligns to the cutout side so it doesn't overlap the notch.
     // LEFT cutout  → card anchored to the right (TopEnd)
@@ -580,4 +597,3 @@ private class PanelLifecycleOwner : LifecycleOwner, SavedStateRegistryOwner,
         lifecycleRegistry.handleLifecycleEvent(event)
     }
 }
-
