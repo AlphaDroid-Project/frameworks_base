@@ -64,6 +64,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
@@ -689,34 +690,44 @@ private fun AnimatedBatteryFillIcon(level: Int, color: Color, iconSize: Dp = Bat
         animationSpec = MaterialTheme.motionScheme.defaultSpatialSpec(),
         label = "kg_battery_fill",
     )
-    Canvas(modifier = Modifier.size(iconSize)) {
+    // Horizontal battery: rotated 90° clockwise, scaled to text height.
+    val iconH = 10.dp
+    val iconW = 18.dp
+    Canvas(modifier = Modifier.size(width = iconW, height = iconH)) {
         val w = size.width
         val h = size.height
-        val bodyW = w * 0.7f
-        val bodyH = h * 0.85f
-        val bodyX = (w - bodyW) / 2f
-        val bodyY = h - bodyH
-        val tipW = bodyW * 0.4f
-        val tipH = h * 0.1f
-        
-        drawRect(
+        val tipW = w * 0.08f
+        val tipH = h * 0.4f
+        val bodyW = w - tipW - 1f
+        val bodyH = h
+        val cornerR = h * 0.2f
+
+        // Tip (right side, centered vertically)
+        drawRoundRect(
             color.copy(alpha = AlphaTertiary),
-            topLeft = Offset((w - tipW) / 2f, 0f),
+            topLeft = Offset(bodyW, (h - tipH) / 2f),
             size = Size(tipW, tipH),
+            cornerRadius = CornerRadius(tipW / 2f, tipW / 2f),
         )
-        
-        drawRect(
+
+        // Body outline
+        drawRoundRect(
             color.copy(alpha = AlphaTertiary),
-            topLeft = Offset(bodyX, bodyY),
+            topLeft = Offset(0f, 0f),
             size = Size(bodyW, bodyH),
+            cornerRadius = CornerRadius(cornerR, cornerR),
         )
-        
-        val fillH = bodyH * fillFraction
-        drawRect(
-            color,
-            topLeft = Offset(bodyX, bodyY + bodyH - fillH),
-            size = Size(bodyW, fillH),
-        )
+
+        // Fill (left to right)
+        val fillW = bodyW * fillFraction
+        if (fillW > 0f) {
+            drawRoundRect(
+                color,
+                topLeft = Offset(0f, 0f),
+                size = Size(fillW, bodyH),
+                cornerRadius = CornerRadius(cornerR, cornerR),
+            )
+        }
     }
 }
 
