@@ -30,10 +30,10 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.requiredWidth
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
@@ -381,7 +381,9 @@ private fun CutoutPillLeft(
     }
 
     Box(
-        modifier = Modifier.fillMaxWidth().padding(top = pillTopDp),
+        modifier = Modifier
+            .requiredWidth(LocalConfiguration.current.screenWidthDp.dp)
+            .padding(top = pillTopDp),
         contentAlignment = Alignment.TopStart,
     ) {
         // Ring mode: show ring centered on cutout instead of pill
@@ -514,7 +516,9 @@ private fun CutoutPillRight(
     }
 
     Box(
-        modifier = Modifier.fillMaxWidth().padding(top = pillTopDp),
+        modifier = Modifier
+            .requiredWidth(LocalConfiguration.current.screenWidthDp.dp)
+            .padding(top = pillTopDp),
         contentAlignment = Alignment.TopEnd,
     ) {
         // Ring mode
@@ -656,7 +660,9 @@ private fun CutoutPillCenter(
     val showRing = collapseToRing && isRightCollapsed && cutoutRectPx != null
 
     Box(
-        modifier = Modifier.fillMaxWidth().padding(top = pillTopDp),
+        modifier = Modifier
+            .requiredWidth(LocalConfiguration.current.screenWidthDp.dp)
+            .padding(top = pillTopDp),
         contentAlignment = Alignment.TopCenter,
     ) {
         AnimatedContent(
