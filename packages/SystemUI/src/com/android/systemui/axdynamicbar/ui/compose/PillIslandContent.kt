@@ -74,7 +74,6 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.res.stringResource
-import com.android.compose.animation.rememberExpandableController
 import com.android.systemui.axdynamicbar.model.IslandEvent
 import com.android.systemui.axdynamicbar.model.RecordingState
 import com.android.systemui.axdynamicbar.shared.*
@@ -88,6 +87,7 @@ import kotlin.math.cos
 import kotlin.math.sin
 import java.lang.Math.toRadians
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.withTimeoutOrNull
 
 @Composable
 internal fun PillEventIcon(
@@ -1588,20 +1588,18 @@ fun WaveformAnimation(color: Color, modifier: Modifier = Modifier.size(34.dp, 20
 }
 
 /**
- * Horizontal swipe cycles the Dynamic Bar stack; vertical / tap opens the expanded panel.
- * AOSP ongoing chips delegate to [AxDynamicBarChipViewModel.handleAospChipTap] when applicable.
+ * Horizontal swipe cycles the Dynamic Bar stack; tap opens the expanded panel.
+ * Long press opens DB settings.
  */
 @Composable
 internal fun Modifier.islandGestures(
     chipState: AxDynamicBarChipState,
     viewModel: AxDynamicBarChipViewModel,
     touchSlop: Float,
-    expandableShape: Shape,
+    @Suppress("UNUSED_PARAMETER") expandableShape: Shape,
 ): Modifier {
-    val expandableController =
-        rememberExpandableController(color = Color.Transparent, shape = expandableShape)
-    val expandable = expandableController.expandable
-    return this.pointerInput(chipState, viewModel, touchSlop, expandable) {
+    return this.pointerInput(chipState, viewModel, touchSlop) {
+        val longPressTimeoutMs = viewConfiguration.longPressTimeoutMillis
         awaitEachGesture {
             val down = awaitFirstDown(pass = PointerEventPass.Initial)
             val startX = down.position.x
@@ -1609,41 +1607,66 @@ internal fun Modifier.islandGestures(
             var dragging = false
             var totalDx = 0f
             var decided = false
-            while (true) {
-                val eventPtr = awaitPointerEvent(PointerEventPass.Initial)
-                val change = eventPtr.changes.firstOrNull() ?: break
-                if (!change.pressed) {
-                    if (dragging) {
-                        change.consume()
-                        if (totalDx > 0) viewModel.cyclePrev() else viewModel.cycleNext()
-                    } else if (!decided) {
-                        change.consume()
-                        val current = chipState.notificationAlert ?: chipState.event
-                        if (current is IslandEvent.AospChip) {
-                            if (!viewModel.handleAospChipTap(current, expandable)) {
-                                viewModel.statusBarExpansion.toggle()
-                            }
-                        } else {
+            var longPressed = false
+            var isReleased = false
+
+            val timeoutResult = withTimeoutOrNull(longPressTimeoutMs) {
+                while (true) {
+                    val eventPtr = awaitPointerEvent(PointerEventPass.Initial)
+                    val change = eventPtr.changes.firstOrNull() ?: break
+
+                    if (!change.pressed) {
+                        isReleased = true
+                        if (dragging) {
+                            change.consume()
+                            if (totalDx > 0) viewModel.cyclePrev() else viewModel.cycleNext()
+                        } else if (!decided) {
+                            change.consume()
                             viewModel.statusBarExpansion.toggle()
                         }
-                    }
-                    break
-                }
-                val dx = change.position.x - startX
-                val dy = change.position.y - startY
-                if (!decided && (abs(dx) > touchSlop || abs(dy) > touchSlop)) {
-                    if (abs(dx) >= abs(dy)) {
-                        decided = true
-                        dragging = true
-                        totalDx = dx
-                        change.consume()
-                    } else {
                         decided = true
                         break
                     }
-                } else if (dragging) {
-                    totalDx = dx
-                    change.consume()
+
+                    val dx = change.position.x - startX
+                    val dy = change.position.y - startY
+                    if (!decided && (abs(dx) > touchSlop || abs(dy) > touchSlop)) {
+                        if (abs(dx) >= abs(dy)) {
+                            decided = true
+                            dragging = true
+                            totalDx = dx
+                            change.consume()
+                        } else {
+                            decided = true
+                            break
+                        }
+                    } else if (dragging) {
+                        totalDx = dx
+                        change.consume()
+                    }
+                }
+                true
+            }
+
+            if (timeoutResult == null && !decided) {
+                longPressed = true
+                decided = true
+                viewModel.openSettings()
+            }
+
+            if (!isReleased) {
+                // Drain remaining pointer events after long press or vertical break
+                while (true) {
+                    val eventPtr = awaitPointerEvent(PointerEventPass.Initial)
+                    val change = eventPtr.changes.firstOrNull() ?: break
+                    if (!change.pressed) {
+                        if (longPressed) change.consume()
+                        break
+                    }
+                    if (dragging) {
+                        totalDx = change.position.x - startX
+                        change.consume()
+                    }
                 }
             }
         }
