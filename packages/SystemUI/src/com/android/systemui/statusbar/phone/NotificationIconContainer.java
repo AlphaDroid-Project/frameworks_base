@@ -29,6 +29,7 @@ import android.graphics.Paint;
 import android.graphics.Rect;
 import android.graphics.drawable.Icon;
 import android.os.Handler;
+import android.os.Looper;
 import android.os.UserHandle;
 import android.provider.Settings;
 import android.util.AttributeSet;
@@ -46,6 +47,7 @@ import com.android.app.animation.Interpolators;
 import com.android.internal.statusbar.StatusBarIcon;
 import com.android.settingslib.Utils;
 import com.android.systemui.res.R;
+import com.android.systemui.shared.clocks.ClockSettingsRepository;
 import com.android.systemui.statusbar.StatusBarIconView;
 import com.android.systemui.statusbar.headsup.shared.StatusBarNoHunBehavior;
 import com.android.systemui.statusbar.notification.stack.AnimationFilter;
@@ -170,6 +172,8 @@ public class NotificationIconContainer extends ViewGroup {
     private int mThemedTextColorPrimaryInverse;
     @Nullable private Runnable mIsolatedIconAnimationEndRunnable;
     private boolean mUseIncreasedIconScale;
+    private boolean mShouldCenterIcons = false;
+    private final ContentObserver mClockSettingsObserver;
 
     private SettingsObserver mSettingsObserver;
 
@@ -177,6 +181,12 @@ public class NotificationIconContainer extends ViewGroup {
         super(context, attrs);
         initResources();
         setWillNotDraw(!(DEBUG || DEBUG_OVERFLOW));
+        mClockSettingsObserver = new ContentObserver(new Handler(Looper.getMainLooper())) {
+            @Override
+            public void onChange(boolean selfChange) {
+                updateShouldCenterIcons();
+            }
+        };
     }
 
     private void initResources() {
@@ -632,7 +642,23 @@ public class NotificationIconContainer extends ViewGroup {
      * @return The left boundary (not the RTL compatible start) of the area that icons can be added.
      */
     protected float getLeftBound() {
-        return getActualPaddingStart();
+        float basePadding = getActualPaddingStart();
+        if (mShouldCenterIcons && getChildCount() > 0) {
+            float iconsWidth = 0;
+            int childCount = getChildCount();
+            int maxVisibleIcons = mMaxIcons;
+            int showCount = Math.min(childCount, maxVisibleIcons);
+            for (int i = 0; i < showCount; i++) {
+                View child = getChildAt(i);
+                iconsWidth += child.getWidth() * getDrawingScale(child);
+            }
+            if (childCount > maxVisibleIcons) {
+                iconsWidth += mStaticDotDiameter + mDotPadding;
+            }
+            float centeredPadding = Math.max(0, (getWidth() - iconsWidth) / 2);
+            return centeredPadding;
+        }
+        return basePadding;
     }
 
     protected float getActualPaddingEnd() {
@@ -944,5 +970,36 @@ public class NotificationIconContainer extends ViewGroup {
                 }
             }
         }
+    }
+    @Override
+    protected void onAttachedToWindow() {
+        super.onAttachedToWindow();
+        ClockSettingsRepository.init(getContext());
+        getContext().getContentResolver().registerContentObserver(
+            ClockSettingsRepository.clockFaceUri,
+            false,
+            mClockSettingsObserver
+        );
+        getContext().getContentResolver().registerContentObserver(
+            ClockSettingsRepository.alignmentUri,
+            false,
+            mClockSettingsObserver
+        );
+        updateShouldCenterIcons();
+    }
+    @Override
+    protected void onDetachedFromWindow() {
+        super.onDetachedFromWindow();
+        getContext().getContentResolver().unregisterContentObserver(mClockSettingsObserver);
+    }
+    private void updateShouldCenterIcons() {
+        final boolean shouldCenter = ClockSettingsRepository.shouldCenterIcons(getContext());
+        if (mShouldCenterIcons != shouldCenter) {
+            mShouldCenterIcons = shouldCenter;
+            requestLayout();
+        }
+    }
+    public boolean shouldCenterIcons() {
+        return mShouldCenterIcons;
     }
 }

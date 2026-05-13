@@ -1007,6 +1007,10 @@ public class NotificationShelf extends ActivatableNotificationView {
         mClipRect.set(0, -height, getWidth(), height);
         if (mShelfIcons != null) {
             mShelfIcons.setClipBounds(mClipRect);
+            if (mAmbientState.isDozing() && mShelfIcons.shouldCenterIcons()) {
+                mShelfIcons.calculateIconXTranslations();
+                mShelfIcons.applyIconStates();
+            }
         }
     }
 
