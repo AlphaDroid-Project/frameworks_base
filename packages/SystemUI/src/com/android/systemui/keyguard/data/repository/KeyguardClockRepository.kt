@@ -99,12 +99,7 @@ constructor(
         if (featureFlags.isEnabled(Flags.LOCKSCREEN_ENABLE_LANDSCAPE)) {
             configurationRepository.onAnyConfigurationChange.map {
                 if (
-                    context.resources.getBoolean(R.bool.force_small_clock_on_lockscreen) ||
-                    secureSettings.getIntForUser(
-                        Settings.Secure.LOCK_SCREEN_CUSTOM_CLOCK_STYLE,
-                        0, // Default value
-                        UserHandle.USER_CURRENT
-                    ) != 0
+                    context.resources.getBoolean(R.bool.force_small_clock_on_lockscreen)
                 ) {
                     ClockSize.SMALL
                 } else {
@@ -175,16 +170,6 @@ constructor(
             ),
             UserHandle.USER_CURRENT
         )
-        val clockStyleEnabled = secureSettings.getIntForUser(
-            Settings.Secure.LOCK_SCREEN_CUSTOM_CLOCK_STYLE,
-            0, // Default value
-            UserHandle.USER_CURRENT
-        ) != 0
-        val clockSettingValue = if (clockStyleEnabled) {
-            0 
-        } else {
-            isDoubleLineClock
-        }
-        return ClockSizeSetting.fromSettingValue(clockSettingValue)
+        return ClockSizeSetting.fromSettingValue(isDoubleLineClock)
     }
 }
