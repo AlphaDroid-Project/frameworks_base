@@ -89,7 +89,6 @@ import com.android.internal.annotations.VisibleForTesting;
 import com.android.internal.jank.InteractionJankMonitor;
 import com.android.internal.policy.SystemBarUtils;
 import com.android.keyguard.BouncerPanelExpansionCalculator;
-import com.android.keyguard.KeyguardSliceView;
 import com.android.systemui.Dependency;
 import com.android.systemui.Dumpable;
 import com.android.systemui.ExpandHelper;
@@ -3904,7 +3903,7 @@ public class NotificationStackScrollLayout
             if (mAmbientState.isDozing()) {
                 event = new AnimationEvent(null /* view */,
                         AnimationEvent.ANIMATION_TYPE_TOP_PADDING_CHANGED,
-                        KeyguardSliceView.DEFAULT_ANIM_DURATION);
+                        550);
             } else {
                 event = new AnimationEvent(null /* view */,
                         AnimationEvent.ANIMATION_TYPE_TOP_PADDING_CHANGED);
