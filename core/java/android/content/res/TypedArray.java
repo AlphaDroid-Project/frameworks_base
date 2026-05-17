@@ -1388,7 +1388,12 @@ public class TypedArray implements AutoCloseable {
         outValue.changingConfigurations = ActivityInfo.activityInfoConfigNativeToJava(
                 data[index + STYLE_CHANGING_CONFIGURATIONS]);
         outValue.density = data[index + STYLE_DENSITY];
-        outValue.string = (type == TypedValue.TYPE_STRING) ? loadStringValueAt(index) : null;
+        try {
+            outValue.string = (type == TypedValue.TYPE_STRING) ? loadStringValueAt(index) : null;
+        } catch (IndexOutOfBoundsException e) {
+            android.util.Log.e("TypedArray", "Caught IndexOutOfBoundsException loading string value (likely due to rapid theme/overlay changes). Returning null.", e);
+            outValue.string = null;
+        }
         outValue.sourceResourceId = data[index + STYLE_SOURCE_RESOURCE_ID];
         return true;
     }
