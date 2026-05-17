@@ -55,22 +55,21 @@ public final class QuickSwitchService extends SystemService {
     private static final String LAWNCHAIR_OVERLAY = "app.lawnchair.overlay";
 
     private static final List<String> WALLPAPER_PICKER_PACKAGES = List.of(
-        "com.android.customization.themes",
-        "com.android.wallpaper"
+        "com.android.alpha.themepicker"
     );
 
     private static final List<String> WALLPAPER_PICKER_GOOGLE_PACKAGES = List.of(
-        "com.google.android.aicore",
-        "com.google.android.apps.aiwallpapers",
+        // "com.google.android.aicore",
+        // "com.google.android.apps.aiwallpapers",
         "com.google.android.apps.customization",
         "com.google.android.apps.customization.pixel",
-        "com.google.android.apps.emojiwallpaper",
-        "com.google.android.apps.wallpaper",
+        // "com.google.android.apps.emojiwallpaper",
+        // "com.google.android.apps.wallpaper",
         "com.google.android.apps.wallpaper.overlay.android",
-        "com.google.android.apps.wallpaper.overlay.launcher",
-        "com.google.android.apps.wallpaper.pixel",
-        "com.google.android.wallpaper.effects",
-        "com.google.pixel.livewallpaper"
+        "com.google.android.apps.wallpaper.overlay.launcher"
+        // "com.google.android.apps.wallpaper.pixel",
+        // "com.google.android.wallpaper.effects",
+        // "com.google.pixel.livewallpaper"
     );
 
     private static final List<String> LAUNCHER3_OVERLAYS = List.of(
