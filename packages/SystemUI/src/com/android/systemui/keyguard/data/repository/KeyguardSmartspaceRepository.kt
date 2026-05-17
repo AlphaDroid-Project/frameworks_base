@@ -16,23 +16,16 @@
 
 package com.android.systemui.keyguard.data.repository
 
-import android.os.UserHandle
-import android.provider.Settings
 import android.view.View
 import com.android.systemui.dagger.SysUISingleton
 import com.android.systemui.dagger.qualifiers.Application
 import com.android.systemui.settings.UserTracker
 import com.android.systemui.util.settings.SecureSettings
-import com.android.systemui.util.settings.SettingsProxyExt.observerFlow
 import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.onStart
-import kotlinx.coroutines.flow.stateIn
 
 interface KeyguardSmartspaceRepository {
     val bcSmartspaceVisibility: StateFlow<Int>
@@ -52,28 +45,16 @@ constructor(
     private val _bcSmartspaceVisibility: MutableStateFlow<Int> = MutableStateFlow(View.GONE)
     override val bcSmartspaceVisibility: StateFlow<Int> = _bcSmartspaceVisibility.asStateFlow()
     override val isWeatherEnabled: StateFlow<Boolean> =
-        secureSettings
-            .observerFlow(
-                names = arrayOf(Settings.Secure.LOCKSCREEN_SMARTSPACE_ENABLED),
-                userId = UserHandle.USER_ALL,
-            )
-            .onStart { emit(Unit) }
-            .map { getLockscreenWeatherEnabled() }
-            .stateIn(
-                scope = applicationScope,
-                started = SharingStarted.WhileSubscribed(),
-                initialValue = getLockscreenWeatherEnabled()
-            )
+        MutableStateFlow(true)
 
     override fun setBcSmartspaceVisibility(visibility: Int) {
         _bcSmartspaceVisibility.value = visibility
     }
 
-    private fun getLockscreenWeatherEnabled(): Boolean {
-        return secureSettings.getIntForUser(
-            Settings.Secure.LOCKSCREEN_SMARTSPACE_ENABLED,
-            1,
-            userTracker.userId
-        ) == 1
-    }
+    /**
+     * Weather data is always considered enabled because AxQuickLook handles weather
+     * rendering inside the active Axion clock face. The BC smartspace pipeline is
+     * permanently disabled — see LockscreenSmartspaceController.isEnabled.
+     */
+    private fun getLockscreenWeatherEnabled(): Boolean = true
 }
