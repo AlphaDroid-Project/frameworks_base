@@ -19,7 +19,6 @@ package com.android.systemui.keyguard.ui.view.layout.sections
 
 import android.content.Context
 import android.view.View
-import androidx.constraintlayout.widget.Barrier
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.constraintlayout.widget.ConstraintSet
 import androidx.constraintlayout.widget.ConstraintSet.BOTTOM
@@ -32,7 +31,6 @@ import androidx.constraintlayout.widget.ConstraintSet.VISIBLE
 import androidx.constraintlayout.widget.ConstraintSet.MATCH_CONSTRAINT
 import androidx.constraintlayout.widget.ConstraintSet.WRAP_CONTENT
 import com.android.systemui.customization.R as custR
-import com.android.systemui.customization.clocks.R as clocksR
 import com.android.systemui.dagger.SysUISingleton
 import com.android.systemui.keyguard.domain.interactor.KeyguardBlueprintInteractor
 import com.android.systemui.keyguard.domain.interactor.KeyguardClockInteractor
@@ -49,7 +47,6 @@ import com.android.systemui.res.R
 import com.android.systemui.shade.LargeScreenHeaderHelper
 import com.android.systemui.shade.ShadeDisplayAware
 import com.android.systemui.shared.R as sharedR
-import com.android.systemui.shared.clocks.useAxClocks
 import com.android.systemui.util.ui.value
 import dagger.Lazy
 import javax.inject.Inject
@@ -112,7 +109,6 @@ constructor(
         clock: ClockController,
         constraintSet: ConstraintSet,
     ): ConstraintSet {
-        val isLargeVisible = keyguardClockViewModel.isLargeClockVisible.value
         val targetFace = getTargetClockFace(clock)
         val nonTargetFace = getNonTargetClockFace(clock)
         val targetViews = targetFace.views
@@ -129,26 +125,18 @@ constructor(
             setAlpha(targetViews, 1F)
             setAlpha(nonTargetViews, 0F)
 
-            if (!keyguardClockViewModel.isLargeClockVisible.value) {
-                if (keyguardClockViewModel.shouldDateWeatherBeBelowSmallClock.value && !useAxClocks) {
-                    connect(
-                        sharedR.id.bc_smartspace_view,
-                        TOP,
-                        sharedR.id.date_smartspace_view,
-                        BOTTOM,
-                    )
-                }
-            } else {
-                if (aodBurnInViewModel.movement.value.scaleClockOnly) {
-                    setScaleX(
-                        getTargetClockFace(clock).views,
-                        aodBurnInViewModel.movement.value.scale,
-                    )
-                    setScaleY(
-                        getTargetClockFace(clock).views,
-                        aodBurnInViewModel.movement.value.scale,
-                    )
-                }
+            if (
+                keyguardClockViewModel.isLargeClockVisible.value &&
+                    aodBurnInViewModel.movement.value.scaleClockOnly
+            ) {
+                setScaleX(
+                    getTargetClockFace(clock).views,
+                    aodBurnInViewModel.movement.value.scale,
+                )
+                setScaleY(
+                    getTargetClockFace(clock).views,
+                    aodBurnInViewModel.movement.value.scale,
+                )
             }
         }
     }
@@ -161,85 +149,20 @@ constructor(
         if (keyguardClockViewModel.isLargeClockVisible.value) clock.smallClock.layout
         else clock.largeClock.layout
 
-    private fun constrainWeatherClockDateIconsBarrier(constraints: ConstraintSet) {
-        constraints.apply {
-            createBarrier(
-                R.id.weather_clock_bc_smartspace_bottom,
-                Barrier.BOTTOM,
-                context.resources.getDimensionPixelSize(clocksR.dimen.enhanced_smartspace_height),
-                (ClockViewIds.WEATHER_CLOCK_TIME),
-            )
-            if (
-                rootViewModel.isNotifIconContainerVisible.value.value &&
-                    keyguardClockViewModel.hasAodIcons.value
-            ) {
-                createBarrier(
-                    ClockViewIds.WEATHER_CLOCK_DATE_BARRIER_BOTTOM,
-                    Barrier.BOTTOM,
-                    0,
-                    *intArrayOf(
-                        R.id.aod_notification_icon_container,
-                        R.id.weather_clock_bc_smartspace_bottom,
-                    ),
-                )
-            } else {
-                createBarrier(
-                    ClockViewIds.WEATHER_CLOCK_DATE_BARRIER_BOTTOM,
-                    Barrier.BOTTOM,
-                    0,
-                    *intArrayOf(R.id.weather_clock_bc_smartspace_bottom),
-                )
-            }
-        }
-    }
-
     fun applyDefaultConstraints(constraints: ConstraintSet) {
-        val isLargeVisible = keyguardClockViewModel.isLargeClockVisible.value
         val guideline =
             if (keyguardClockViewModel.clockShouldBeCentered.value) PARENT_ID
             else R.id.split_shade_guideline
         constraints.apply {
             connect(ClockViewIds.LOCKSCREEN_CLOCK_VIEW_LARGE, START, PARENT_ID, START)
             connect(ClockViewIds.LOCKSCREEN_CLOCK_VIEW_LARGE, END, guideline, END)
-            if (
-                com.android.systemui.shared.Flags.clockReactiveSmartspaceLayout() &&
-                    !com.android.systemui.shared.Flags.clockReactiveVariants() 
-                    && !useAxClocks
-            ) {
-                connect(
-                    ClockViewIds.LOCKSCREEN_CLOCK_VIEW_LARGE,
-                    BOTTOM,
-                    R.id.device_entry_icon_view,
-                    TOP,
-                    context.resources.getDimensionPixelSize(
-                        clocksR.dimen.date_weather_view_height
-                    ) * 2,
-                )
-            } else {
-                connect(
-                    ClockViewIds.LOCKSCREEN_CLOCK_VIEW_LARGE,
-                    BOTTOM,
-                    R.id.device_entry_icon_view,
-                    TOP,
-                )
-            }
-            val largeClockTopMargin =
-                if (useAxClocks) {
-                    keyguardClockViewModel.getLargeClockTopMargin()
-                } else if (com.android.systemui.shared.Flags.clockReactiveSmartspaceLayout()) {
-                    keyguardClockViewModel.getLargeClockTopMargin() +
-                        context.resources.getDimensionPixelSize(
-                            clocksR.dimen.enhanced_smartspace_height
-                        )
-                } else {
-                    keyguardClockViewModel.getLargeClockTopMargin() +
-                        context.resources.getDimensionPixelSize(
-                            clocksR.dimen.date_weather_view_height
-                        ) +
-                        context.resources.getDimensionPixelSize(
-                            clocksR.dimen.enhanced_smartspace_height
-                        )
-                }
+            connect(
+                ClockViewIds.LOCKSCREEN_CLOCK_VIEW_LARGE,
+                BOTTOM,
+                R.id.device_entry_icon_view,
+                TOP,
+            )
+            val largeClockTopMargin = keyguardClockViewModel.getLargeClockTopMargin()
             connect(
                 ClockViewIds.LOCKSCREEN_CLOCK_VIEW_LARGE,
                 TOP,
@@ -285,10 +208,6 @@ constructor(
             // Explicitly clear pivot to force recalculate pivot instead of using legacy value
             setTransformPivot(ClockViewIds.LOCKSCREEN_CLOCK_VIEW_LARGE, Float.NaN, Float.NaN)
 
-            val smallClockBottom =
-                keyguardClockViewModel.getSmallClockTopMargin() +
-                    context.resources.getDimensionPixelSize(clocksR.dimen.small_clock_height)
-                    - context.resources.getDimensionPixelSize(R.dimen.keyguard_clock_top_margin)
             val marginBetweenSmartspaceAndNotification =
                 context.resources.getDimensionPixelSize(
                     R.dimen.keyguard_status_view_bottom_margin
@@ -299,25 +218,11 @@ constructor(
                         0
                     }
 
-            if (keyguardClockViewModel.shouldDateWeatherBeBelowSmallClock.value && !useAxClocks) {
-                val dateWeatherSmartspaceHeight =
-                    context.resources
-                        .getDimensionPixelSize(clocksR.dimen.date_weather_view_height)
-                        .toFloat()
-                clockInteractor.setNotificationStackDefaultTop(
-                    smallClockBottom +
-                        dateWeatherSmartspaceHeight +
-                        marginBetweenSmartspaceAndNotification
-                )
-            } else {
-                clockInteractor.setNotificationStackDefaultTop(
-                    (keyguardClockViewModel.getSmallClockTopMargin() +
-                            marginBetweenSmartspaceAndNotification)
-                        .toFloat()
-                )
-            }
+            clockInteractor.setNotificationStackDefaultTop(
+                (keyguardClockViewModel.getSmallClockTopMargin() +
+                        marginBetweenSmartspaceAndNotification)
+                    .toFloat()
+            )
         }
-
-        if (!useAxClocks) constrainWeatherClockDateIconsBarrier(constraints)
     }
 }

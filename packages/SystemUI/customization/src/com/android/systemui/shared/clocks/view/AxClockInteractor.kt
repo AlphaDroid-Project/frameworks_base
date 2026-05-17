@@ -97,7 +97,11 @@ class AxClockInteractor(
 
     fun refreshDate() {
         if (cachedDateFormat == null || cachedDateLocale != locale) {
-            cachedDateFormat = SimpleDateFormat("EEE, dd MMM", locale)
+            // Respect the locale's preferred day/month order (en_US: "Thu, May 14",
+            // en_GB/pt_PT: "Thu, 14 May") instead of hardcoding day-first. Matches the
+            // skeleton used by BC IcuDateTextView (cr_strings smartspace_icu_date_pattern).
+            val pattern = DateFormat.getBestDateTimePattern(locale, "EEEMMMd")
+            cachedDateFormat = SimpleDateFormat(pattern, locale)
             cachedDateLocale = locale
         }
         state.dateStrFlow.value = cachedDateFormat!!.format(calendar.time)

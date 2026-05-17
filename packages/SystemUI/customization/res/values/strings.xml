@@ -29,7 +29,6 @@
     <string name="clock_id_ndot">NDOT</string>
     <string name="clock_id_ntype">DEFAULT</string>
     <string name="clock_id_old_quick_look">OLD_QUICKLOOK</string>
-    <string name="clock_id_quick_look">QUICKLOOK</string>
     <string name="clock_id_polyline">POLYLINE</string>
     <string name="clock_id_space_age">SPACE_AGE</string>
     <string name="clock_id_cyberpunk">CYBERPUNK</string>
