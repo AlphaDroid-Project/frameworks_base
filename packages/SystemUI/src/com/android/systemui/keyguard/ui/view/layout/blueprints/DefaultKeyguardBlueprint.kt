@@ -36,8 +36,6 @@ import com.android.systemui.keyguard.ui.view.layout.sections.DefaultStatusBarSec
 import com.android.systemui.keyguard.ui.view.layout.sections.DefaultUdfpsAccessibilityOverlaySection
 import com.android.systemui.keyguard.ui.view.layout.sections.AxDynamicBarKeyguardChipSection
 import com.android.systemui.keyguard.ui.view.layout.sections.KeyguardSectionsModule.Companion.KEYGUARD_AMBIENT_INDICATION_AREA_SECTION
-import com.android.systemui.keyguard.ui.view.layout.sections.KeyguardSliceViewSection
-import com.android.systemui.keyguard.ui.view.layout.sections.KeyguardWeatherViewSection
 import com.android.systemui.keyguard.ui.view.layout.sections.KeyguardWidgetViewSection
 import com.android.systemui.keyguard.ui.view.layout.sections.SmartspaceSection
 import java.util.Optional
@@ -70,8 +68,6 @@ constructor(
     aodBurnInSection: AodBurnInSection,
     clockSection: ClockSection,
     smartspaceSection: SmartspaceSection,
-    keyguardWeatherViewSection: KeyguardWeatherViewSection,
-    keyguardSliceViewSection: KeyguardSliceViewSection,
     keyguardWidgetViewSection: KeyguardWidgetViewSection,
     axDynamicBarKeyguardChipSection: AxDynamicBarKeyguardChipSection,
     udfpsAccessibilityOverlaySection: DefaultUdfpsAccessibilityOverlaySection,
@@ -94,8 +90,6 @@ constructor(
             smartspaceSection,
             aodBurnInSection,
             clockSection,
-            keyguardWeatherViewSection,
-            keyguardSliceViewSection,
             keyguardWidgetViewSection,
             defaultDeviceEntrySection,
             udfpsAccessibilityOverlaySection, // Add LAST: Intentionally has z-order above others
