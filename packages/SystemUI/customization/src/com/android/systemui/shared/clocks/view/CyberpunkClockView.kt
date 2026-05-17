@@ -258,8 +258,10 @@ class CyberpunkClockView @JvmOverloads constructor(
                     )
                     Spacer(modifier = Modifier.width(8.dp))
 
+                    // Decorative label only; the real date is rendered once by
+                    // EnhancedDateArea below to avoid duplicating it with BC smartspace.
                     Text(
-                        text = dateStr.uppercase().ifEmpty { "2077" },
+                        text = "2077",
                         modifier = Modifier.padding(horizontal = 4.dp),
                         style = TextStyle(
                             fontSize = 16.sp,

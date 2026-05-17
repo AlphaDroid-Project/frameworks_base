@@ -547,7 +547,7 @@ constructor(
             depthBlockedByBouncer = showing
             updateDepthVisibility()
         }
-        override fun onDozingChanged() {
+        override fun onDozingChanged(dozing: Boolean) {
             updateDepthVisibility()
         }
         override fun onKeyguardShowingChanged(showing: Boolean) {

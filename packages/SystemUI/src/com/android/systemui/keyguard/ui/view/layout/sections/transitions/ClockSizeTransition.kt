@@ -84,7 +84,6 @@ class ClockSizeTransition(
             val parent = view.parent as View
             val targetSSView =
                 parent.findViewById<View>(sharedR.id.bc_smartspace_view)
-                    ?: parent.findViewById<View>(R.id.keyguard_slice_view)
             if (targetSSView == null) {
                 logger.e({ "Failed to find smartspace equivalent target under $str1" }) {
                     str1 = "$parent"

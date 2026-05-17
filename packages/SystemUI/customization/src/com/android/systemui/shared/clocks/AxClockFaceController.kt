@@ -35,8 +35,12 @@ class AxClockFaceController(
     override var animations: ClockAnimations = AxClockAnimations(view, 0.0f, 0.0f)
         internal set
 
+    // hasCustomWeatherDataDisplay = true for both small + large variants: every Axion face
+    // renders its own date/weather row via EnhancedDateArea (or an equivalent inline path),
+    // so the framework should hide BC date_smartspace_view / weather_smartspace_view whenever
+    // an Axion face is active, regardless of clock size. See §12 of axion-integration-plan.md.
     override val config: ClockFaceConfig =
-        ClockFaceConfig(clockTickRate, false, false, false)
+        ClockFaceConfig(clockTickRate, true, false, false)
 
     override var theme = ThemeConfig(true, null)
 

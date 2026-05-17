@@ -90,6 +90,7 @@ public final class BcSmartspaceDataProvider implements BcSmartspaceDataPlugin {
         mSmartspaceTargets =
                 list.stream()
                         .filter(target -> target.getFeatureType() != 15)
+                        .filter(target -> target.getFeatureType() != 25)
                         .collect(Collectors.toList());
 
         mSmartspaceTargetListeners.forEach(

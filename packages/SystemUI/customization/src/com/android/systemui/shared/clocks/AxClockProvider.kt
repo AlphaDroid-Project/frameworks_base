@@ -16,20 +16,14 @@ package com.android.systemui.shared.clocks
 
 import android.content.Context
 import android.content.res.Resources
-import android.graphics.drawable.Drawable
-import android.os.Vibrator
 import android.util.Log
 import android.view.LayoutInflater
 import com.android.systemui.customization.R
 import com.android.systemui.plugins.keyguard.ui.clocks.*
 
-const val useAxClocks = true
-
 class AxClockProvider(
     private val layoutInflater: LayoutInflater,
     private val resources: Resources,
-    private val isClockReactiveVariantsEnabled: Boolean = false,
-    private val vibrator: Vibrator?,
 ) : ClockProvider {
 
     private val tag = "AxClockProvider"

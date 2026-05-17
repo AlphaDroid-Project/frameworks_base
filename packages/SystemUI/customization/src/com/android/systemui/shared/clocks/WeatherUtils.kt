@@ -19,7 +19,7 @@ import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Canvas
 import android.graphics.drawable.Drawable
-import com.android.internal.util.android.OmniJawsClient
+import com.android.internal.util.alpha.OmniJawsClient
 import com.android.systemui.plugins.keyguard.ui.clocks.ClockWeatherData
 
 object WeatherUtils {

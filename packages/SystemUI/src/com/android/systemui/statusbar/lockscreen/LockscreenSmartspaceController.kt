@@ -34,8 +34,6 @@ import android.os.UserHandle
 import android.provider.Settings
 import android.provider.Settings.Secure.LOCK_SCREEN_ALLOW_PRIVATE_NOTIFICATIONS
 import android.provider.Settings.Secure.LOCK_SCREEN_SHOW_NOTIFICATIONS
-import android.provider.Settings.Secure.LOCKSCREEN_SMARTSPACE_ENABLED
-import android.provider.Settings.System.LOCKSCREEN_WEATHER_ENABLED
 import android.util.Log
 import android.view.ContextThemeWrapper
 import android.view.View
@@ -307,26 +305,29 @@ constructor(
         get() = datePlugin != null && weatherPlugin != null
 
     val isWeatherEnabled: Boolean
-        get() {
-            val showWeather =
-                secureSettings.getIntForUser(LOCKSCREEN_SMARTSPACE_ENABLED, 1, userTracker.userId) ==
-                    1
-            return showWeather
-        }
+        get() = false
 
     val isOmniWeatherEnabled: Boolean
-        get() {
-            val showCustomWeather =
-                systemSettings.getIntForUser(
-                    LOCKSCREEN_WEATHER_ENABLED,
-                    0,
-                    userTracker.userId,
-                ) == 1
-            return showCustomWeather && !isWeatherEnabled && !isCustomClockEnabled
-        }
+        get() = false
 
+    /**
+     * BC smartspace is permanently disabled. Axion clocks render their own date/weather/
+     * alarm/now-playing via AxQuickLook — the BC pipeline (date_smartspace_view,
+     * weather_smartspace_view, bc_smartspace_view) would always duplicate that content.
+     * See axion-integration-plan.md §12.
+     */
     val isEnabled: Boolean
-        get() = plugin != null && isWeatherEnabled
+        get() = false
+
+    /**
+     * Whether some path is responsible for surfacing smartspace-style content (next alarm,
+     * now-playing, calendar, weather) on the lockscreen — either the BC plugin (source =
+     * GOOGLE) or the Axion clock + AxQuickLook bridge (source = AXION). Used by view
+     * sections (e.g. the legacy keyguard slice) that should not draw redundant content
+     * while either of those paths is active.
+     */
+    val isSmartspaceContentActive: Boolean
+        get() = true
 
     private fun updateBypassEnabled() {
         val bypassEnabled = bypassController.bypassEnabled

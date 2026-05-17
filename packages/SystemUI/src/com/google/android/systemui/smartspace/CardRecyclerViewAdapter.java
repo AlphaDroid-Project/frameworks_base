@@ -731,22 +731,15 @@ public final class CardRecyclerViewAdapter
                             smartspaceTargets.stream().collect(Collectors.toList()), runnable);
                 }
                 hasAodLockscreenTransition = targets != lockscreenTargets;
-                if (configProvider.isDefaultDateWeatherDisabled()
-                        || BcSmartspaceDataPlugin.UI_SURFACE_HOME_SCREEN.equals(uiSurface)) {}
                 BcSmartspaceTemplateDataUtils.updateVisibility(
                         root, smartspaceTargets.isEmpty() ? View.GONE : View.VISIBLE);
                 return;
             }
         }
-        z2 = false;
-        if (smartspaceTargets == lockscreenTargets) {}
-        if (!z2) {}
-        if (!z) {}
         viewHolders.clear();
         resetListIfNeeded();
         mDiffer.submitList(smartspaceTargets.stream().collect(Collectors.toList()), runnable);
         hasAodLockscreenTransition = targets != lockscreenTargets;
-        if (configProvider.isDefaultDateWeatherDisabled()) {}
     }
 
     public final void setTargets(List<SmartspaceTarget> list, Runnable runnable) {
