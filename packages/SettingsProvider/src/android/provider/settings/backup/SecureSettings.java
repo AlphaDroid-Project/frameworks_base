@@ -281,6 +281,7 @@ public class SecureSettings {
         Settings.Secure.CONTEXTUAL_SCREEN_TIMEOUT_ENABLED,
         Settings.Secure.HINGE_ANGLE_LIDEVENT_ENABLED,
         Settings.Secure.LOCKSCREEN_SMARTSPACE_ENABLED,
+        Settings.Secure.LOCKSCREEN_SMARTSPACE_SOURCE,
         Settings.Secure.HEARING_AID_RINGTONE_ROUTING,
         Settings.Secure.HEARING_AID_CALL_ROUTING,
         Settings.Secure.HEARING_AID_MEDIA_ROUTING,

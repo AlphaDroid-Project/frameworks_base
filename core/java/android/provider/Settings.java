@@ -15570,6 +15570,32 @@ public final class Settings {
         public static final String LOCKSCREEN_SMARTSPACE_ENABLED = "lockscreen_smartspace_enabled";
 
         /**
+         * Selects the lockscreen smartspace data source.
+         *
+         * <ul>
+         *   <li>{@code 0} ({@link #LOCKSCREEN_SMARTSPACE_SOURCE_AXION}): AxQuickLook only —
+         *       smartspace data is rendered inside the active Axion clock face.</li>
+         *   <li>{@code 1} ({@link #LOCKSCREEN_SMARTSPACE_SOURCE_GOOGLE}): Google BC only —
+         *       smartspace data is rendered in the BC carousel below the clock.</li>
+         *   <li>{@code 2} ({@link #LOCKSCREEN_SMARTSPACE_SOURCE_NONE}): no smartspace, falls
+         *       back to the OmniJaws weather chip when {@code LOCKSCREEN_WEATHER_ENABLED} is
+         *       set.</li>
+         * </ul>
+         *
+         * @hide
+         */
+        public static final String LOCKSCREEN_SMARTSPACE_SOURCE = "lockscreen_smartspace_source";
+
+        /** @hide */
+        public static final int LOCKSCREEN_SMARTSPACE_SOURCE_AXION = 0;
+
+        /** @hide */
+        public static final int LOCKSCREEN_SMARTSPACE_SOURCE_GOOGLE = 1;
+
+        /** @hide */
+        public static final int LOCKSCREEN_SMARTSPACE_SOURCE_NONE = 2;
+
+        /**
          * Whether the feature that the device will fire a haptic when users scroll and hit
          * the edge of the screen is enabled.
          *
