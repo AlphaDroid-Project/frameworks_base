@@ -1,0 +1,192 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    SPDX-FileCopyrightText: 2026 AlphaDroid
+    SPDX-License-Identifier: Apache-2.0
+-->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/weather_dialog_content"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:paddingStart="16dp"
+    android:paddingEnd="16dp"
+    android:paddingTop="16dp"
+    android:paddingBottom="16dp"
+    android:background="@drawable/qs_dialog_bg">
+
+    <!-- No-data fallback -->
+    <TextView
+        android:id="@+id/weather_no_data"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/omnijaws_service_unknown"
+        android:textSize="13sp"
+        android:textColor="?android:attr/textColorSecondary"
+        android:gravity="center"
+        android:paddingTop="8dp"
+        android:paddingBottom="8dp"
+        android:visibility="gone" />
+
+    <!-- Current conditions row — mirrors OmniJaws large widget layout -->
+    <LinearLayout
+        android:id="@+id/weather_current_row"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_marginBottom="12dp">
+
+        <!-- Left spacer -->
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1" />
+
+        <!-- Condition icon + temperature -->
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <ImageView
+                android:id="@+id/weather_current_icon"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:layout_gravity="center_vertical"
+                android:scaleType="centerInside"
+                android:contentDescription="@string/weather_current_condition_desc" />
+
+            <TextView
+                android:id="@+id/weather_current_temp"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_vertical"
+                android:layout_marginStart="4dp"
+                android:textSize="28sp"
+                android:textStyle="bold"
+                android:textColor="?android:attr/textColorPrimary" />
+
+        </LinearLayout>
+
+        <!-- City + wind/humidity details -->
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="8"
+            android:layout_gravity="center_vertical"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/weather_city_name"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center_horizontal"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                android:textColor="?android:attr/textColorPrimary"
+                android:ellipsize="end"
+                android:maxLines="2" />
+
+            <!-- Wind + humidity row, centered -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_horizontal"
+                android:orientation="horizontal">
+
+                <!-- Left spacer -->
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1" />
+
+                <ImageView
+                    android:id="@+id/weather_wind_icon"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center_vertical"
+                    android:src="@drawable/ic_wind_symbol_small"
+                    android:tint="?android:attr/textColorPrimary"
+                    android:contentDescription="" />
+
+                <TextView
+                    android:id="@+id/weather_wind_info"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center_vertical"
+                    android:singleLine="true"
+                    android:textSize="11sp"
+                    android:textColor="?android:attr/textColorSecondary" />
+
+                <ImageView
+                    android:id="@+id/weather_wind_direction_icon"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center_vertical"
+                    android:layout_marginStart="4dp"
+                    android:src="@drawable/ic_wind_direction_symbol_small"
+                    android:tint="?android:attr/textColorPrimary"
+                    android:contentDescription="" />
+
+                <TextView
+                    android:id="@+id/weather_wind_direction"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center_vertical"
+                    android:singleLine="true"
+                    android:textSize="11sp"
+                    android:textColor="?android:attr/textColorSecondary" />
+
+                <ImageView
+                    android:id="@+id/weather_humidity_icon"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center_vertical"
+                    android:layout_marginStart="4dp"
+                    android:src="@drawable/ic_humidity_symbol_small"
+                    android:tint="?android:attr/textColorPrimary"
+                    android:contentDescription="" />
+
+                <TextView
+                    android:id="@+id/weather_humidity_info"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center_vertical"
+                    android:singleLine="true"
+                    android:textSize="11sp"
+                    android:textColor="?android:attr/textColorSecondary" />
+
+                <!-- Right spacer -->
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1" />
+
+            </LinearLayout>
+
+        </LinearLayout>
+
+        <!-- Right spacer -->
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1" />
+
+    </LinearLayout>
+
+    <!-- Divider -->
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="?android:attr/listDivider"
+        android:layout_marginBottom="10dp" />
+
+    <!-- 5-day forecast row -->
+    <LinearLayout
+        android:id="@+id/weather_forecast_container"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center" />
+
+</LinearLayout>

@@ -129,6 +129,10 @@
     <string name="omnijaws_service_unknown">No weather data</string>
     <string name="omnijaws_label_default">Weather</string>
 
+    <!-- Weather Tile Dialog -->
+    <string name="weather_current_condition_desc">Current weather condition</string>
+    <string name="weather_forecast_condition_desc">Forecast weather condition</string>
+
     <!-- Refresh Rate Tile -->
     <string name="refresh_rate_tile_label">Refresh rate</string>
     <string name="auto_mode_label">Auto</string>
