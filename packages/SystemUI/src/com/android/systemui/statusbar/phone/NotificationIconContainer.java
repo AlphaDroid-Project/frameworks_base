@@ -268,6 +268,18 @@ public class NotificationIconContainer extends ViewGroup {
         super.onAttachedToWindow();
         mSettingsObserver = new SettingsObserver(new Handler());
         mSettingsObserver.register();
+        ClockSettingsRepository.init(getContext());
+        getContext().getContentResolver().registerContentObserver(
+            ClockSettingsRepository.clockFaceUri,
+            false,
+            mClockSettingsObserver
+        );
+        getContext().getContentResolver().registerContentObserver(
+            ClockSettingsRepository.alignmentUri,
+            false,
+            mClockSettingsObserver
+        );
+        updateShouldCenterIcons();
     }
 
     @Override
@@ -276,6 +288,7 @@ public class NotificationIconContainer extends ViewGroup {
         if (mSettingsObserver != null) {
             mSettingsObserver.unregister();
         }
+        getContext().getContentResolver().unregisterContentObserver(mClockSettingsObserver);
     }
 
     @Override
@@ -970,27 +983,6 @@ public class NotificationIconContainer extends ViewGroup {
                 }
             }
         }
-    }
-    @Override
-    protected void onAttachedToWindow() {
-        super.onAttachedToWindow();
-        ClockSettingsRepository.init(getContext());
-        getContext().getContentResolver().registerContentObserver(
-            ClockSettingsRepository.clockFaceUri,
-            false,
-            mClockSettingsObserver
-        );
-        getContext().getContentResolver().registerContentObserver(
-            ClockSettingsRepository.alignmentUri,
-            false,
-            mClockSettingsObserver
-        );
-        updateShouldCenterIcons();
-    }
-    @Override
-    protected void onDetachedFromWindow() {
-        super.onDetachedFromWindow();
-        getContext().getContentResolver().unregisterContentObserver(mClockSettingsObserver);
     }
     private void updateShouldCenterIcons() {
         final boolean shouldCenter = ClockSettingsRepository.shouldCenterIcons(getContext());
