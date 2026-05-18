@@ -661,7 +661,7 @@ class BitmapDigitComposeClockView @JvmOverloads constructor(
         val (time, date, isDoze, screenOff, regionDark) = rememberClockState()
 
         Box(
-            modifier = Modifier.fillMaxSize(),
+            modifier = Modifier.fillMaxWidth().aspectRatio(1f),
             contentAlignment = Alignment.Center,
         ) {
             Box(modifier = Modifier.fillMaxSize().analogDrawModifier(config, time, isDoze, screenOff, regionDark))
