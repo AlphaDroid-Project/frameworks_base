@@ -203,7 +203,7 @@ class OldQuickLookClockView @JvmOverloads constructor(
         }
 
         Box(
-            modifier = Modifier.fillMaxSize(),
+            modifier = Modifier.fillMaxWidth().wrapContentHeight(),
             contentAlignment = Alignment.Center,
         ) {
             Column(
