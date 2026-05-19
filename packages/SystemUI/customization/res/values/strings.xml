@@ -34,6 +34,8 @@
     <string name="clock_id_cyberpunk">CYBERPUNK</string>
     <string name="clock_id_axion_age">AXION_AGE</string>
     <string name="clock_id_segments">SEGMENTS</string>
+    <string name="clock_id_stylish2">STYLISH_2</string>
+    <string name="clock_id_stylish7">STYLISH_7</string>
     <string name="clock_image_placeholder">?</string>
     <string name="clock_old_quick_look_image_placeholder">__°</string>
     <string name="clock_text_placeholder">: )</string>

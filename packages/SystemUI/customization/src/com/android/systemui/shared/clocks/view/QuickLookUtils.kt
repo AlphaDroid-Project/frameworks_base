@@ -19,10 +19,18 @@ package com.android.systemui.shared.clocks.view
 import android.graphics.Typeface
 import androidx.compose.ui.text.font.FontFamily
 
-fun splitTimeLines(time: String): Pair<String, String> = when (time.length) {
-    4 -> time.substring(0, 2) to time.substring(2, 4)
-    3 -> time.substring(0, 1) to time.substring(1, 3)
-    else -> "" to ""
+fun splitTimeLines(time: String): Pair<String, String> {
+    if (time.contains(":")) {
+        val parts = time.split(":")
+        if (parts.size == 2) {
+            return parts[0] to parts[1]
+        }
+    }
+    return when (time.length) {
+        4 -> time.substring(0, 2) to time.substring(2, 4)
+        3 -> time.substring(0, 1) to time.substring(1, 3)
+        else -> "" to ""
+    }
 }
 
 fun resolveBodyFontFamily(): FontFamily {

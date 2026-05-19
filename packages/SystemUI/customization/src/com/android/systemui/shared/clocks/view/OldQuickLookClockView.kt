@@ -207,12 +207,14 @@ class OldQuickLookClockView @JvmOverloads constructor(
             contentAlignment = Alignment.Center,
         ) {
             Column(
+                modifier = Modifier.fillMaxWidth(),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center,
             ) {
                 Column(
+                    modifier = Modifier.fillMaxWidth(),
                     horizontalAlignment = Alignment.CenterHorizontally,
-                    ) {
+                ) {
                     Text(
                         text = hours,
                         maxLines = 1,

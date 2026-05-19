@@ -84,6 +84,16 @@ enum class AxClockType(
         viewId = R.layout.clock_bitmap_compose,
         largeViewId = R.layout.clock_bitmap_compose_large,
         bitmapFaceStyle = ClockFaceStyle.SEGMENTS
+    ),
+    STYLISH_2(
+        clockId = R.string.clock_id_stylish2,
+        viewId = R.layout.clock_stylish2,
+        largeViewId = R.layout.clock_stylish2_large
+    ),
+    STYLISH_7(
+        clockId = R.string.clock_id_stylish7,
+        viewId = R.layout.clock_stylish7,
+        largeViewId = R.layout.clock_stylish7_large
     );
 
     companion object {
