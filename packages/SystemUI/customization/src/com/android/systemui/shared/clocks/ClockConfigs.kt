@@ -117,6 +117,26 @@ object ClockConfigs {
             Align.CENTER,
             visible = false,
         ),
+        "Stylish2ClockView" to ClockStyleConfig(
+            Position.ABOVE,
+            Align.CENTER,
+            visible = false,
+        ),
+        "Stylish2ClockView_large" to ClockStyleConfig(
+            Position.BELOW,
+            Align.CENTER,
+            visible = false,
+        ),
+        "Stylish7ClockView" to ClockStyleConfig(
+            Position.ABOVE,
+            Align.CENTER,
+            visible = false,
+        ),
+        "Stylish7ClockView_large" to ClockStyleConfig(
+            Position.BELOW,
+            Align.CENTER,
+            visible = false,
+        ),
     )
 }
 

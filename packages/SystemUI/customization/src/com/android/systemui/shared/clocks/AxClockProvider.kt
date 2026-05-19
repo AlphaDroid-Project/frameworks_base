@@ -67,6 +67,8 @@ class AxClockProvider(
             add(AxClockType.CYBERPUNK)
             add(AxClockType.AXION_AGE)
             add(AxClockType.SEGMENTS)
+            add(AxClockType.STYLISH_2)
+            add(AxClockType.STYLISH_7)
         }
 
         return availableTypes.map { type ->
