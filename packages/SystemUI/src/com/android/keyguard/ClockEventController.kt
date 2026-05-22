@@ -529,22 +529,15 @@ constructor(
                     clock?.largeClock?.events?.onPulsingChanged(pulsing)
                 }
             }
-    private var depthBlockedByFading = false
-    private var depthBlockedByGoingAway = false
-    private var depthBlockedByBouncer = false
-    private var depthBlockedByAlpha = false
     private var depthBlockedByDozeAmount = false
     private val depthScrimListener = object : ScrimUtils.ScrimEventListener {
         override fun onKeyguardFadingAwayChanged(fadingAway: Boolean) {
-            depthBlockedByFading = fadingAway
             updateDepthVisibility()
         }
         override fun onKeyguardGoingAwayChanged(goingAway: Boolean) {
-            depthBlockedByGoingAway = goingAway
             updateDepthVisibility()
         }
         override fun onPrimaryBouncerShowingChanged(showing: Boolean) {
-            depthBlockedByBouncer = showing
             updateDepthVisibility()
         }
         override fun onDozingChanged(dozing: Boolean) {
@@ -554,7 +547,6 @@ constructor(
             updateDepthVisibility()
         }
         override fun onKeyguardAlphaChanged(alpha: Float) {
-            depthBlockedByAlpha = alpha < 1f
             updateDepthVisibility()
         }
     }
@@ -562,10 +554,6 @@ constructor(
         val scrim = ScrimUtils.get()
         val visible = scrim.isKeyguardShowing()
             && !scrim.isDozing()
-            && !depthBlockedByFading
-            && !depthBlockedByGoingAway
-            && !depthBlockedByBouncer
-            && !depthBlockedByAlpha
             && !depthBlockedByDozeAmount
         clock?.events?.onDepthEffectVisibilityChanged(visible)
     }

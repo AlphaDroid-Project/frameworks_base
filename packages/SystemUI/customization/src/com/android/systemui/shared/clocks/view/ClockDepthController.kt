@@ -35,6 +35,21 @@ class ClockDepthController(private val view: View) {
         style = Paint.Style.FILL
     }
 
+    private val currentGlobalMatrix = Matrix()
+    private val lastGlobalMatrix = Matrix()
+
+    private val preDrawListener = android.view.ViewTreeObserver.OnPreDrawListener {
+        if (shouldApplyDepth()) {
+            currentGlobalMatrix.reset()
+            view.transformMatrixToGlobal(currentGlobalMatrix)
+            if (currentGlobalMatrix != lastGlobalMatrix) {
+                lastGlobalMatrix.set(currentGlobalMatrix)
+                view.invalidate()
+            }
+        }
+        true
+    }
+
     private val wallpaperMaxScale: Float = try {
         val id = Resources.getSystem().getIdentifier(
             "config_wallpaperMaxScale", "dimen", "android"
@@ -78,6 +93,7 @@ class ClockDepthController(private val view: View) {
         if (!enabled) return
         DepthWallpaperProvider.init(view.context)
         DepthWallpaperProvider.addListener(listener)
+        view.viewTreeObserver.addOnPreDrawListener(preDrawListener)
     }
 
     fun onDetached() {
@@ -85,6 +101,7 @@ class ClockDepthController(private val view: View) {
         maskAnimator = null
         maskAlpha = 0f
         revealProgress = 0f
+        view.viewTreeObserver.removeOnPreDrawListener(preDrawListener)
         DepthWallpaperProvider.removeListener(listener)
         subjectPath = null
         depthActive = false
@@ -101,9 +118,7 @@ class ClockDepthController(private val view: View) {
         if (visible) {
             animateReveal()
         } else {
-            maskAlpha = 0f
-            revealProgress = 0f
-            view.postInvalidateOnAnimation()
+            animateHide()
         }
     }
 
@@ -114,10 +129,6 @@ class ClockDepthController(private val view: View) {
 
     fun drawWithDepth(canvas: Canvas, drawSuper: (Canvas) -> Unit) {
         val path = subjectPath ?: run { drawSuper(canvas); return }
-
-        view.getLocationOnScreen(location)
-        val viewX = location[0].toFloat()
-        val viewY = location[1].toFloat()
 
         val realMetrics = DisplayMetrics()
         view.context.display?.getRealMetrics(realMetrics)
@@ -133,9 +144,10 @@ class ClockDepthController(private val view: View) {
         val visibleW: Float
         val visibleH: Float
         if (wallAspect > screenAspect) {
+            // Wallpaper wider than screen — left-aligned on lockscreen (offset 0)
             visibleW = (screenAspect / wallAspect) * 10000f
             visibleH = 10000f
-            cropLeft = (10000f - visibleW) / 2f
+            cropLeft = 0f
             cropTop = 0f
         } else {
             visibleW = 10000f
@@ -150,13 +162,12 @@ class ClockDepthController(private val view: View) {
         if (zoom != 1f) {
             pathMatrix.postScale(zoom, zoom, screenW / 2f, screenH / 2f)
         }
-        pathMatrix.postTranslate(-viewX, -viewY)
 
-        val viewScaleX = view.scaleX
-        val viewScaleY = view.scaleY
-        if (viewScaleX != 1f || viewScaleY != 1f) {
-            pathMatrix.postScale(1f / viewScaleX, 1f / viewScaleY)
-        }
+        // Map from screen coordinates to view-local canvas coordinates
+        val globalToLocal = Matrix()
+        view.transformMatrixToGlobal(globalToLocal)
+        globalToLocal.invert(globalToLocal)
+        pathMatrix.postConcat(globalToLocal)
 
         transformedPath.reset()
         path.transform(pathMatrix, transformedPath)
@@ -164,11 +175,8 @@ class ClockDepthController(private val view: View) {
         val pathBounds = RectF()
         transformedPath.computeBounds(pathBounds, true)
 
-        val layerLeft = -viewX
-        val layerTop = -viewY
-        val layerRight = screenW - viewX
-        val layerBottom = screenH - viewY
-        val layerRect = RectF(layerLeft, layerTop, layerRight, layerBottom)
+        val layerRect = RectF(0f, 0f, screenW, screenH)
+        globalToLocal.mapRect(layerRect)
 
         if (!RectF.intersects(pathBounds, layerRect)) {
             drawSuper(canvas)
@@ -209,7 +217,7 @@ class ClockDepthController(private val view: View) {
                 transformedPath.transform(revealMatrix)
             }
 
-            val layerCount = canvas.saveLayer(layerLeft, layerTop, layerRight, layerBottom, null)
+            val layerCount = canvas.saveLayer(layerRect.left, layerRect.top, layerRect.right, layerRect.bottom, null)
             drawSuper(canvas)
 
             maskPaint.alpha = (maskAlpha * 255f).toInt().coerceIn(0, 255)
