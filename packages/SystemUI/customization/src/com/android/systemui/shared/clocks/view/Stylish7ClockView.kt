@@ -6,17 +6,20 @@
 package com.android.systemui.shared.clocks.view
 
 import android.content.Context
+import android.graphics.Bitmap
+import android.os.UserManager
 import android.util.AttributeSet
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -31,7 +34,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -52,6 +58,31 @@ class Stylish7ClockView @JvmOverloads constructor(
     override fun getTag(): String =
         if (isLargeClock) "Stylish7LargeClockView" else "Stylish7ClockView"
 
+    private val userManager: UserManager? =
+        context.getSystemService(Context.USER_SERVICE) as? UserManager
+
+    private fun loadUserAvatar(): Bitmap? {
+        return try {
+            val userId = android.app.ActivityManager.getCurrentUser()
+            var icon = userManager?.getUserIcon(userId)
+            if (icon == null) {
+                val drawable = com.android.internal.util.UserIcons.getDefaultUserIcon(
+                    context.resources, userId, false
+                )
+                icon = com.android.internal.util.UserIcons.convertToBitmap(drawable)
+            }
+            icon
+        } catch (_: Exception) { null }
+    }
+
+    private fun loadUserName(): String {
+        return try {
+            val userId = android.app.ActivityManager.getCurrentUser()
+            val userInfo = userManager?.getUserInfo(userId)
+            userInfo?.name?.takeIf { it.isNotBlank() } ?: "\u0CA0\u1D25\u0CA0"
+        } catch (_: Exception) { "\u0CA0\u1D25\u0CA0" }
+    }
+
     @Composable
     override fun Content() {
         if (isLargeClock) LargeContent() else SmallContent()
@@ -61,16 +92,16 @@ class Stylish7ClockView @JvmOverloads constructor(
     private fun SmallContent() {
         val (time, date, isDoze, screenOff, regionDark) = rememberClockState()
         val dynSizeScale by ClockSettingsRepository.sizeScale.collectAsState()
-        val tintColor = tintColor(isDoze, screenOff, regionDark)
 
-        val accentColor = if (isDoze) Color.White else Color(0xFF5AC8FA)
-        val bgColor = if (isDoze) Color.White.copy(alpha = 0.06f) else tintColor.copy(alpha = 0.08f)
-        val dividerColor = if (isDoze) Color.White.copy(alpha = 0.3f) else tintColor.copy(alpha = 0.2f)
+        val accent1 = Color(context.getColor(android.R.color.system_accent1_600))
+        val accent3 = Color(context.getColor(android.R.color.system_accent3_600))
 
         val dayOfWeek = remember(date) { formatDayOfWeek() }
         val monthDay = remember(date) { formatMonthDay() }
         val (hours, minutes) = splitTimeLines(time)
         val timeDisplay = "$hours \u2022 $minutes"
+        val avatar = remember { loadUserAvatar() }
+        val userName = remember { loadUserName() }
 
         val contentAlign = when {
             isLeftAligned -> Alignment.CenterStart
@@ -96,18 +127,19 @@ class Stylish7ClockView @JvmOverloads constructor(
                 timeDisplay = timeDisplay,
                 monthDay = monthDay,
                 dayOfWeek = dayOfWeek,
-                tintColor = tintColor,
-                accentColor = accentColor,
-                bgColor = bgColor,
-                dividerColor = dividerColor,
+                accent1 = accent1,
+                accent3 = accent3,
                 isDoze = isDoze,
                 scale = dynSizeScale,
-                profileSize = 36.dp,
-                timeFontSize = 42f,
-                dateFontSize = 14f,
-                dayFontSize = 13f,
-                dividerWidth = 2.dp,
-                sectionHeight = 100.dp,
+                avatar = avatar,
+                userName = userName,
+                profileFrameSize = 75.dp,
+                profileImageSize = 64.dp,
+                timeFontSize = 34f,
+                dateFontSize = 16f,
+                dayFontSize = 20f,
+                userNameSize = 14f,
+                dividerHeight = 32.dp,
             )
         }
     }
@@ -115,16 +147,17 @@ class Stylish7ClockView @JvmOverloads constructor(
     @Composable
     private fun LargeContent() {
         val (time, date, isDoze, screenOff, regionDark) = rememberClockState()
-        val tintColor = tintColor(isDoze, screenOff, regionDark)
+        val dynSizeScale by ClockSettingsRepository.sizeScale.collectAsState()
 
-        val accentColor = if (isDoze) Color.White else Color(0xFF5AC8FA)
-        val bgColor = if (isDoze) Color.White.copy(alpha = 0.06f) else tintColor.copy(alpha = 0.08f)
-        val dividerColor = if (isDoze) Color.White.copy(alpha = 0.3f) else tintColor.copy(alpha = 0.2f)
+        val accent1 = Color(context.getColor(android.R.color.system_accent1_600))
+        val accent3 = Color(context.getColor(android.R.color.system_accent3_600))
 
         val dayOfWeek = remember(date) { formatDayOfWeek() }
         val monthDay = remember(date) { formatMonthDay() }
         val (hours, minutes) = splitTimeLines(time)
         val timeDisplay = "$hours \u2022 $minutes"
+        val avatar = remember { loadUserAvatar() }
+        val userName = remember { loadUserName() }
 
         Column(
             modifier = Modifier
@@ -136,27 +169,19 @@ class Stylish7ClockView @JvmOverloads constructor(
                 timeDisplay = timeDisplay,
                 monthDay = monthDay,
                 dayOfWeek = dayOfWeek,
-                tintColor = tintColor,
-                accentColor = accentColor,
-                bgColor = bgColor,
-                dividerColor = dividerColor,
+                accent1 = accent1,
+                accent3 = accent3,
                 isDoze = isDoze,
-                scale = 1f,
-                profileSize = 48.dp,
-                timeFontSize = 56f,
-                dateFontSize = 18f,
-                dayFontSize = 16f,
-                dividerWidth = 2.5.dp,
-                sectionHeight = 140.dp,
-            )
-
-            Spacer(modifier = Modifier.height(12.dp))
-
-            EnhancedDateArea(
-                textColor = tintColor,
-                textSize = 16.sp,
-                iconSize = 18.dp,
-                rowArrangement = Arrangement.Center,
+                scale = dynSizeScale,
+                avatar = avatar,
+                userName = userName,
+                profileFrameSize = 96.dp,
+                profileImageSize = 82.dp,
+                timeFontSize = 38f,
+                dateFontSize = 20f,
+                dayFontSize = 24f,
+                userNameSize = 18f,
+                dividerHeight = 40.dp,
             )
         }
     }
@@ -166,114 +191,189 @@ class Stylish7ClockView @JvmOverloads constructor(
         timeDisplay: String,
         monthDay: String,
         dayOfWeek: String,
-        tintColor: Color,
-        accentColor: Color,
-        bgColor: Color,
-        dividerColor: Color,
+        accent1: Color,
+        accent3: Color,
         isDoze: Boolean,
         scale: Float,
-        profileSize: Dp,
+        avatar: Bitmap?,
+        userName: String,
+        profileFrameSize: Dp,
+        profileImageSize: Dp,
         timeFontSize: Float,
         dateFontSize: Float,
         dayFontSize: Float,
-        dividerWidth: Dp,
-        sectionHeight: Dp,
+        userNameSize: Float,
+        dividerHeight: Dp,
     ) {
-        val shape = RoundedCornerShape(20.dp)
+        val bgBrush = if (isDoze) {
+            Brush.horizontalGradient(listOf(Color.White.copy(alpha = 0.08f), Color.White.copy(alpha = 0.08f)))
+        } else {
+            Brush.horizontalGradient(listOf(accent1, accent3))
+        }
+        val dayPillBg = if (isDoze) Color.White.copy(alpha = 0.08f) else Color.White
+        val dayTextColor = if (isDoze) Color.White else accent1
 
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Box(
-                modifier = Modifier
-                    .clip(shape)
-                    .background(bgColor)
-                    .padding(16.dp),
-            ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.height(sectionHeight * scale),
+            Box {
+                // Background Card
+                Box(
+                    modifier = Modifier
+                        .padding(top = (profileFrameSize * scale) / 2)
+                        .clip(RoundedCornerShape(20.dp * scale))
+                        .background(bgBrush)
                 ) {
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.Center,
-                        modifier = Modifier.fillMaxHeight(),
+                    // Foreground Content
+                    Row(
+                        verticalAlignment = Alignment.Bottom,
+                        modifier = Modifier.padding(
+                            start = 20.dp * scale,
+                            end = 20.dp * scale,
+                            top = 0.dp,
+                            bottom = 24.dp * scale
+                        )
                     ) {
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.Center,
+                            modifier = Modifier.width(profileFrameSize * scale)
+                        ) {
+                            Spacer(modifier = Modifier.height((profileFrameSize * scale) / 2))
+                            Spacer(modifier = Modifier.height(8.dp * scale))
+                            Text(
+                                text = userName,
+                                maxLines = 1,
+                                style = TextStyle(
+                                    fontSize = (userNameSize * scale).sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color.White,
+                                )
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.width(12.dp * scale))
+
                         Box(
                             modifier = Modifier
-                                .size(profileSize * scale)
-                                .background(
-                                    if (isDoze) Color.White.copy(alpha = 0.15f)
-                                    else accentColor.copy(alpha = 0.2f),
-                                    CircleShape,
-                                ),
-                            contentAlignment = Alignment.Center,
+                                .width(2.dp * scale)
+                                .height(dividerHeight * scale)
+                                .background(Color.White),
+                        )
+
+                        Spacer(modifier = Modifier.width(12.dp * scale))
+
+                        Column(
+                            verticalArrangement = Arrangement.Center,
+                            horizontalAlignment = Alignment.CenterHorizontally,
                         ) {
                             Text(
-                                text = "\u0CA0\u1D25\u0CA0",
+                                text = timeDisplay,
+                                modifier = Modifier.padding(top = 6.dp * scale),
                                 style = TextStyle(
-                                    fontSize = (profileSize.value * 0.35f * scale).sp,
-                                    color = if (isDoze) Color.White else accentColor,
+                                    fontSize = (timeFontSize * scale).sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color.White,
+                                ),
+                            )
+                            Text(
+                                text = monthDay,
+                                style = TextStyle(
+                                    fontSize = (dateFontSize * scale).sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color.White,
                                 ),
                             )
                         }
                     }
+                }
 
-                    Spacer(modifier = Modifier.width(12.dp * scale))
-
-                    Box(
-                        modifier = Modifier
-                            .width(dividerWidth)
-                            .fillMaxHeight(0.7f)
-                            .background(dividerColor),
-                    )
-
-                    Spacer(modifier = Modifier.width(16.dp * scale))
-
-                    Column(
-                        verticalArrangement = Arrangement.Center,
-                        modifier = Modifier.fillMaxHeight(),
-                    ) {
-                        Text(
-                            text = timeDisplay,
-                            style = TextStyle(
-                                fontSize = (timeFontSize * scale).sp,
-                                fontWeight = FontWeight.Black,
-                                color = tintColor,
-                                letterSpacing = (-1).sp,
-                            ),
+                // Avatar Box
+                Box(
+                    modifier = Modifier
+                        .padding(start = 20.dp * scale)
+                        .size(profileFrameSize * scale)
+                        .background(Color.White, CircleShape),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    if (avatar != null) {
+                        Image(
+                            bitmap = avatar.asImageBitmap(),
+                            contentDescription = null,
+                            contentScale = ContentScale.Crop,
+                            modifier = Modifier
+                                .size(profileImageSize * scale)
+                                .clip(CircleShape),
                         )
-                        Spacer(modifier = Modifier.height(4.dp))
+                    } else {
                         Text(
-                            text = monthDay,
+                            text = "\u0CA0\u1D25\u0CA0",
                             style = TextStyle(
-                                fontSize = (dateFontSize * scale).sp,
-                                fontWeight = FontWeight.Medium,
-                                color = tintColor.copy(alpha = if (isDoze) 0.6f else 0.7f),
+                                fontSize = (profileFrameSize.value * 0.3f * scale).sp,
+                                color = accent1,
                             ),
                         )
                     }
                 }
             }
 
-            Spacer(modifier = Modifier.height(10.dp * scale))
-
+            // Day Pill (overlapping the main card by offset)
             Box(
                 modifier = Modifier
-                    .clip(RoundedCornerShape(12.dp))
-                    .background(
-                        if (isDoze) Color.White.copy(alpha = 0.08f)
-                        else accentColor.copy(alpha = 0.15f),
-                    )
-                    .padding(horizontal = (16 * scale).dp, vertical = (6 * scale).dp),
+                    .offset(y = (-16.dp * scale))
+                    .clip(RoundedCornerShape(12.dp * scale))
+                    .background(dayPillBg)
+                    .padding(horizontal = 16.dp * scale, vertical = 8.dp * scale),
                 contentAlignment = Alignment.Center,
             ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.Center
+                ) {
+                    Text(
+                        text = dayOfWeek.uppercase(),
+                        style = TextStyle(
+                            fontSize = (dayFontSize * scale).sp,
+                            fontWeight = FontWeight.Bold,
+                            color = dayTextColor,
+                            letterSpacing = 2.sp,
+                            textAlign = TextAlign.Center,
+                        ),
+                    )
+                    WeatherRow(
+                        textColor = dayTextColor,
+                        scale = scale,
+                    )
+                }
+            }
+        }
+    }
+
+    @Composable
+    private fun WeatherRow(
+        textColor: Color,
+        scale: Float,
+    ) {
+        val display = viewModel.rememberResolvedDisplay()
+        if (display is DateDisplay.Weather && display.temp.isNotEmpty()) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.Center,
+            ) {
+                Spacer(modifier = Modifier.width(4.dp * scale))
+                display.icon?.let { icon ->
+                    Image(
+                        bitmap = icon.asImageBitmap(),
+                        contentDescription = null,
+                        modifier = Modifier.size((18 * scale).dp),
+                    )
+                    Spacer(modifier = Modifier.width(4.dp * scale))
+                }
                 Text(
-                    text = dayOfWeek.uppercase(),
+                    text = display.temp,
                     style = TextStyle(
-                        fontSize = (dayFontSize * scale).sp,
+                        fontSize = (18f * scale).sp,
                         fontWeight = FontWeight.Bold,
-                        color = if (isDoze) Color.White else accentColor,
+                        color = textColor,
                         letterSpacing = 2.sp,
-                        textAlign = TextAlign.Center,
                     ),
                 )
             }
