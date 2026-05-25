@@ -211,7 +211,7 @@ public class Notifier {
     private int mBroadcastedInteractiveState;
     private boolean mBroadcastInProgress;
     private long mBroadcastStartTime;
-    private static final long USER_ACTIVITY_MIN_INTERVAL_MS = 500;
+    private static final long USER_ACTIVITY_MIN_INTERVAL_MS = 100;
     private long mLastUserActivityTimeMs;
 
     // True if a user activity message should be sent.
