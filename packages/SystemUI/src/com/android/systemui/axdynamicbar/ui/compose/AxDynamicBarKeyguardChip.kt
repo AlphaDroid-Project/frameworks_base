@@ -800,7 +800,12 @@ private fun KeyguardPrimaryText(event: IslandEvent, color: Color, modifier: Modi
             event.shortText.ifEmpty { event.title.ifEmpty { event.appName } }, color, modifier,
         )
         is IslandEvent.Sports -> MarqueeText(
-            "${event.score1}-${event.score2}", color, modifier,
+            when {
+                event.score1.isNotEmpty() -> "${event.score1}-${event.score2}"
+                event.team1Name.isNotEmpty() -> event.team1Name
+                else -> stringResource(R.string.ax_dynamic_bar_sports_live_event)
+            },
+            color, modifier,
         )
         is IslandEvent.NowPlaying -> MarqueeText(
             "${event.songTitle} · ${event.artist}".trimEnd(' ', '·', ' '), color, modifier,
@@ -834,7 +839,12 @@ private fun secondaryTextFor(event: IslandEvent): String? = when (event) {
     is IslandEvent.AppSwitch -> null
     is IslandEvent.Notification -> event.text?.take(30)
     is IslandEvent.PromotedOngoing -> event.text.takeIf { it.isNotBlank() }?.take(20)
-    is IslandEvent.Sports -> "${event.team1Name} ${stringResource(R.string.ax_dynamic_bar_sports_vs)} ${event.team2Name}"
+    is IslandEvent.Sports -> when {
+        event.team1Name.isNotEmpty() || event.team2Name.isNotEmpty() ->
+            "${event.team1Name} ${stringResource(R.string.ax_dynamic_bar_sports_vs)} ${event.team2Name}"
+        event.score1.isNotEmpty() -> "${event.score1}-${event.score2}"
+        else -> stringResource(R.string.ax_dynamic_bar_sports_live_event)
+    }
     is IslandEvent.KeyguardIndication -> when (event.indicationType) {
         IslandEvent.KeyguardIndication.IndicationType.BIOMETRIC -> stringResource(R.string.ax_dynamic_bar_biometric)
         IslandEvent.KeyguardIndication.IndicationType.TRUST -> stringResource(R.string.ax_dynamic_bar_trust)

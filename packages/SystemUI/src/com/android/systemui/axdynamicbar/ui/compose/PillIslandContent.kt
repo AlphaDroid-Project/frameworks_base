@@ -25,9 +25,11 @@ import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
@@ -972,23 +974,47 @@ private fun SportsPillIcon(event: IslandEvent.Sports) {
 @Composable
 private fun SportsText(event: IslandEvent.Sports, modifier: Modifier, overrideColor: Color? = null) {
     val color = overrideColor ?: accentColorFor(event)
-    val scoreText = when {
-        event.score1.isNotEmpty() -> "${event.score1}-${event.score2}"
-        event.team2Name.isEmpty() -> event.team1Name
-        else -> "vs"
-    }
     Row(modifier = modifier, verticalAlignment = Alignment.CenterVertically) {
-        Text(scoreText, color = color, style = PillAccent, maxLines = 1)
-        event.team2Icon?.let { icon ->
-            Box(modifier = Modifier.padding(start = 4.dp)) {
-                Image(
-                    bitmap = icon.toScaledBitmap(14.dp),
-                    contentDescription = null,
-                    modifier = Modifier.size(14.dp).clip(CircleShape),
-                    contentScale = ContentScale.Crop,
-                )
+        if (event.team2Name.isNotEmpty()) {
+            SportsTeamLabel(event.team1Name, event.team1Icon, color)
+            Spacer(Modifier.width(SpaceXs))
+            Text(
+                if (event.score1.isNotEmpty()) "${event.score1} - ${event.score2}"
+                else stringResource(R.string.ax_dynamic_bar_sports_vs),
+                color = color,
+                style = PillAccent,
+                maxLines = 1,
+            )
+            Spacer(Modifier.width(SpaceXs))
+            SportsTeamLabel(event.team2Name, event.team2Icon, color)
+        } else {
+            val fallback = when {
+                event.team1Name.isNotEmpty() -> event.team1Name
+                event.score1.isNotEmpty() -> "${event.score1}-${event.score2}"
+                else -> stringResource(R.string.ax_dynamic_bar_sports_live_event)
             }
+            Text(fallback, color = color, style = PillAccent, maxLines = 1)
         }
+    }
+}
+
+@Composable
+private fun SportsTeamLabel(name: String, icon: Drawable?, color: Color) {
+    val badgeSize = 14.dp
+    if (icon != null) {
+        Image(
+            bitmap = icon.toScaledBitmap(badgeSize),
+            contentDescription = name,
+            modifier = Modifier.size(badgeSize).clip(CircleShape),
+            contentScale = ContentScale.Crop,
+        )
+    } else {
+        Text(
+            name.take(3).uppercase(),
+            color = color,
+            style = TsBadge,
+            maxLines = 1,
+        )
     }
 }
 
