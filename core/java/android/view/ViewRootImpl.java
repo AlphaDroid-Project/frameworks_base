@@ -708,8 +708,7 @@ public final class ViewRootImpl implements ViewParent,
 
     // This is used to reduce the race between window focus changes being dispatched from
     // the window manager and input events coming through the input system.
-    @GuardedBy("this")
-    boolean mWindowFocusChanged;
+    volatile boolean mWindowFocusChanged;
     @GuardedBy("this")
     boolean mUpcomingWindowFocus;
     @GuardedBy("this")
@@ -4915,6 +4914,9 @@ public final class ViewRootImpl implements ViewParent,
     }
 
     private void handleWindowFocusChanged() {
+        if (!mWindowFocusChanged) {
+            return;
+        }
         final boolean hasWindowFocus;
         synchronized (this) {
             if (!mWindowFocusChanged) {
