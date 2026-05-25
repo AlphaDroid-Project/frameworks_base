@@ -25,8 +25,7 @@ import android.animation.AnimatorListenerAdapter;
 import android.animation.ObjectAnimator;
 import android.animation.PropertyValuesHolder;
 import android.animation.ValueAnimator;
-import android.os.Handler;
-import android.os.Looper;
+
 import android.util.Log;
 import android.util.Property;
 import android.view.View;
@@ -50,8 +49,7 @@ import kotlin.Unit;
 import kotlin.jvm.functions.Function1;
 
 import java.io.PrintWriter;
-import java.util.Map;
-import java.util.WeakHashMap;
+
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 
@@ -62,18 +60,7 @@ import java.lang.reflect.Modifier;
  */
 public class ViewState implements Dumpable {
 
-    private static final Handler sLayerHandler = new Handler(Looper.getMainLooper());
-    private static final long LAYER_DEBOUNCE_MS = 150;
-    private static final Map<View, Runnable> sPendingLayerChanges = new WeakHashMap<>();
 
-    private static void debouncedSetFaded(View view, Runnable action) {
-        Runnable prev = sPendingLayerChanges.get(view);
-        if (prev != null) {
-            sLayerHandler.removeCallbacks(prev);
-        }
-        sPendingLayerChanges.put(view, action);
-        sLayerHandler.postDelayed(action, LAYER_DEBOUNCE_MS);
-    }
 
     public ViewState() {
         this(physicalNotificationMovement());
@@ -354,7 +341,7 @@ public class ViewState implements Dumpable {
                 FadeOptimizedNotification fadeOptimizedView = (FadeOptimizedNotification) view;
                 boolean isFaded = fadeOptimizedView.isNotificationFaded();
                 if (isFaded != becomesFaded) {
-                    debouncedSetFaded(view, () -> fadeOptimizedView.setNotificationFaded(becomesFaded));
+                    fadeOptimizedView.setNotificationFaded(becomesFaded);
                 }
             } else {
                 boolean newLayerTypeIsHardware = becomesFaded && view.hasOverlappingRendering();
@@ -362,7 +349,7 @@ public class ViewState implements Dumpable {
                 int newLayerType =
                         newLayerTypeIsHardware ? View.LAYER_TYPE_HARDWARE : View.LAYER_TYPE_NONE;
                 if (layerType != newLayerType) {
-                    debouncedSetFaded(view, () -> view.setLayerType(newLayerType, null));
+                    view.setLayerType(newLayerType, null);
                 }
             }
 
