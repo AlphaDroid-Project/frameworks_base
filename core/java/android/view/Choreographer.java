@@ -873,6 +873,17 @@ public final class Choreographer {
      * @hide
      */
     public long getLatestExpectedPresentTimeNanos() {
+        // mLastVsyncEventData is refreshed at the start of every doFrame
+        // (see copyFrom() under mLock at the end of the synchronized block in doFrame).
+        // Once at least one frame has run, the cached value is identical to what the
+        // IPC would return for the same vsync, so we can skip the binder round-trip on
+        // the UI thread. Same staleness contract as getFrameDeadline() / getVsyncId(),
+        // which already trust this field unconditionally. mLastFrameTimeNanos is
+        // initialized to Long.MIN_VALUE in the constructor and only becomes positive
+        // once doFrame has populated mLastVsyncEventData via copyFrom().
+        if (mLastFrameTimeNanos > 0L) {
+            return mLastVsyncEventData.preferredFrameTimeline().expectedPresentationTime;
+        }
         if (mDisplayEventReceiver == null) {
             return System.nanoTime();
         }

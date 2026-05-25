@@ -389,6 +389,13 @@ public class NotificationStackScrollLayout
     // Rect of QsHeader. Kept as a field just to avoid creating a new one each time.
     private final Rect mQsHeaderBound = new Rect();
     private boolean mContinuousShadowUpdate;
+
+    private float mLastAvoidOverlapScrollY = Float.NaN;
+    private float mLastAvoidOverlapExpansionFraction = Float.NaN;
+    private int mLastAvoidOverlapChildCount = -1;
+    private static final float AVOID_OVERLAP_SCROLL_EPSILON = 0.5f;
+    private static final float AVOID_OVERLAP_FRACTION_EPSILON = 1e-3f;
+
     private final ViewTreeObserver.OnPreDrawListener mShadowUpdater = () -> {
         updateViewShadows();
         return true;
@@ -1503,6 +1510,25 @@ public class NotificationStackScrollLayout
         if (!physicalNotificationMovement()) {
             return;
         }
+
+        float scrollY = getOwnScrollY();
+        float expansionFraction = mAmbientState.getExpansionFraction();
+        int childCount = getChildCount();
+        // Epsilon comparisons defeat FPU jitter on otherwise-identical interpolated
+        // inputs during a steady fling. Tracking childCount as a cache key catches
+        // silent mutations (add/remove paths that fail to call requestChildrenUpdate()).
+        if (Math.abs(mLastAvoidOverlapScrollY - scrollY) < AVOID_OVERLAP_SCROLL_EPSILON
+                && Math.abs(mLastAvoidOverlapExpansionFraction - expansionFraction)
+                        < AVOID_OVERLAP_FRACTION_EPSILON
+                && mLastAvoidOverlapChildCount == childCount
+                && !mChildrenUpdateRequested
+                && !isCurrentlyAnimating()) {
+            return;
+        }
+        mLastAvoidOverlapScrollY = scrollY;
+        mLastAvoidOverlapExpansionFraction = expansionFraction;
+        mLastAvoidOverlapChildCount = childCount;
+
         createSortedNotificationLists(mTmpSortedChildren, mTmpNonOverlapChildren);
         // Now lets update the overlaps for the views, ensuring that we set the values for every
         // view, otherwise they might get stuck.
@@ -1589,6 +1615,18 @@ public class NotificationStackScrollLayout
      * getLocationOnScreen[1] however this also works for transientViews.
      */
     private float getRelativePosition(ExpandableView expandableView) {
+        ViewParent viewParent = expandableView.getParent();
+        if (viewParent == this && expandableView.hasIdentityMatrix()) {
+            // Common steady-state case: direct child with no in-flight transform.
+            // The layout Y equals the visual Y, so we can skip both the matrix
+            // mapPoints() call and the parent-chain walk below. The identity-matrix
+            // guard is required because rows use setTranslationY() heavily during
+            // appear/disappear, swipe-dismiss, and heads-up entry animations; without
+            // it the overlap clipping would be computed from the layout position
+            // instead of the animated visual position.
+            return expandableView.getTop();
+        }
+
         mTempFloat2[0] = 0f;
         mTempFloat2[1] = 0f;
         if (!expandableView.hasIdentityMatrix()) {
@@ -1597,7 +1635,6 @@ public class NotificationStackScrollLayout
 
         mTempFloat2[1] += expandableView.getTop();
 
-        ViewParent viewParent = expandableView.getParent();
         while (viewParent instanceof View && viewParent != this) {
             final View view = (View) viewParent;
 
