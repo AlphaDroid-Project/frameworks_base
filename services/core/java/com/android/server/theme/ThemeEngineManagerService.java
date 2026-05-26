@@ -280,6 +280,12 @@ public class ThemeEngineManagerService extends SystemService {
             if (iconPackPkg != null
                     && (!iconPackPkg.equals(mIconPackPackage) || mIconPackMap.isEmpty())) {
                 loadIconPack(iconPackPkg);
+                // Register the iconpack's overlaid resources so getThemePackageForResource
+                // can fall back to it when no per-category statusbar theme (wifi/signal) is
+                // active. This lets an iconpack contribute its bundled ic_wifi_signal_* /
+                // ic_signal_cellular_* drawables when the user has not picked a dedicated
+                // statusbar overlay.
+                loadTargetArrays(iconPackPkg);
             } else if (iconPackPkg == null && mIconPackPackage != null) {
                 mIconPackPackage = null;
                 mIconPackMap.clear();
@@ -486,6 +492,19 @@ public class ThemeEngineManagerService extends SystemService {
             if (category != null
                     && mSystemThemeIconTargets.contains("statusbar_" + category)) {
                 return mActiveSystemThemeIcons;
+            }
+        }
+
+        // Fall back to the active iconpack when a statusbar resource (wifi/signal)
+        // has no dedicated category theme. Iconpacks that ship ic_wifi_signal_* /
+        // ic_signal_cellular_* drawables get registered in mTargetArrayCache via
+        // loadTargetArrays at iconpack load time; consult that set so we don't
+        // serve from an iconpack that does not actually theme this resource.
+        String iconPackPkg = mIconPackPackage;
+        if (iconPackPkg != null) {
+            Set<String> iconPackTargets = mTargetArrayCache.get(iconPackPkg);
+            if (iconPackTargets != null && iconPackTargets.contains(resourceName)) {
+                return iconPackPkg;
             }
         }
 
