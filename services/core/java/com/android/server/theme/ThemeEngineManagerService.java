@@ -82,6 +82,26 @@ public class ThemeEngineManagerService extends SystemService {
     private static final String TARGET_ARRAY_ANDROID = "target_android";
     private static final String TARGET_ARRAY_SETTINGS = "target_settings";
 
+    /** Overlay-manager category prefix for built-in icon pack RROs (Theme Store path). */
+    private static final String ICON_PACK_OVERLAY_PREFIX =
+            "android.theme.customization.icon_pack.";
+
+    private static final String OVERLAY_CATEGORY_WIFI_ICON =
+            "android.theme.customization.wifi_icon";
+    private static final String OVERLAY_CATEGORY_SIGNAL_ICON =
+            "android.theme.customization.signal_icon";
+
+    private static final String[] STATUSBAR_THEMED_DRAWABLE_NAMES = {
+        "ic_signal_cellular_0_4_bar", "ic_signal_cellular_1_4_bar",
+        "ic_signal_cellular_2_4_bar", "ic_signal_cellular_3_4_bar",
+        "ic_signal_cellular_4_4_bar",
+        "ic_signal_cellular_0_5_bar", "ic_signal_cellular_1_5_bar",
+        "ic_signal_cellular_2_5_bar", "ic_signal_cellular_3_5_bar",
+        "ic_signal_cellular_4_5_bar", "ic_signal_cellular_5_5_bar",
+        "ic_wifi_signal_0", "ic_wifi_signal_1", "ic_wifi_signal_2",
+        "ic_wifi_signal_3", "ic_wifi_signal_4",
+    };
+
     private static final int BITMAP_CACHE_SIZE = 5 * 1024 * 1024;
 
     private final Context mContext;
@@ -98,6 +118,8 @@ public class ThemeEngineManagerService extends SystemService {
 
     private volatile String mActiveSystemThemeIcons = null;
     private volatile String mIconPackPackage = null;
+    /** All icon-pack overlay APKs active in categoryThemes (android, systemui, …). */
+    private final Set<String> mIconPackOverlayPackages = new HashSet<>();
 
     private final Map<ComponentName, String> mIconPackMap = new ConcurrentHashMap<>();
     private final List<String> mIconBackList = new CopyOnWriteArrayList<>();
@@ -115,6 +137,9 @@ public class ThemeEngineManagerService extends SystemService {
     private int mCachedTextColorPrimary = 0;
     private boolean mTextColorPrimaryCached = false;
     private ContentObserver mSettingsObserver;
+
+    /** Guards against re-entrant beginBroadcast() (settings observer + explicit notify). */
+    private boolean mBroadcasting = false;
 
     private static final long PERSIST_DEBOUNCE_MS = 500;
     private final Runnable mPersistPerAppRunnable = this::persistPerAppIconPacksNow;
@@ -203,6 +228,7 @@ public class ThemeEngineManagerService extends SystemService {
         mActiveSystemThemeIcons = null;
         mSystemThemeIconTargets.clear();
         mCategoryThemes.clear();
+        mIconPackOverlayPackages.clear();
         mBitmapCache.evictAll();
         mPerAppIconPacks.clear();
         mPerAppIconPackMaps.clear();
@@ -255,9 +281,19 @@ public class ThemeEngineManagerService extends SystemService {
                 while (catKeys.hasNext()) {
                     String category = catKeys.next();
                     String pkgName = categoryThemes.optString(category);
+                    if (pkgName == null || pkgName.isEmpty()) {
+                        continue;
+                    }
+                    if (isIconPackOverlayCategory(category)) {
+                        // Theme Store enables icon packs via categoryThemes only (no themes.icon_pack).
+                        mIconPackOverlayPackages.add(pkgName);
+                        mCategoryThemes.put(category, pkgName);
+                        loadTargetArrays(pkgName);
+                        continue;
+                    }
                     boolean isCategoryEnabled = mEnabledThemes.containsKey(category)
                             || mSystemThemeIconTargets.contains(category);
-                    if (pkgName != null && !pkgName.isEmpty() && isCategoryEnabled) {
+                    if (isCategoryEnabled) {
                         mCategoryThemes.put(category, pkgName);
                         loadTargetArrays(pkgName);
                     }
@@ -277,6 +313,9 @@ public class ThemeEngineManagerService extends SystemService {
             }
 
             String iconPackPkg = mEnabledThemes.get(CATEGORY_ICON_PACK);
+            if (iconPackPkg == null && !mIconPackOverlayPackages.isEmpty()) {
+                iconPackPkg = resolvePrimaryIconPackPackage();
+            }
             if (iconPackPkg != null
                     && (!iconPackPkg.equals(mIconPackPackage) || mIconPackMap.isEmpty())) {
                 loadIconPack(iconPackPkg);
@@ -329,42 +368,93 @@ public class ThemeEngineManagerService extends SystemService {
             }
         }
 
-        if (allTargets.isEmpty()) {
-            String overlayCategory = null;
-            try {
-                android.content.pm.PackageInfo pi = mContext.getPackageManager()
-                        .getPackageInfo(packageName, 0);
-                overlayCategory = pi.overlayCategory;
-            } catch (Exception e) {
-                Slog.d(TAG, "Failed to get overlay category for " + packageName, e);
-            }
+        registerStatusbarDrawableTargets(themeResources, packageName, allTargets);
 
-            String resCategory = null;
-            if ("android.theme.customization.signal_icon".equals(overlayCategory)) {
-                resCategory = "signal";
-            } else if ("android.theme.customization.wifi_icon".equals(overlayCategory)) {
-                resCategory = "wifi";
-            }
+        mTargetArrayCache.put(packageName, allTargets);
+    }
 
-            String[] knownNames = {
-                "ic_signal_cellular_0_4_bar", "ic_signal_cellular_1_4_bar",
-                "ic_signal_cellular_2_4_bar", "ic_signal_cellular_3_4_bar",
-                "ic_signal_cellular_4_4_bar",
-                "ic_signal_cellular_0_5_bar", "ic_signal_cellular_1_5_bar",
-                "ic_signal_cellular_2_5_bar", "ic_signal_cellular_3_5_bar",
-                "ic_signal_cellular_4_5_bar", "ic_signal_cellular_5_5_bar",
-                "ic_wifi_signal_0", "ic_wifi_signal_1", "ic_wifi_signal_2",
-                "ic_wifi_signal_3", "ic_wifi_signal_4",
-            };
-            for (String name : knownNames) {
-                if (themeResources.getIdentifier(name, "drawable", packageName) != 0) {
-                    allTargets.add(name);
-                    if (resCategory != null) mResourceCategoryCache.put(name, resCategory);
+    private static boolean isIconPackOverlayCategory(@NonNull String category) {
+        return category.startsWith(ICON_PACK_OVERLAY_PREFIX);
+    }
+
+    /**
+     * Prefer the android overlay (appfilter + framework wifi/signal drawables), else any member.
+     */
+    @Nullable
+    private String resolvePrimaryIconPackPackage() {
+        for (String pkg : mIconPackOverlayPackages) {
+            if (pkg.endsWith(".android")) {
+                return pkg;
+            }
+        }
+        for (String pkg : mIconPackOverlayPackages) {
+            return pkg;
+        }
+        return null;
+    }
+
+    /**
+     * Probe for wifi/signal drawables shipped in icon-pack overlays. Runs even when target_* arrays
+     * are present so statusbar icons are registered for ThemeEngine fallback.
+     */
+    private void registerStatusbarDrawableTargets(@NonNull Resources themeResources,
+            @NonNull String packageName, @NonNull Set<String> allTargets) {
+        String overlayCategory = null;
+        try {
+            android.content.pm.PackageInfo pi = mContext.getPackageManager()
+                    .getPackageInfo(packageName, 0);
+            overlayCategory = pi.overlayCategory;
+        } catch (Exception e) {
+            Slog.d(TAG, "Failed to get overlay category for " + packageName, e);
+        }
+
+        String resCategory = null;
+        if ("android.theme.customization.signal_icon".equals(overlayCategory)) {
+            resCategory = CATEGORY_STATUSBAR_SIGNAL;
+        } else if ("android.theme.customization.wifi_icon".equals(overlayCategory)) {
+            resCategory = CATEGORY_STATUSBAR_WIFI;
+        }
+
+        for (String name : STATUSBAR_THEMED_DRAWABLE_NAMES) {
+            if (themeResources.getIdentifier(name, "drawable", packageName) != 0) {
+                allTargets.add(name);
+                if (resCategory != null) {
+                    mResourceCategoryCache.put(name, resCategory);
                 }
             }
         }
+    }
 
-        mTargetArrayCache.put(packageName, allTargets);
+    private boolean packageTargetsResource(@Nullable String packageName,
+            @NonNull String resourceName) {
+        if (packageName == null) return false;
+        Set<String> targets = mTargetArrayCache.get(packageName);
+        return targets != null && targets.contains(resourceName);
+    }
+
+    @Nullable
+    private String resolveIconPackPackageForResource(@NonNull String resourceName) {
+        for (String pkg : mIconPackOverlayPackages) {
+            if (packageTargetsResource(pkg, resourceName)) {
+                return pkg;
+            }
+        }
+        String primary = mIconPackPackage;
+        if (primary != null && packageTargetsResource(primary, resourceName)) {
+            return primary;
+        }
+        return null;
+    }
+
+    private boolean shouldUseActiveSystemThemeIcons(@Nullable String category) {
+        if (mActiveSystemThemeIcons == null) return false;
+        if (category == null || mSystemThemeIconTargets.isEmpty()) {
+            return true;
+        }
+        if (mSystemThemeIconTargets.contains(category)) {
+            return true;
+        }
+        return mSystemThemeIconTargets.contains("statusbar_" + category);
     }
 
     private void loadIconPack(String packageName) {
@@ -474,25 +564,39 @@ public class ThemeEngineManagerService extends SystemService {
         String category = mResourceCategoryCache.get(resourceName);
 
         if (category != null && mCategoryThemes.containsKey(category)) {
-            return mCategoryThemes.get(category);
+            String pkg = mCategoryThemes.get(category);
+            if (packageTargetsResource(pkg, resourceName)) {
+                return pkg;
+            }
         }
 
         if (category != null) {
             String aliasCategory = "statusbar_" + category;
             if (mCategoryThemes.containsKey(aliasCategory)) {
-                return mCategoryThemes.get(aliasCategory);
+                String pkg = mCategoryThemes.get(aliasCategory);
+                if (packageTargetsResource(pkg, resourceName)) {
+                    return pkg;
+                }
+            }
+            if (CATEGORY_STATUSBAR_WIFI.equals(category)
+                    && mCategoryThemes.containsKey(OVERLAY_CATEGORY_WIFI_ICON)) {
+                String pkg = mCategoryThemes.get(OVERLAY_CATEGORY_WIFI_ICON);
+                if (packageTargetsResource(pkg, resourceName)) {
+                    return pkg;
+                }
+            }
+            if (CATEGORY_STATUSBAR_SIGNAL.equals(category)
+                    && mCategoryThemes.containsKey(OVERLAY_CATEGORY_SIGNAL_ICON)) {
+                String pkg = mCategoryThemes.get(OVERLAY_CATEGORY_SIGNAL_ICON);
+                if (packageTargetsResource(pkg, resourceName)) {
+                    return pkg;
+                }
             }
         }
 
-        if (mActiveSystemThemeIcons != null) {
-            if (category == null || mSystemThemeIconTargets.isEmpty()
-                    || mSystemThemeIconTargets.contains(category)) {
-                return mActiveSystemThemeIcons;
-            }
-            if (category != null
-                    && mSystemThemeIconTargets.contains("statusbar_" + category)) {
-                return mActiveSystemThemeIcons;
-            }
+        if (shouldUseActiveSystemThemeIcons(category)
+                && packageTargetsResource(mActiveSystemThemeIcons, resourceName)) {
+            return mActiveSystemThemeIcons;
         }
 
         // Fall back to the active iconpack when a statusbar resource (wifi/signal)
@@ -500,15 +604,7 @@ public class ThemeEngineManagerService extends SystemService {
         // ic_signal_cellular_* drawables get registered in mTargetArrayCache via
         // loadTargetArrays at iconpack load time; consult that set so we don't
         // serve from an iconpack that does not actually theme this resource.
-        String iconPackPkg = mIconPackPackage;
-        if (iconPackPkg != null) {
-            Set<String> iconPackTargets = mTargetArrayCache.get(iconPackPkg);
-            if (iconPackTargets != null && iconPackTargets.contains(resourceName)) {
-                return iconPackPkg;
-            }
-        }
-
-        return null;
+        return resolveIconPackPackageForResource(resourceName);
     }
 
     @NonNull
@@ -563,7 +659,15 @@ public class ThemeEngineManagerService extends SystemService {
     }
 
     private void notifyThemeChangedInternal(@Nullable String category) {
+        if (mBroadcasting) {
+            // theme_engine_data can change while callbacks run (e.g. AlphaVisuals sync +
+            // notifyThemeChanged); defer so RemoteCallbackList is not re-entered.
+            mHandler.post(() -> notifyThemeChangedInternal(category));
+            return;
+        }
+
         final long ident = Binder.clearCallingIdentity();
+        mBroadcasting = true;
         try {
             loadThemeConfig();
 
@@ -584,6 +688,7 @@ public class ThemeEngineManagerService extends SystemService {
                 mContext.sendBroadcastAsUser(intent, UserHandle.ALL);
             }
         } finally {
+            mBroadcasting = false;
             Binder.restoreCallingIdentity(ident);
         }
     }
@@ -774,24 +879,7 @@ public class ThemeEngineManagerService extends SystemService {
         public boolean isTargetedResource(String resourceName) {
             if (resourceName == null) return false;
             synchronized (ThemeEngineManagerService.this) {
-                String category = mResourceCategoryCache.get(resourceName);
-
-                if (category != null && mCategoryThemes.containsKey(category)) {
-                    String pkgName = mCategoryThemes.get(category);
-                    Set<String> targets = mTargetArrayCache.get(pkgName);
-                    return targets != null && targets.contains(resourceName);
-                }
-
-                if (mActiveSystemThemeIcons == null) return false;
-
-                Set<String> targets = mTargetArrayCache.get(mActiveSystemThemeIcons);
-                if (targets == null || !targets.contains(resourceName)) return false;
-
-                if (category != null && !mSystemThemeIconTargets.isEmpty()) {
-                    return mSystemThemeIconTargets.contains(category);
-                }
-
-                return !mSystemThemeIconTargets.isEmpty();
+                return getThemePackageForResource(resourceName) != null;
             }
         }
 
