@@ -36,6 +36,12 @@ object ThemeIconController {
     private const val NEW_WIFI_WIDTH_DP = 17f
     private const val NEW_WIFI_HEIGHT_DP = 12.58f
 
+    /**
+     * Applied when rendering ThemeEngine wifi/signal bitmaps (dedicated RROs and icon-pack
+     * fallbacks). Overlay vectors often use tighter padding than stock status-bar art.
+     */
+    private const val THEME_ICON_SIZE_SCALE = 1.1f
+
     private val SIGNAL_4BAR_NAMES = arrayOf(
         "ic_signal_cellular_0_4_bar",
         "ic_signal_cellular_1_4_bar",
