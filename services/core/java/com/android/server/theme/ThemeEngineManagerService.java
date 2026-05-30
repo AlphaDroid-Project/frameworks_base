@@ -102,6 +102,9 @@ public class ThemeEngineManagerService extends SystemService {
         "ic_wifi_signal_3", "ic_wifi_signal_4",
     };
 
+    private static final String ENGINE_KEY_WIFI = "wifi";
+    private static final String ENGINE_KEY_SIGNAL = "signal";
+
     private static final int BITMAP_CACHE_SIZE = 5 * 1024 * 1024;
 
     private final Context mContext;
@@ -291,6 +294,15 @@ public class ThemeEngineManagerService extends SystemService {
                         loadTargetArrays(pkgName);
                         continue;
                     }
+                    // Dedicated statusbar wifi/signal RROs use overlay-manager category ids;
+                    // themes.wifi uses the short key "wifi" — always register when present in
+                    // categoryThemes so getThemePackageForResource can prefer them over iconpack.
+                    if (OVERLAY_CATEGORY_WIFI_ICON.equals(category)
+                            || OVERLAY_CATEGORY_SIGNAL_ICON.equals(category)) {
+                        mCategoryThemes.put(category, pkgName);
+                        loadTargetArrays(pkgName);
+                        continue;
+                    }
                     boolean isCategoryEnabled = mEnabledThemes.containsKey(category)
                             || mSystemThemeIconTargets.contains(category);
                     if (isCategoryEnabled) {
@@ -432,8 +444,64 @@ public class ThemeEngineManagerService extends SystemService {
         return targets != null && targets.contains(resourceName);
     }
 
+    private boolean hasDedicatedWifiOverlay() {
+        return mCategoryThemes.containsKey(OVERLAY_CATEGORY_WIFI_ICON)
+                || mCategoryThemes.containsKey(ENGINE_KEY_WIFI)
+                || mCategoryThemes.containsKey(CATEGORY_STATUSBAR_WIFI);
+    }
+
+    private boolean hasDedicatedSignalOverlay() {
+        return mCategoryThemes.containsKey(OVERLAY_CATEGORY_SIGNAL_ICON)
+                || mCategoryThemes.containsKey(ENGINE_KEY_SIGNAL)
+                || mCategoryThemes.containsKey(CATEGORY_STATUSBAR_SIGNAL);
+    }
+
+    @Nullable
+    private String getDedicatedStatusbarPackage(@Nullable String category) {
+        if (category == null) return null;
+        if (CATEGORY_STATUSBAR_WIFI.equals(category)) {
+            return firstCategoryThemePackage(
+                    OVERLAY_CATEGORY_WIFI_ICON,
+                    ENGINE_KEY_WIFI,
+                    CATEGORY_STATUSBAR_WIFI);
+        }
+        if (CATEGORY_STATUSBAR_SIGNAL.equals(category)) {
+            return firstCategoryThemePackage(
+                    OVERLAY_CATEGORY_SIGNAL_ICON,
+                    ENGINE_KEY_SIGNAL,
+                    CATEGORY_STATUSBAR_SIGNAL);
+        }
+        return null;
+    }
+
+    @Nullable
+    private String firstCategoryThemePackage(String... categories) {
+        for (String category : categories) {
+            String pkg = mCategoryThemes.get(category);
+            if (pkg != null && !pkg.isEmpty()) {
+                return pkg;
+            }
+        }
+        return null;
+    }
+
+    private static boolean isWifiStatusbarResource(@NonNull String resourceName) {
+        return resourceName.startsWith("ic_wifi_signal_");
+    }
+
+    private static boolean isCellularStatusbarResource(@NonNull String resourceName) {
+        return resourceName.startsWith("ic_signal_cellular_");
+    }
+
     @Nullable
     private String resolveIconPackPackageForResource(@NonNull String resourceName) {
+        // Iconpack wifi/signal art is fallback only — never override a dedicated statusbar RRO.
+        if (isWifiStatusbarResource(resourceName) && hasDedicatedWifiOverlay()) {
+            return null;
+        }
+        if (isCellularStatusbarResource(resourceName) && hasDedicatedSignalOverlay()) {
+            return null;
+        }
         for (String pkg : mIconPackOverlayPackages) {
             if (packageTargetsResource(pkg, resourceName)) {
                 return pkg;
@@ -571,26 +639,18 @@ public class ThemeEngineManagerService extends SystemService {
         }
 
         if (category != null) {
-            String aliasCategory = "statusbar_" + category;
-            if (mCategoryThemes.containsKey(aliasCategory)) {
-                String pkg = mCategoryThemes.get(aliasCategory);
-                if (packageTargetsResource(pkg, resourceName)) {
-                    return pkg;
+            if (!category.startsWith("statusbar_")) {
+                String aliasCategory = "statusbar_" + category;
+                if (mCategoryThemes.containsKey(aliasCategory)) {
+                    String pkg = mCategoryThemes.get(aliasCategory);
+                    if (packageTargetsResource(pkg, resourceName)) {
+                        return pkg;
+                    }
                 }
             }
-            if (CATEGORY_STATUSBAR_WIFI.equals(category)
-                    && mCategoryThemes.containsKey(OVERLAY_CATEGORY_WIFI_ICON)) {
-                String pkg = mCategoryThemes.get(OVERLAY_CATEGORY_WIFI_ICON);
-                if (packageTargetsResource(pkg, resourceName)) {
-                    return pkg;
-                }
-            }
-            if (CATEGORY_STATUSBAR_SIGNAL.equals(category)
-                    && mCategoryThemes.containsKey(OVERLAY_CATEGORY_SIGNAL_ICON)) {
-                String pkg = mCategoryThemes.get(OVERLAY_CATEGORY_SIGNAL_ICON);
-                if (packageTargetsResource(pkg, resourceName)) {
-                    return pkg;
-                }
+            String dedicatedPkg = getDedicatedStatusbarPackage(category);
+            if (dedicatedPkg != null && packageTargetsResource(dedicatedPkg, resourceName)) {
+                return dedicatedPkg;
             }
         }
 

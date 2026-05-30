@@ -30,6 +30,7 @@ import com.android.systemui.qs.tiles.base.domain.model.DataUpdateTrigger
 import com.android.systemui.qs.tiles.impl.cell.domain.model.MobileDataTileIcon
 import com.android.systemui.qs.tiles.impl.cell.domain.model.MobileDataTileModel
 import com.android.systemui.res.R
+import com.android.systemui.statusbar.connectivity.ThemeIconController
 import com.android.systemui.statusbar.pipeline.mobile.domain.interactor.MobileIconsInteractor
 import com.android.systemui.statusbar.pipeline.mobile.domain.model.SignalIconModel
 import javax.inject.Inject
@@ -73,17 +74,28 @@ constructor(
                 } else {
                     combine(it.isDataEnabled, it.signalLevelIcon) { isDataEnabled, signalLevelIcon
                         ->
+                        val useStaticIcon =
+                            ThemeIconController.usesStaticQsCellularTileIcon(context)
                         val icon =
                             if (isDataEnabled) {
                                 when (signalLevelIcon) {
                                     is SignalIconModel.Cellular -> {
-                                        val signalState =
-                                            SignalDrawable.getState(
-                                                signalLevelIcon.level,
-                                                signalLevelIcon.numberOfLevels,
-                                                signalLevelIcon.showExclamationMark,
+                                        if (useStaticIcon) {
+                                            MobileDataTileIcon.ResourceIcon(
+                                                Icon.Resource(
+                                                    ThemeIconController.qsTileFullCellularIconResId(),
+                                                    ContentDescription.Loaded(mobileDataLabel),
+                                                )
                                             )
-                                        MobileDataTileIcon.SignalIcon(signalState)
+                                        } else {
+                                            val signalState =
+                                                SignalDrawable.getState(
+                                                    signalLevelIcon.level,
+                                                    signalLevelIcon.numberOfLevels,
+                                                    signalLevelIcon.showExclamationMark,
+                                                )
+                                            MobileDataTileIcon.SignalIcon(signalState)
+                                        }
                                     }
 
                                     is SignalIconModel.Satellite -> {
@@ -98,7 +110,11 @@ constructor(
                             } else {
                                 MobileDataTileIcon.ResourceIcon(
                                     Icon.Resource(
-                                        R.drawable.ic_signal_mobile_data_off,
+                                        if (useStaticIcon) {
+                                            ThemeIconController.qsTileFullCellularIconResId()
+                                        } else {
+                                            R.drawable.ic_signal_mobile_data_off
+                                        },
                                         ContentDescription.Loaded(mobileDataLabel),
                                     )
                                 )
@@ -117,7 +133,14 @@ constructor(
                         icon =
                             MobileDataTileIcon.ResourceIcon(
                                 Icon.Resource(
-                                    R.drawable.ic_signal_mobile_data_off,
+                                    if (ThemeIconController.usesStaticQsCellularTileIcon(
+                                            context
+                                        )
+                                    ) {
+                                        ThemeIconController.qsTileFullCellularIconResId()
+                                    } else {
+                                        R.drawable.ic_signal_mobile_data_off
+                                    },
                                     ContentDescription.Loaded(mobileDataLabel),
                                 )
                             ),
