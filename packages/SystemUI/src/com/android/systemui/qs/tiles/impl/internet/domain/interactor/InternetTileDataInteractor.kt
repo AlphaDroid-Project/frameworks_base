@@ -30,6 +30,7 @@ import com.android.systemui.qs.tiles.impl.internet.domain.model.InternetTileMode
 import com.android.systemui.res.R
 import com.android.systemui.shade.ShadeDisplayAware
 import com.android.systemui.statusbar.connectivity.ui.MobileContextProvider
+import com.android.systemui.statusbar.connectivity.ThemeIconController
 import com.android.systemui.statusbar.pipeline.airplane.data.repository.AirplaneModeRepository
 import com.android.systemui.statusbar.pipeline.ethernet.domain.EthernetInteractor
 import com.android.systemui.statusbar.pipeline.mobile.domain.interactor.MobileIconsInteractor
@@ -72,10 +73,16 @@ constructor(
             val wifiIcon = WifiIcon.fromModel(it, context, showHotspotInfo = true)
             if (it is WifiNetworkModel.Active && wifiIcon is WifiIcon.Visible) {
                 val secondary = removeDoubleQuotes(it.ssid)
+                val iconResId =
+                    if (ThemeIconController.usesStaticQsWifiTileIcon(context)) {
+                        ThemeIconController.qsTileFullWifiIconResId()
+                    } else {
+                        wifiIcon.icon.resId
+                    }
                 flowOf(
                     InternetTileModel.Active(
                         secondaryTitle = secondary,
-                        icon = InternetTileIconModel.ResourceId(wifiIcon.icon.resId),
+                        icon = InternetTileIconModel.ResourceId(iconResId),
                         stateDescription = wifiIcon.contentDescription,
                         contentDescription = ContentDescription.Loaded("$internetLabel,$secondary"),
                     )
@@ -128,9 +135,21 @@ constructor(
                                         dataContentDescription,
                                     )
 
+                                val icon =
+                                    if (ThemeIconController.usesStaticQsCellularTileIcon(
+                                            context
+                                        )
+                                    ) {
+                                        InternetTileIconModel.ResourceId(
+                                            ThemeIconController.qsTileFullCellularIconResId()
+                                        )
+                                    } else {
+                                        InternetTileIconModel.Cellular(signalIcon.level)
+                                    }
+
                                 InternetTileModel.Active(
                                     secondaryTitle = secondary,
-                                    icon = InternetTileIconModel.Cellular(signalIcon.level),
+                                    icon = icon,
                                     stateDescription =
                                         ContentDescription.Loaded(secondary.toString()),
                                     contentDescription = ContentDescription.Loaded(internetLabel),

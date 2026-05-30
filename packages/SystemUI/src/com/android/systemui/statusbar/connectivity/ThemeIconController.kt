@@ -112,6 +112,57 @@ object ThemeIconController {
         return engine.isTargetedResource(SIGNAL_4BAR_NAMES[0])
     }
 
+    /**
+     * Returns true when a dedicated wifi RRO or an icon pack with wifi art is active.
+     *
+     * Business rules for QS wifi tile icon selection:
+     *   1. Dedicated wifi RRO active → render themed wifi icon (this gate).
+     *   2. Icon pack active but no dedicated wifi RRO → render icon-pack wifi art (this gate,
+     *      because icon packs register ic_wifi_signal_* in the android overlay via ThemeEngine).
+     *   3. Neither active → AOSP path (gate returns false).
+     *
+     * Checked independently from [usesStaticQsCellularTileIcon] — a wifi RRO being active
+     * must not affect the cellular tile, and vice versa.
+     */
+    @JvmStatic
+    fun usesStaticQsWifiTileIcon(context: Context): Boolean {
+        return ThemeEngine.getInstance(context)?.isTargetedResource("ic_wifi_signal_4") == true
+    }
+
+    /**
+     * Returns true when a dedicated signal RRO or an icon pack with signal art is active.
+     *
+     * Business rules for QS cellular tile icon selection:
+     *   1. Dedicated signal RRO active → render themed cellular icon (this gate).
+     *   2. Icon pack active but no dedicated signal RRO → render icon-pack signal art (this gate,
+     *      because icon packs register ic_signal_cellular_* in the android overlay via ThemeEngine).
+     *   3. Neither active → AOSP path (gate returns false).
+     *
+     * Checked independently from [usesStaticQsWifiTileIcon] — a signal RRO being active
+     * must not affect the wifi tile, and vice versa.
+     */
+    @JvmStatic
+    fun usesStaticQsCellularTileIcon(context: Context): Boolean {
+        return hasThemedSignalIcons(context)
+    }
+
+    /**
+     * Resource ID of the full-strength QS wifi glyph (last entry of [WifiIcons.WIFI_FULL_ICONS]).
+     * Used by QS interactors when [usesStaticQsWifiTileIcon] is true.
+     */
+    @JvmStatic
+    fun qsTileFullWifiIconResId(): Int =
+        com.android.systemui.statusbar.connectivity.WifiIcons.WIFI_FULL_ICONS[
+            com.android.systemui.statusbar.connectivity.WifiIcons.WIFI_FULL_ICONS.size - 1]
+
+    /**
+     * Resource ID of the full-strength QS cellular static glyph.
+     * Used by QS interactors when [usesStaticQsCellularTileIcon] is true.
+     */
+    @JvmStatic
+    fun qsTileFullCellularIconResId(): Int =
+        com.android.settingslib.R.drawable.ic_mobile_4_4_bar
+
     @JvmStatic
     fun getThemedWifiIcon(context: Context, resId: Int): Drawable? {
         val level = mapWifiResIdToLevel(context, resId)

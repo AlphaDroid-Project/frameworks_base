@@ -30,6 +30,7 @@ import com.android.systemui.qs.tiles.base.domain.model.DataUpdateTrigger
 import com.android.systemui.qs.tiles.impl.wifi.domain.model.WifiTileModel
 import com.android.systemui.res.R
 import com.android.systemui.shade.ShadeDisplayAware
+import com.android.systemui.statusbar.connectivity.ThemeIconController
 import com.android.systemui.statusbar.connectivity.WifiIcons
 import com.android.systemui.statusbar.connectivity.ui.MobileContextProvider
 import com.android.systemui.statusbar.pipeline.airplane.data.repository.AirplaneModeRepository
@@ -70,16 +71,28 @@ constructor(
             val wifiIcon = WifiIcon.fromModel(it, context, showHotspotInfo = true)
             if (it is WifiNetworkModel.Active && wifiIcon is WifiIcon.Visible) {
                 val secondary = removeDoubleQuotes(it.ssid)
+                val iconResId =
+                    if (ThemeIconController.usesStaticQsWifiTileIcon(context)) {
+                        ThemeIconController.qsTileFullWifiIconResId()
+                    } else {
+                        wifiIcon.icon.resId
+                    }
                 flowOf(
                     WifiTileModel.Active(
-                        icon = WifiTileIconModel(wifiIcon.icon.resId),
+                        icon = WifiTileIconModel(iconResId),
                         secondaryLabel = secondary,
                     )
                 )
             } else {
+                val iconResId =
+                    if (ThemeIconController.usesStaticQsWifiTileIcon(context)) {
+                        ThemeIconController.qsTileFullWifiIconResId()
+                    } else {
+                        WifiIcons.WIFI_NO_SIGNAL
+                    }
                 flowOf(
                     WifiTileModel.Inactive(
-                        icon = WifiTileIconModel(WifiIcons.WIFI_NO_SIGNAL),
+                        icon = WifiTileIconModel(iconResId),
                         secondaryLabel = null,
                     )
                 )
@@ -235,12 +248,24 @@ constructor(
 
             if (toggleState == WifiToggleState.Pausing) {
                 return@combine WifiTileModel.Inactive(
-                    icon = WifiTileIconModel(WifiIcons.WIFI_NO_SIGNAL),
+                    icon = WifiTileIconModel(
+                        if (ThemeIconController.usesStaticQsWifiTileIcon(context)) {
+                            ThemeIconController.qsTileFullWifiIconResId()
+                        } else {
+                            WifiIcons.WIFI_NO_SIGNAL
+                        }
+                    ),
                     secondaryLabel = notConnectedDescription,
                 )
             } else if (toggleState == WifiToggleState.Scanning) {
                 return@combine WifiTileModel.Active(
-                    icon = WifiTileIconModel(WifiIcons.WIFI_NO_SIGNAL),
+                    icon = WifiTileIconModel(
+                        if (ThemeIconController.usesStaticQsWifiTileIcon(context)) {
+                            ThemeIconController.qsTileFullWifiIconResId()
+                        } else {
+                            WifiIcons.WIFI_NO_SIGNAL
+                        }
+                    ),
                     secondaryLabel = context.getString(R.string.quick_settings_scanning_for_wifi),
                 )
             }
@@ -255,7 +280,9 @@ constructor(
             WifiTileModel.Inactive(
                 icon =
                     WifiTileIconModel(
-                        if (isEnabled) {
+                        if (ThemeIconController.usesStaticQsWifiTileIcon(context)) {
+                            ThemeIconController.qsTileFullWifiIconResId()
+                        } else if (isEnabled) {
                             WifiIcons.WIFI_NO_SIGNAL
                         } else {
                             R.drawable.ic_signal_wifi_off
