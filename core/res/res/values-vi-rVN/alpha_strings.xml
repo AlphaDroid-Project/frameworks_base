@@ -7,20 +7,17 @@
     <!-- Upload crash log -->
     <string name="url_copy_failed">An error occured while uploading the log</string>
     <!-- Digital Wellbeing shorter title -->
-    <string name="digital_wellbeing_title">Digital Wellbeing</string>
+    <string name="digital_wellbeing_title">Sức khoẻ kỹ thuật số</string>
     <!-- Settings Restart -->
     <string name="settings_restart_title">Settings restart required</string>
     <string name="settings_restart_message">For all changes to take effect, a Settings app restart is required. Restart Settings app now?</string>
     <!-- System Reboot -->
-    <string name="system_restart_title">System restart required</string>
-    <string name="system_restart_message">For all the changes to take effect, a system restart is required. Perform system restart now?</string>
+    <string name="system_restart_title">Yêu cầu khởi động lại hệ thống</string>
+    <string name="system_restart_message">Để áp dụng tất cả thay đổi, cần khởi động lại hệ thống. Thực hiện khởi động lại ngay?</string>
     <!-- SystemUI Restart -->
     <string name="systemui_restart_title">Yêu cầu khởi động lại giao diện hệ thống</string>
     <string name="systemui_restart_message">For all changes to take effect, a SystemUI restart is required. Restart SystemUI now?</string>
-    <string name="systemui_restart_yes">Có</string>
-    <string name="systemui_restart_not_now">Không phải bây giờ</string>
-    <string name="systemui_restart_process">Đang mở lại giao diện hệ thống để áp dụng các thay đổi...</string>
     <!-- Launcher Restart -->
-    <string name="launcher_restart_title">Launcher restart required</string>
-    <string name="launcher_restart_message">For all changes to take effect, a Launcher restart is required. Restart Launcher now?</string>
+    <string name="launcher_restart_title">Yêu cầu khởi động lại Trình khởi chạy</string>
+    <string name="launcher_restart_message">Để tất cả các thay đổi có hiệu lực, cần phải khởi động lại Trình khởi chạy. Khởi động lại Trình khởi chạy ngay bây giờ?</string>
 </resources>
