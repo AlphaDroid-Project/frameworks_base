@@ -41,7 +41,6 @@ object ClockConfigs {
     fun resolveConfig(className: String, isLarge: Boolean, alignValue: String): ClockStyleConfig? {
         val key = if (isLarge) "${className}_large" else className
         val base = clockConfigMap[key] ?: clockConfigMap[className] ?: return null
-        if (base.position == Position.BELOW) return base
 
         val resolvedAlign = when (alignValue) {
             ALIGNMENT_LEFT -> Align.LEFT
@@ -134,6 +133,16 @@ object ClockConfigs {
         ),
         "Stylish7ClockView_large" to ClockStyleConfig(
             Position.BELOW,
+            Align.CENTER,
+            visible = false,
+        ),
+        "SimpleClockView" to ClockStyleConfig(
+            Position.ABOVE,
+            Align.CENTER,
+            visible = false,
+        ),
+        "SimpleClockView_large" to ClockStyleConfig(
+            Position.ABOVE,
             Align.CENTER,
             visible = false,
         ),

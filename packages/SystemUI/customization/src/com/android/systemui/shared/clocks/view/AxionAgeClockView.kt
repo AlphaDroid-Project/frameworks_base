@@ -102,7 +102,7 @@ class AxionAgeClockView @JvmOverloads constructor(
         val textColor = tintColor(isDoze, screenOff, regionDark)
         val isDark = isDoze || regionDark
         val dynSizeScale by ClockSettingsRepository.sizeScale.collectAsState()
-        val sz = if (large) 1f else dynSizeScale
+        val sz = if (large) sizeScale else dynSizeScale
         val digitW = (if (large) 90.dp else 48.dp) * sz
         val digitH = (if (large) 150.dp else 108.dp) * sz
         val digitSpacing = (if (large) 8.dp else 2.dp) * sz
@@ -159,7 +159,6 @@ class AxionAgeClockView @JvmOverloads constructor(
                 textColor = textColor,
                 textSize = infoTextSize,
                 iconSize = infoIconSize,
-                rowArrangement = Arrangement.Center,
             )
         }
     }

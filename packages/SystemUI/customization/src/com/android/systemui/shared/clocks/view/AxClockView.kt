@@ -49,6 +49,33 @@ import com.android.systemui.shared.clocks.extensions.*
 import java.util.Locale
 import kotlinx.coroutines.*
 
+/**
+ * Base view for all AlphaDroid custom lockscreen clocks.
+ * 
+ * This class hosts Compose-based clock faces (`SmallContent` and `LargeContent`) within
+ * a traditional Android View hierarchy (`ConstraintLayout` via `ClockSection`). It manages
+ * state propagation (doze, region dark, scale, user configuration) so subclasses only need
+ * to focus on rendering.
+ *
+ * ### Architectural Guidelines for Subclasses
+ * 
+ * 1. **Horizontal Alignment (`isLeftAligned`, `isRightAligned`)**:
+ *    Subclasses MUST respect the user's horizontal alignment preference in both small and 
+ *    large modes. This is typically done by passing appropriate `horizontalAlignment` and
+ *    `padding` parameters to the root `Column` or `Box`.
+ *
+ * 2. **Large Clock Vertical Centering**:
+ *    The `ConstraintLayout` container provides a fixed vertical ceiling via `MATCH_CONSTRAINT`.
+ *    To ensure proper vertical centering within this space, large clock composables MUST use 
+ *    `Modifier.fillMaxSize()` on their root element combined with `verticalArrangement = Arrangement.Center`
+ *    (or `contentAlignment = Alignment.Center` for `Box`). Do not use `wrapContentHeight()`.
+ *
+ * 3. **Date and Weather Area (`EnhancedDateArea`)**:
+ *    Use the provided `EnhancedDateArea` composable to render smartspace/date/weather. It 
+ *    automatically respects horizontal alignment constraints and handles proportional scaling 
+ *    (`sizeScale`) so the date grows appropriately when the "Large" size toggle is enabled.
+ *    Do not hard-code `rowArrangement = Arrangement.Center` unless explicitly required by the design.
+ */
 abstract class AxClockView @JvmOverloads constructor(
     context: Context,
     attrs: AttributeSet? = null,
@@ -65,6 +92,22 @@ abstract class AxClockView @JvmOverloads constructor(
     private var uiScope: CoroutineScope? = null
 
     var isLargeClock = false
+
+    // Max height (px) the host allows for this clock, or 0 when unconstrained. Fed from the
+    // keyguard/preview target region via AxClockFaceController.onTargetRegionChanged. Used by
+    // onMeasure to clamp the large clock so its content never paints past the bottom anchor
+    // (the UDFPS / lock icon).
+    var maxRenderHeightPx: Int = 0
+        set(value) {
+            if (field != value) {
+                field = value
+                requestLayout()
+            }
+        }
+
+    // Set during onMeasure for the large clock: ratio (<=1f) applied to the compose host so
+    // content that would exceed the height ceiling shrinks to fit instead of overflowing.
+    private var largeContentScale = 1f
 
     var isPreviewMode = false
         set(value) {
@@ -98,10 +141,7 @@ abstract class AxClockView @JvmOverloads constructor(
     val scaleRatio get() = context.scaleRatio
     val sizeScale get() = when {
         isPreviewMode -> 1f
-        else -> {
-            val raw = ClockSettingsRepository.sizeScale.value
-            if (isLargeClock) raw.coerceAtMost(LARGE_CLOCK_SIZE_CAP) else raw
-        }
+        else -> ClockSettingsRepository.sizeScale.value
     }
     val iconSize get() = context.scaledDimenInt(R.dimen.clock_icon_secondary_size)
 
@@ -200,7 +240,9 @@ abstract class AxClockView @JvmOverloads constructor(
 
     open fun refreshFormat(use24: Boolean, newLocale: Locale = interactor.locale) {
         interactor.needsSeconds = (this as? BitmapDigitComposeClockView)?.faceStyle?.needsPerSecondTick == true
-        interactor.useStandardFormat = this is OldQuickLookClockView
+        // OldQuickLook and Simple render the time as a single line and need the colon
+        // separator; bitmap/stacked faces split hh/mm themselves and use the compact pattern.
+        interactor.useStandardFormat = this is OldQuickLookClockView || this is SimpleClockView
         interactor.refreshFormat(use24, newLocale)
     }
 
@@ -269,7 +311,36 @@ abstract class AxClockView @JvmOverloads constructor(
             MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED),
         )
         val naturalH = cv.measuredHeight
-        val floor = if (isLargeClock) 0 else clockHeight
+
+        if (isLargeClock) {
+            // Upper bound from the host: the measure-spec ceiling (constrainMaxHeight in
+            // ClockSection) and/or the target region height, whichever is set and smaller.
+            val specCeiling = if (mode != MeasureSpec.UNSPECIFIED) maxH else Int.MAX_VALUE
+            val regionCeiling = if (maxRenderHeightPx > 0) maxRenderHeightPx else Int.MAX_VALUE
+            val ceiling = minOf(specCeiling, regionCeiling)
+
+            // Shrink content to fit when it would exceed the ceiling.
+            largeContentScale =
+                if (ceiling != Int.MAX_VALUE && naturalH > ceiling && naturalH > 0)
+                    ceiling.toFloat() / naturalH.toFloat()
+                else 1f
+
+            // Report the full available height so the view fills the ConstraintLayout slot;
+            // applyLargeContentScale() will centre the (possibly scaled-down) content via
+            // translationY.
+            val viewH = if (ceiling != Int.MAX_VALUE) ceiling else naturalH
+            setMeasuredDimension(w, viewH)
+            if (w > 0 && naturalH > 0) {
+                cv.measure(
+                    MeasureSpec.makeMeasureSpec(w, MeasureSpec.EXACTLY),
+                    MeasureSpec.makeMeasureSpec(naturalH, MeasureSpec.EXACTLY),
+                )
+            }
+            applyLargeContentScale()
+            return
+        }
+
+        val floor = clockHeight
         val finalH = when (mode) {
             MeasureSpec.EXACTLY -> maxOf(naturalH, maxH, floor)
             else -> maxOf(naturalH, floor)
@@ -283,10 +354,41 @@ abstract class AxClockView @JvmOverloads constructor(
         }
     }
 
+    private fun applyLargeContentScale() {
+        val cv = host.view
+        if (largeContentScale >= 1f) {
+            cv.scaleX = 1f
+            cv.scaleY = 1f
+        } else {
+            cv.pivotX = (cv.width.takeIf { it > 0 } ?: width) / 2f
+            cv.pivotY = 0f
+            cv.scaleX = largeContentScale
+            cv.scaleY = largeContentScale
+        }
+
+        // Center vertically if there is leftover space
+        val viewHeight = height.takeIf { it > 0 } ?: measuredHeight
+        val contentHeight = (cv.measuredHeight * largeContentScale).toInt()
+        if (viewHeight > 0 && contentHeight > 0 && viewHeight > contentHeight) {
+            cv.translationY = (viewHeight - contentHeight) / 2f
+        } else {
+            cv.translationY = 0f
+        }
+    }
+
     override fun onLayout(changed: Boolean, l: Int, t: Int, r: Int, b: Int) {
         val cv = host.view
         if (!cv.isAttachedToWindow) return
-        if (!isLargeClock && (isPreviewMode)) {
+        if (isLargeClock) {
+            // Lay the compose host out at its full natural height so its content composes
+            // without truncation; largeContentScale (applied in onMeasure) shrinks it into
+            // the clamped view bounds, anchored at the top.
+            val naturalH = cv.measuredHeight.takeIf { it > 0 } ?: height
+            cv.layout(0, 0, width, naturalH)
+            applyLargeContentScale()
+            return
+        }
+        if (isPreviewMode) {
             cv.measure(
                 MeasureSpec.makeMeasureSpec(width, MeasureSpec.EXACTLY),
                 MeasureSpec.makeMeasureSpec(height, MeasureSpec.EXACTLY),
@@ -326,11 +428,10 @@ abstract class AxClockView @JvmOverloads constructor(
     protected fun digitScaleModifier(): Modifier {
         if (isPreviewMode) return Modifier
         val scaleValue by ClockSettingsRepository.sizeScale.collectAsState()
-        val effective = if (isLargeClock) scaleValue.coerceAtMost(LARGE_CLOCK_SIZE_CAP) else scaleValue
-        if (effective == 1f) return Modifier
+        if (scaleValue == 1f) return Modifier
         return Modifier.graphicsLayer {
-            scaleX = effective
-            scaleY = effective
+            scaleX = scaleValue
+            scaleY = scaleValue
         }
     }
 
@@ -353,17 +454,21 @@ abstract class AxClockView @JvmOverloads constructor(
     ) {
         val display = viewModel.rememberResolvedDisplay()
         val inverseModifier = inverseSizeScaleModifier()
+        // Scale date text & icons proportionally with the user's size toggle so the
+        // date area doesn't look disproportionately small next to scaled clock digits.
+        val scaledTextSize = textSize * sizeScale
+        val scaledIconSize = iconSize * sizeScale
         QuickLookDateArea(
             modifier = modifier.then(inverseModifier),
             display = display,
             dateStr = state.dateStr,
             sizeScale = 1f,
             textColor = textColor,
-            textSize = textSize,
+            textSize = scaledTextSize,
             fontFamily = fontFamily,
             fontWeight = fontWeight,
             letterSpacing = letterSpacing,
-            iconSize = iconSize,
+            iconSize = scaledIconSize,
             uppercase = uppercase,
             rowArrangement = rowArrangement,
         )
@@ -371,6 +476,5 @@ abstract class AxClockView @JvmOverloads constructor(
 
     companion object {
         const val DEBUG = false
-        const val LARGE_CLOCK_SIZE_CAP = 1.2f
     }
 }

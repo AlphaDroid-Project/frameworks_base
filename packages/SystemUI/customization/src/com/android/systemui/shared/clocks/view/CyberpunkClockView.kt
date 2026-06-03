@@ -49,12 +49,14 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Fill
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.android.systemui.customization.clocks.R as clocksR
 
 class CyberpunkClockView @JvmOverloads constructor(
     context: Context,
@@ -183,7 +185,17 @@ class CyberpunkClockView @JvmOverloads constructor(
         val primaryTimeColor = if (isDoze) Color.White else cpYellow
         val accentColor = if (isDoze) Color.White else cpCyan
         val dynSizeScale by ClockSettingsRepository.sizeScale.collectAsState()
-        val sz = dynSizeScale.coerceAtMost(LARGE_CLOCK_SIZE_CAP)
+        val sz = dynSizeScale
+        val timeFont = remember(state.fontVersion.intValue) { resolveClockTimeFontFamily(context.resources) }
+
+        // Derive the large digit size from the shared large_clock_text_size dimen (which
+        // scales across density buckets) rather than a hardcoded sp.
+        // CYBERPUNK_LARGE_RATIO preserves the original visual weight.
+        val largeFontSize = with(LocalDensity.current) {
+            context.resources.getDimensionPixelSize(
+                clocksR.dimen.large_clock_text_size
+            ).toSp() * CYBERPUNK_LARGE_RATIO * sz
+        }
 
         val glitchProgress = remember { Animatable(0f) }
 
@@ -222,12 +234,12 @@ class CyberpunkClockView @JvmOverloads constructor(
                 Text(
                     text = hours,
                     style = TextStyle(
-                        fontSize = 160.sp * sz,
+                        fontSize = largeFontSize,
                         fontWeight = FontWeight.Black,
-                        fontFamily = FontFamily.Monospace,
+                        fontFamily = timeFont,
                         color = primaryTimeColor,
                         letterSpacing = (-8).sp,
-                        lineHeight = 160.sp * sz,
+                        lineHeight = largeFontSize,
                         drawStyle = if (isDoze) Stroke(width = 8f) else Fill
                     )
                 )
@@ -298,12 +310,12 @@ class CyberpunkClockView @JvmOverloads constructor(
                 Text(
                     text = minutes,
                     style = TextStyle(
-                        fontSize = 160.sp * sz,
+                        fontSize = largeFontSize,
                         fontWeight = FontWeight.Black,
-                        fontFamily = FontFamily.Monospace,
+                        fontFamily = timeFont,
                         color = primaryTimeColor,
                         letterSpacing = (-8).sp,
-                        lineHeight = 160.sp * sz,
+                        lineHeight = largeFontSize,
                         drawStyle = if (isDoze) Stroke(width = 8f) else Fill
                     )
                 )
@@ -335,9 +347,9 @@ class CyberpunkClockView @JvmOverloads constructor(
                         verticalArrangement = Arrangement.Center
                     ) {
                         val (gh, gm) = splitTimeLines(time)
-                        Text(gh, style = TextStyle(fontSize = 160.sp, fontWeight = FontWeight.Black, fontFamily = FontFamily.Monospace, color = cpCyan, letterSpacing = (-8).sp, lineHeight = 160.sp))
+                        Text(gh, style = TextStyle(fontSize = largeFontSize, fontWeight = FontWeight.Black, fontFamily = FontFamily.Monospace, color = cpCyan, letterSpacing = (-8).sp, lineHeight = largeFontSize))
                         Spacer(modifier = Modifier.height(30.dp))
-                        Text(gm, style = TextStyle(fontSize = 160.sp, fontWeight = FontWeight.Black, fontFamily = FontFamily.Monospace, color = cpCyan, letterSpacing = (-8).sp, lineHeight = 160.sp))
+                        Text(gm, style = TextStyle(fontSize = largeFontSize, fontWeight = FontWeight.Black, fontFamily = FontFamily.Monospace, color = cpCyan, letterSpacing = (-8).sp, lineHeight = largeFontSize))
                     }
                 }
             }
@@ -396,12 +408,13 @@ class CyberpunkClockView @JvmOverloads constructor(
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     val dynSizeScale by ClockSettingsRepository.sizeScale.collectAsState()
+                    val badgeTimeFont = remember(state.fontVersion.intValue) { resolveClockTimeFontFamily(context.resources) }
                     Text(
                         text = time,
                         style = TextStyle(
                             fontSize = 80.sp * dynSizeScale,
                             fontWeight = FontWeight.Black,
-                            fontFamily = FontFamily.Monospace,
+                            fontFamily = badgeTimeFont,
                             color = primaryColor,
                             letterSpacing = (-4).sp,
                             drawStyle = if (isDoze) Stroke(width = 5f) else Fill
@@ -474,4 +487,10 @@ class CyberpunkClockView @JvmOverloads constructor(
     }
 
     override fun getTag(): String = if (isLargeClock) "CyberpunkLargeClockView" else "CyberpunkClockView"
+
+    companion object {
+        // Ratio applied to large_clock_text_size (150dp base) to preserve Cyberpunk's
+        // original ~160sp large-digit visual weight while scaling across density buckets.
+        private const val CYBERPUNK_LARGE_RATIO = 1.067f
+    }
 }

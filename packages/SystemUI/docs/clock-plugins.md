@@ -62,6 +62,14 @@ Picker logic for choosing between clocks is available to our partners as part of
 The clock picking UI will be enabled by default if there is more than 1 clock provided, otherwise
 it will be hidden from the UI.
 
+### AlphaDroid Specifics
+AlphaDroid extends the base AOSP clock functionality to support deep compose integration, dynamic font scaling, and rich layout alignments (Left/Center/Right). 
+
+When creating a new custom clock for AlphaDroid, ensure your view inherits from [AxClockView](../customization/src/com/android/systemui/shared/clocks/view/AxClockView.kt). Please review the KDoc on `AxClockView` for critical architectural guidelines regarding:
+- **Horizontal Alignment**: Respecting user settings in small and large modes.
+- **Vertical Centering**: Utilizing `Modifier.fillMaxSize()` instead of `wrapContentHeight()` so clocks float correctly within the host layout.
+- **EnhancedDateArea**: Properly scaling dates and smartspace elements using dynamic variables.
+
 ## System Health
 
 Clocks are high risk for battery consumption and screen burn-in because they modify the UI of AOD.

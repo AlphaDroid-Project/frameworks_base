@@ -147,7 +147,7 @@ class Stylish7ClockView @JvmOverloads constructor(
     @Composable
     private fun LargeContent() {
         val (time, date, isDoze, screenOff, regionDark) = rememberClockState()
-        val dynSizeScale by ClockSettingsRepository.sizeScale.collectAsState()
+        val largeScale = sizeScale
 
         val accent1 = Color(context.getColor(android.R.color.system_accent1_600))
         val accent3 = Color(context.getColor(android.R.color.system_accent3_600))
@@ -159,11 +159,26 @@ class Stylish7ClockView @JvmOverloads constructor(
         val avatar = remember { loadUserAvatar() }
         val userName = remember { loadUserName() }
 
+        val horizontalAlign = when {
+            isLeftAligned -> Alignment.Start
+            isRightAligned -> Alignment.End
+            else -> Alignment.CenterHorizontally
+        }
+        val sidePadding = if (isSideAligned) {
+            (clockPaddingStart / context.resources.displayMetrics.density).dp
+        } else {
+            0.dp
+        }
+
         Column(
             modifier = Modifier
-                .fillMaxWidth()
-                .wrapContentHeight(),
-            horizontalAlignment = Alignment.CenterHorizontally,
+                .fillMaxSize()
+                .padding(
+                    start = if (isRightAligned) 0.dp else sidePadding,
+                    end = if (isRightAligned) sidePadding else 0.dp,
+                ),
+            horizontalAlignment = horizontalAlign,
+            verticalArrangement = Arrangement.Center,
         ) {
             ClockBody(
                 timeDisplay = timeDisplay,
@@ -172,7 +187,7 @@ class Stylish7ClockView @JvmOverloads constructor(
                 accent1 = accent1,
                 accent3 = accent3,
                 isDoze = isDoze,
-                scale = dynSizeScale,
+                scale = largeScale,
                 avatar = avatar,
                 userName = userName,
                 profileFrameSize = 96.dp,

@@ -143,8 +143,9 @@ class GeneralClockView @JvmOverloads constructor(
             (digitH * 2 + lineSpacing).toDp()
         }
         Column(
-            modifier = Modifier.fillMaxWidth().wrapContentHeight(),
+            modifier = Modifier.fillMaxSize(),
             horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center,
         ) {
             Canvas(
                 modifier = Modifier
@@ -198,7 +199,6 @@ class GeneralClockView @JvmOverloads constructor(
                 textColor = tintColor,
                 textSize = 16.sp,
                 iconSize = 18.dp,
-                rowArrangement = Arrangement.Center,
             )
         }
     }
