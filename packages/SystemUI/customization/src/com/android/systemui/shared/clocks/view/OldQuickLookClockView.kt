@@ -199,7 +199,7 @@ class OldQuickLookClockView @JvmOverloads constructor(
         val largeFontSize = with(LocalDensity.current) {
             context.resources.getDimensionPixelSize(
                 clocksR.dimen.large_clock_text_size
-            ).toSp()
+            ).toSp() * sizeScale
         }
 
         Box(

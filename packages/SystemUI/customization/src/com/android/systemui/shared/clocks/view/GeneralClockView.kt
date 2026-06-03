@@ -132,7 +132,7 @@ class GeneralClockView @JvmOverloads constructor(
     private fun LargeContent() {
         val (time, date, isDoze, screenOff, regionDark) = rememberClockState()
 
-        val largeScale = min(context.scaleRatio, MAX_TABLET_SCALE) * LARGE_SCALE_MULTIPLIER
+        val largeScale = min(context.scaleRatio, MAX_TABLET_SCALE) * LARGE_SCALE_MULTIPLIER * sizeScale
         val digitSpacing = context.scaledDimen(R.dimen.large_clock_digit_spacing)
         val lineSpacing = context.scaledDimen(R.dimen.large_clock_line_spacing)
         val tintColor = tintColor(isDoze, screenOff, regionDark)

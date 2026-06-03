@@ -37,18 +37,6 @@ internal fun AxClockView.resolveDisplay(
     alarm: String,
     date: String,
 ): DateDisplay {
-    if (media.isPlaying && media.trackTitle.isNotEmpty()) {
-        val fullText = if (media.artistName.isNotEmpty()) {
-            "${media.trackTitle} - ${media.artistName}"
-        } else {
-            "Now playing ${media.trackTitle}"
-        }
-        return DateDisplay.IconText(fullText, loadNowPlayingIcon(media.packageName), media.packageName.isEmpty())
-    }
-
-    if (nowPlaying.isNotBlank()) {
-        return DateDisplay.IconText(nowPlaying, loadNowPlayingIcon(media.packageName), false, nowPlayingTapAction)
-    }
 
     val activeSmartspace = clockData.smartspace.firstOrNull {
         it.title.isNotEmpty() && !it.isSensitive

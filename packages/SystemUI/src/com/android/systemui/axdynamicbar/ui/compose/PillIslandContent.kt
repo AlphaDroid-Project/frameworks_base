@@ -342,10 +342,27 @@ private fun AnimatedTrophyIcon(color: Color) {
 @Composable
 private fun MediaPillIcon(event: IslandEvent.Media, animated: Boolean = true) {
     event.albumArt?.let { art ->
+        val rotation: Float
+        if (animated && event.isPlaying) {
+            val transition = rememberInfiniteTransition(label = "media_art_roll")
+            val animatedRotation by transition.animateFloat(
+                initialValue = 0f,
+                targetValue = 360f,
+                animationSpec = infiniteRepeatable(
+                    animation = tween(8000, easing = LinearEasing),
+                    repeatMode = RepeatMode.Restart
+                ),
+                label = "media_art_rotation"
+            )
+            rotation = animatedRotation
+        } else {
+            rotation = 0f
+        }
+
         Image(
             bitmap = art.toScaledBitmap(16.dp),
             contentDescription = null,
-            modifier = Modifier.size(16.dp).clip(CircleShape),
+            modifier = Modifier.size(16.dp).clip(CircleShape).graphicsLayer { rotationZ = rotation },
             contentScale = ContentScale.Crop,
         )
     }

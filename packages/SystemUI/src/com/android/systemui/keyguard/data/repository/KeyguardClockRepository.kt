@@ -22,6 +22,7 @@ import android.provider.Settings
 import com.android.keyguard.ClockEventController
 import com.android.systemui.animation.GSFAxes
 import com.android.systemui.common.ui.data.repository.ConfigurationRepository
+import com.android.systemui.axdynamicbar.domain.AxDynamicBarSettings
 import com.android.systemui.dagger.SysUISingleton
 import com.android.systemui.dagger.qualifiers.Application
 import com.android.systemui.dagger.qualifiers.Background
@@ -77,6 +78,7 @@ interface KeyguardClockRepository {
     val forcedClockSize: Flow<ClockSize?>
 
     val areLockscreenWidgetsEnabled: Boolean
+    val isDynamicBarLockscreenActive: Flow<Boolean>
     fun setClockSize(size: ClockSize)
 }
 
@@ -178,6 +180,31 @@ constructor(
             ) ?: ""
             return isEnabled && widgetConfig.isNotEmpty()
         }
+
+    override val isDynamicBarLockscreenActive: StateFlow<Boolean> =
+        secureSettings
+            .observerFlow(
+                names = arrayOf(
+                    AxDynamicBarSettings.KEY_ENABLED,
+                    AxDynamicBarSettings.KEY_KEYGUARD_ENABLED,
+                ),
+                userId = UserHandle.USER_ALL,
+            )
+            .onStart { emit(Unit) }
+            .map {
+                val dbEnabled = secureSettings.getIntForUser(
+                    AxDynamicBarSettings.KEY_ENABLED, 0, UserHandle.USER_CURRENT
+                ) == 1
+                val dbKeyguard = secureSettings.getIntForUser(
+                    AxDynamicBarSettings.KEY_KEYGUARD_ENABLED, 1, UserHandle.USER_CURRENT
+                ) == 1
+                dbEnabled && dbKeyguard
+            }
+            .stateIn(
+                scope = applicationScope,
+                started = SharingStarted.WhileSubscribed(),
+                initialValue = false,
+            )
     private fun getClockSize(): ClockSizeSetting {
         val isDoubleLineClock = secureSettings.getIntForUser(
             Settings.Secure.LOCKSCREEN_USE_DOUBLE_LINE_CLOCK,

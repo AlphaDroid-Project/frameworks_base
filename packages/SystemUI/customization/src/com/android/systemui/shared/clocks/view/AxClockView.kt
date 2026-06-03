@@ -98,8 +98,10 @@ abstract class AxClockView @JvmOverloads constructor(
     val scaleRatio get() = context.scaleRatio
     val sizeScale get() = when {
         isPreviewMode -> 1f
-        isLargeClock -> 1f
-        else -> ClockSettingsRepository.sizeScale.value
+        else -> {
+            val raw = ClockSettingsRepository.sizeScale.value
+            if (isLargeClock) raw.coerceAtMost(LARGE_CLOCK_SIZE_CAP) else raw
+        }
     }
     val iconSize get() = context.scaledDimenInt(R.dimen.clock_icon_secondary_size)
 
@@ -322,12 +324,13 @@ abstract class AxClockView @JvmOverloads constructor(
 
     @Composable
     protected fun digitScaleModifier(): Modifier {
-        if (isLargeClock || isPreviewMode) return Modifier
+        if (isPreviewMode) return Modifier
         val scaleValue by ClockSettingsRepository.sizeScale.collectAsState()
-        if (scaleValue == 1f) return Modifier
+        val effective = if (isLargeClock) scaleValue.coerceAtMost(LARGE_CLOCK_SIZE_CAP) else scaleValue
+        if (effective == 1f) return Modifier
         return Modifier.graphicsLayer {
-            scaleX = scaleValue
-            scaleY = scaleValue
+            scaleX = effective
+            scaleY = effective
         }
     }
 
@@ -368,5 +371,6 @@ abstract class AxClockView @JvmOverloads constructor(
 
     companion object {
         const val DEBUG = false
+        const val LARGE_CLOCK_SIZE_CAP = 1.2f
     }
 }
