@@ -146,18 +146,36 @@ class Stylish2ClockView @JvmOverloads constructor(
         val dayOfWeek = remember(date) { formatDayOfWeek() }
         val monthDay = remember(date) { formatMonthDay() }
 
+        val boxScale = LARGE_BASE_SCALE * sizeScale
+        val greetingSize = 36.sp * sizeScale
+
         val (hours, minutes) = splitTimeLines(time)
+
+        val horizontalAlign = when {
+            isLeftAligned -> Alignment.Start
+            isRightAligned -> Alignment.End
+            else -> Alignment.CenterHorizontally
+        }
+        val sidePadding = if (isSideAligned) {
+            (clockPaddingStart / context.resources.displayMetrics.density).dp
+        } else {
+            0.dp
+        }
 
         Column(
             modifier = Modifier
-                .fillMaxWidth()
-                .wrapContentHeight(),
-            horizontalAlignment = Alignment.CenterHorizontally,
+                .fillMaxSize()
+                .padding(
+                    start = if (isRightAligned) 0.dp else sidePadding,
+                    end = if (isRightAligned) sidePadding else 0.dp,
+                ),
+            horizontalAlignment = horizontalAlign,
+            verticalArrangement = Arrangement.Center,
         ) {
             Text(
                 text = "Have a great",
                 style = TextStyle(
-                    fontSize = 36.sp,
+                    fontSize = greetingSize,
                     fontWeight = FontWeight.Bold,
                     color = tintColor.copy(alpha = greetingAlpha),
                 ),
@@ -165,7 +183,7 @@ class Stylish2ClockView @JvmOverloads constructor(
             Text(
                 text = "$dayOfWeek !",
                 style = TextStyle(
-                    fontSize = 36.sp,
+                    fontSize = greetingSize,
                     fontWeight = FontWeight.Bold,
                     color = tintColor.copy(alpha = greetingAlpha),
                 ),
@@ -177,17 +195,17 @@ class Stylish2ClockView @JvmOverloads constructor(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.Center,
             ) {
-                TimeBox(hours, textOnBg, bgColor, 1.3f, isDoze)
+                TimeBox(hours, textOnBg, bgColor, boxScale, isDoze)
 
                 Spacer(modifier = Modifier.width(10.dp))
-                ColonDots(tintColor, 1.3f)
+                ColonDots(tintColor, boxScale)
                 Spacer(modifier = Modifier.width(10.dp))
 
-                TimeBox(minutes, textOnBg, bgColor, 1.3f, isDoze)
+                TimeBox(minutes, textOnBg, bgColor, boxScale, isDoze)
 
                 Spacer(modifier = Modifier.width(10.dp))
 
-                DateBox(monthDay, textOnBg, bgColor, 1.3f, isDoze)
+                DateBox(monthDay, textOnBg, bgColor, boxScale, isDoze)
             }
 
             Spacer(modifier = Modifier.height(12.dp))
@@ -196,7 +214,6 @@ class Stylish2ClockView @JvmOverloads constructor(
                 textColor = tintColor,
                 textSize = 16.sp,
                 iconSize = 18.dp,
-                rowArrangement = Arrangement.Center,
             )
         }
     }
@@ -287,5 +304,11 @@ class Stylish2ClockView @JvmOverloads constructor(
         val sdf = SimpleDateFormat("MMM dd", interactor.locale)
         sdf.timeZone = interactor.calendar.timeZone
         return sdf.format(interactor.calendar.time)
+    }
+
+    companion object {
+        // Base multiplier for the boxed digits on the large clock, before the user's Large
+        // size toggle (sizeScale) is applied. Matches the previous fixed 1.3f at scale 1.0.
+        private const val LARGE_BASE_SCALE = 1.3f
     }
 }

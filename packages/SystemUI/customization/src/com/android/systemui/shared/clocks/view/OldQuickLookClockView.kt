@@ -203,7 +203,7 @@ class OldQuickLookClockView @JvmOverloads constructor(
         }
 
         Box(
-            modifier = Modifier.fillMaxWidth().wrapContentHeight(),
+            modifier = Modifier.fillMaxSize(),
             contentAlignment = Alignment.Center,
         ) {
             Column(
@@ -245,7 +245,6 @@ class OldQuickLookClockView @JvmOverloads constructor(
                     textColor = textColor,
                     textSize = 16.sp,
                     iconSize = 18.dp,
-                    rowArrangement = Arrangement.Center,
                 )
             }
         }

@@ -16,6 +16,7 @@
 
 package com.android.systemui.shared.clocks.view
 
+import android.content.res.Resources
 import android.graphics.Typeface
 import androidx.compose.ui.text.font.FontFamily
 
@@ -41,4 +42,16 @@ fun resolveBodyFontFamily(): FontFamily {
 fun resolveDateFontFamily(): FontFamily {
     val typeface = Typeface.create(FONT_FAMILY_DATE, Typeface.NORMAL)
     return FontFamily(typeface)
+}
+
+/**
+ * Resolves the lockscreen clock time digit font from the android package's
+ * config_clockFontFamily string resource. AlphaVisuals lockscreen_clock_font RRO
+ * overlays override this value at the android package level; reading it here ensures
+ * the active overlay is respected. Falls back to google-sans-flex-clock when unset.
+ */
+fun resolveClockTimeFontFamily(resources: Resources): FontFamily {
+    val resId = resources.getIdentifier("config_clockFontFamily", "string", "android")
+    val family = if (resId != 0) resources.getString(resId) else "google-sans-flex-clock"
+    return FontFamily(Typeface.create(family, Typeface.NORMAL))
 }

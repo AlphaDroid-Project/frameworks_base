@@ -27,7 +27,7 @@
     <string name="clock_id_graphic">GRAPHIC</string>
     <string name="clock_id_london_ug">LONDON_UG</string>
     <string name="clock_id_ndot">NDOT</string>
-    <string name="clock_id_ntype">DEFAULT</string>
+    <string name="clock_id_ntype">NTYPE</string>
     <string name="clock_id_old_quick_look">OLD_QUICKLOOK</string>
     <string name="clock_id_polyline">POLYLINE</string>
     <string name="clock_id_space_age">SPACE_AGE</string>
@@ -36,6 +36,22 @@
     <string name="clock_id_segments">SEGMENTS</string>
     <string name="clock_id_stylish2">STYLISH_2</string>
     <string name="clock_id_stylish7">STYLISH_7</string>
+    <string name="clock_id_simple">DEFAULT</string>
+
+    <string name="clock_name_simple">Simple</string>
+    <string name="clock_name_ntype">NType</string>
+    <string name="clock_name_ndot">NDot</string>
+    <string name="clock_name_graphic">Graphic</string>
+    <string name="clock_name_general">Intervar</string>
+    <string name="clock_name_old_quick_look">Nothing</string>
+    <string name="clock_name_cyberpunk">Cyberpunk</string>
+    <string name="clock_name_axion_age">Axion Age</string>
+    <string name="clock_name_space_age">Space Age</string>
+    <string name="clock_name_london_ug">London UG</string>
+    <string name="clock_name_polyline">Polyline</string>
+    <string name="clock_name_segments">Segments</string>
+    <string name="clock_name_stylish2">Stylish II</string>
+    <string name="clock_name_stylish7">Stylish VII</string>
     <string name="clock_image_placeholder">?</string>
     <string name="clock_old_quick_look_image_placeholder">__°</string>
     <string name="clock_text_placeholder">: )</string>

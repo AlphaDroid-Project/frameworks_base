@@ -34,10 +34,18 @@ class AxClockProvider(
     }
 
     override fun getClockPickerConfig(settings: ClockSettings): ClockPickerConfig {
+        // Resolve the actual selected face so the fallback id agrees with createClock
+        // (which defaults to SIMPLE). SIMPLE owns the DEFAULT_CLOCK_ID fallback.
+        val simpleId = resources.getString(R.string.clock_id_simple)
+        val resolvedId = settings.clockId ?: simpleId
+        val resolvedType = AxClockType.values().firstOrNull {
+            resolvedId == resources.getString(it.clockId)
+        } ?: AxClockType.SIMPLE
+        
         return ClockPickerConfig(
-                settings.clockId ?: "NTYPE",
-                resources.getString(R.string.clock_id_general),
-                resources.getString(R.string.clock_id_general),
+                resolvedId,
+                resources.getString(resolvedType.nameRes),
+                resources.getString(resolvedType.nameRes),
                 resources.getDrawable(R.drawable.clock_default_thumbnail, null),
                 isReactiveToTone = true,
                 axes = emptyList(),
@@ -49,13 +57,14 @@ class AxClockProvider(
         val clockId = settings.clockId
         val resolvedType = AxClockType.values().firstOrNull {
             clockId == resources.getString(it.clockId)
-        } ?: AxClockType.NTYPE
+        } ?: AxClockType.SIMPLE
 
         return AxClockController(ctx, resolvedType, layoutInflater, messageBuffers)
     }
 
     override fun getClocks(): List<ClockMetadata> {
         val availableTypes = buildList {
+            add(AxClockType.SIMPLE)
             add(AxClockType.NTYPE)
             add(AxClockType.NDOT)
             add(AxClockType.GRAPHIC)

@@ -52,6 +52,7 @@ class AxClockFaceController(
             }
 
             override fun onTargetRegionChanged(targetRegion: Rect?) {
+                view.maxRenderHeightPx = targetRegion?.height() ?: 0
             }
 
             override fun onFontSettingChanged(fontSizePx: Float) {

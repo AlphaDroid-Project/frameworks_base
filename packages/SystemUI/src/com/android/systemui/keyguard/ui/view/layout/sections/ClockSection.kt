@@ -172,9 +172,8 @@ constructor(
             )
             constrainWidth(ClockViewIds.LOCKSCREEN_CLOCK_VIEW_LARGE, MATCH_CONSTRAINT)
 
-            // The following two lines make LOCKSCREEN_CLOCK_VIEW_LARGE is constrained to available
-            // height when it goes beyond constraints; otherwise, it use WRAP_CONTENT
-            constrainHeight(ClockViewIds.LOCKSCREEN_CLOCK_VIEW_LARGE, WRAP_CONTENT)
+            // The following two lines make LOCKSCREEN_CLOCK_VIEW_LARGE constrained to available height.
+            constrainHeight(ClockViewIds.LOCKSCREEN_CLOCK_VIEW_LARGE, MATCH_CONSTRAINT)
             constrainMaxHeight(ClockViewIds.LOCKSCREEN_CLOCK_VIEW_LARGE, 0)
             constrainWidth(ClockViewIds.LOCKSCREEN_CLOCK_VIEW_SMALL, MATCH_CONSTRAINT)
             constrainHeight(
