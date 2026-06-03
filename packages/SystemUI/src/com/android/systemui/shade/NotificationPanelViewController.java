@@ -1277,7 +1277,7 @@ public final class NotificationPanelViewController implements
         }
         // Media is not visible to the user on AOD.
         boolean isMediaVisibleToUser =
-                mMediaDataManager.hasActiveMedia() && !isOnAod();
+                mMediaDataManager.hasActiveMedia() && !isOnAod() && !isDynamicBarLockscreenActive();
         if (isMediaVisibleToUser) {
             // When media is visible, it overlaps with the large clock. Use small clock instead.
             return ClockSize.SMALL;
@@ -1316,9 +1316,19 @@ public final class NotificationPanelViewController implements
         return mDozing && mDozeParameters.getAlwaysOn();
     }
 
+    private boolean isDynamicBarLockscreenActive() {
+        boolean enabled = Settings.Secure.getIntForUser(
+                mContentResolver, "ax_dynamic_bar_enabled", 0,
+                UserHandle.USER_CURRENT) == 1;
+        boolean keyguardEnabled = Settings.Secure.getIntForUser(
+                mContentResolver, "ax_dynamic_bar_keyguard_enabled", 1,
+                UserHandle.USER_CURRENT) == 1;
+        return enabled && keyguardEnabled;
+    }
+
     private boolean hasVisibleNotifications() {
         return mActiveNotificationsInteractor.getAreAnyNotificationsPresentValue()
-                || mMediaDataManager.hasActiveMedia();
+                || (mMediaDataManager.hasActiveMedia() && !isDynamicBarLockscreenActive());
     }
 
     @Override

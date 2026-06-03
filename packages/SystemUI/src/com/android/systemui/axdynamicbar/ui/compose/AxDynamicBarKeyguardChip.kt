@@ -18,6 +18,7 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.core.LinearEasing
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.animation.fadeIn
@@ -322,12 +323,30 @@ private fun KeyguardChipBody(
                     label = "kg_media_icon",
                 ) { art ->
                     if (art != null) {
+                        val rotation: Float
+                        if (event.isPlaying) {
+                            val transition = rememberInfiniteTransition(label = "kg_media_art_roll")
+                            val animatedRotation by transition.animateFloat(
+                                initialValue = 0f,
+                                targetValue = 360f,
+                                animationSpec = infiniteRepeatable(
+                                    animation = tween(8000, easing = LinearEasing),
+                                    repeatMode = RepeatMode.Restart
+                                ),
+                                label = "kg_media_art_rotation"
+                            )
+                            rotation = animatedRotation
+                        } else {
+                            rotation = 0f
+                        }
+
                         Image(
                             bitmap = art.toScaledBitmap(ChipIconSize),
                             contentDescription = null,
                             modifier = Modifier
                                 .size(ChipIconSize)
-                                .clip(ShapeXs),
+                                .clip(CircleShape)
+                                .graphicsLayer { rotationZ = rotation },
                             contentScale = ContentScale.Crop,
                         )
                     } else {

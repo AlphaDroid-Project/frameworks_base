@@ -129,7 +129,7 @@ object BitmapFaceConfigs {
             topMarginRes = R.dimen.bitmap_digit_clocks_margin_top_v2,
             clockOffsetRes = R.dimen.clock_offset,
             hasSeparator = true,
-            largeScaleMultiplier = 1.1f,
+            largeScaleMultiplier = 1.8f,
             overlapSpacingRes = R.dimen.overlap_small_padding,
             overlapPairs = mapOf("14" to 6f, "17" to 1f, "19" to 2f),
             dateSpacingDp = 0f,

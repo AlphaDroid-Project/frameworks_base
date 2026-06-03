@@ -121,12 +121,14 @@ constructor(
                 areAnyNotificationsPresent,
                 mediaCarouselInteractor.hasActiveMedia,
                 keyguardInteractor.isDozing,
-            ) { forcedClockSize, isFullWidthShade, hasNotifs, hasMedia, isDozing ->
+                keyguardClockRepository.isDynamicBarLockscreenActive,
+            ) { forcedClockSize, isFullWidthShade, hasNotifs, hasMedia, isDozing, isDbActive ->
+                val effectiveHasMedia = hasMedia && !isDbActive
                 when {
                     forcedClockSize != null -> forcedClockSize
-                    isFullWidthShade && (hasNotifs || hasMedia) -> ClockSize.SMALL
+                    isFullWidthShade && (hasNotifs || effectiveHasMedia) -> ClockSize.SMALL
                     isFullWidthShade -> ClockSize.LARGE
-                    hasMedia && !isDozing -> ClockSize.SMALL
+                    effectiveHasMedia && !isDozing -> ClockSize.SMALL
                     else -> ClockSize.LARGE
                 }
             }

@@ -182,6 +182,8 @@ class CyberpunkClockView @JvmOverloads constructor(
         val cpCyan = Color(0xFF00F0FF)
         val primaryTimeColor = if (isDoze) Color.White else cpYellow
         val accentColor = if (isDoze) Color.White else cpCyan
+        val dynSizeScale by ClockSettingsRepository.sizeScale.collectAsState()
+        val sz = dynSizeScale.coerceAtMost(LARGE_CLOCK_SIZE_CAP)
 
         val glitchProgress = remember { Animatable(0f) }
 
@@ -220,12 +222,12 @@ class CyberpunkClockView @JvmOverloads constructor(
                 Text(
                     text = hours,
                     style = TextStyle(
-                        fontSize = 160.sp,
+                        fontSize = 160.sp * sz,
                         fontWeight = FontWeight.Black,
                         fontFamily = FontFamily.Monospace,
                         color = primaryTimeColor,
                         letterSpacing = (-8).sp,
-                        lineHeight = 160.sp,
+                        lineHeight = 160.sp * sz,
                         drawStyle = if (isDoze) Stroke(width = 8f) else Fill
                     )
                 )
@@ -296,12 +298,12 @@ class CyberpunkClockView @JvmOverloads constructor(
                 Text(
                     text = minutes,
                     style = TextStyle(
-                        fontSize = 160.sp,
+                        fontSize = 160.sp * sz,
                         fontWeight = FontWeight.Black,
                         fontFamily = FontFamily.Monospace,
                         color = primaryTimeColor,
                         letterSpacing = (-8).sp,
-                        lineHeight = 160.sp,
+                        lineHeight = 160.sp * sz,
                         drawStyle = if (isDoze) Stroke(width = 8f) else Fill
                     )
                 )

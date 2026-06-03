@@ -505,7 +505,7 @@ class BitmapDigitComposeClockView @JvmOverloads constructor(
         }
 
         val baseScale = minOf(context.scaleRatio, MAX_TABLET_SCALE)
-        val scale = baseScale * config.largeScaleMultiplier
+        val scale = baseScale * config.largeScaleMultiplier * sizeScale
         val digitSpacing = context.scaledDimen(config.largeDigitSpacingRes)
         val lineSpacing = context.scaledDimen(config.largeLineSpacingRes)
 
@@ -571,7 +571,7 @@ class BitmapDigitComposeClockView @JvmOverloads constructor(
         )
 
         val scale = context.scaleRatio
-        val largeFontSize = mode.fontSize * scale * mode.largeScale
+        val largeFontSize = mode.fontSize * scale * mode.largeScale * sizeScale
         val fontLayout = remember(largeFontSize, mode.lineSpacing, scale, mode.fontPath, mode.lsFontWeight) {
             val tempPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
                 textSize = largeFontSize
