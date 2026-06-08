@@ -142,9 +142,24 @@ class GeneralClockView @JvmOverloads constructor(
         val canvasHeightDp = with(LocalDensity.current) {
             (digitH * 2 + lineSpacing).toDp()
         }
+        val sidePadding = if (isSideAligned) {
+            (clockPaddingStart / context.resources.displayMetrics.density).dp
+        } else {
+            0.dp
+        }
+
+        val colAlign = when {
+            isLeftAligned -> Alignment.Start
+            isRightAligned -> Alignment.End
+            else -> Alignment.CenterHorizontally
+        }
+
         Column(
-            modifier = Modifier.fillMaxSize(),
-            horizontalAlignment = Alignment.CenterHorizontally,
+            modifier = Modifier.fillMaxSize().padding(
+                start = if (isRightAligned) 0.dp else sidePadding,
+                end = if (isRightAligned) sidePadding else 0.dp,
+            ),
+            horizontalAlignment = colAlign,
             verticalArrangement = Arrangement.Center,
         ) {
             Canvas(
@@ -189,8 +204,19 @@ class GeneralClockView @JvmOverloads constructor(
                 val hoursW = lineWidth(hours)
                 val minutesW = lineWidth(minutes)
 
-                drawLine(hours, (size.width - hoursW) / 2f, 0f)
-                drawLine(minutes, (size.width - minutesW) / 2f, dh + lineSpacing)
+                val hoursX = when {
+                    isLeftAligned -> 0f
+                    isRightAligned -> size.width - hoursW
+                    else -> (size.width - hoursW) / 2f
+                }
+                val minutesX = when {
+                    isLeftAligned -> 0f
+                    isRightAligned -> size.width - minutesW
+                    else -> (size.width - minutesW) / 2f
+                }
+
+                drawLine(hours, hoursX, 0f)
+                drawLine(minutes, minutesX, dh + lineSpacing)
             }
 
             Spacer(modifier = Modifier.height(12.dp))
@@ -199,6 +225,7 @@ class GeneralClockView @JvmOverloads constructor(
                 textColor = tintColor,
                 textSize = 16.sp,
                 iconSize = 18.dp,
+                rowArrangement = if (isLeftAligned) Arrangement.Start else if (isRightAligned) Arrangement.End else Arrangement.Center,
             )
         }
     }

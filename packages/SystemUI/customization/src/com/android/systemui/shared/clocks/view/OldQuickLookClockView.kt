@@ -202,18 +202,36 @@ class OldQuickLookClockView @JvmOverloads constructor(
             ).toSp() * sizeScale
         }
 
+        val horizontalAlign = when {
+            isLeftAligned -> Alignment.Start
+            isRightAligned -> Alignment.End
+            else -> Alignment.CenterHorizontally
+        }
+        val sidePadding = if (isSideAligned) {
+            (clockPaddingStart / context.resources.displayMetrics.density).dp
+        } else {
+            0.dp
+        }
+
         Box(
-            modifier = Modifier.fillMaxSize(),
-            contentAlignment = Alignment.Center,
+            modifier = Modifier.fillMaxSize().padding(
+                start = if (isRightAligned) 0.dp else sidePadding,
+                end = if (isRightAligned) sidePadding else 0.dp,
+            ),
+            contentAlignment = when {
+                isLeftAligned -> Alignment.CenterStart
+                isRightAligned -> Alignment.CenterEnd
+                else -> Alignment.Center
+            },
         ) {
             Column(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalAlignment = Alignment.CenterHorizontally,
+                horizontalAlignment = horizontalAlign,
                 verticalArrangement = Arrangement.Center,
             ) {
                 Column(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalAlignment = Alignment.CenterHorizontally,
+                    horizontalAlignment = horizontalAlign,
                 ) {
                     Text(
                         text = hours,
@@ -245,6 +263,7 @@ class OldQuickLookClockView @JvmOverloads constructor(
                     textColor = textColor,
                     textSize = 16.sp,
                     iconSize = 18.dp,
+                    rowArrangement = if (isLeftAligned) Arrangement.Start else if (isRightAligned) Arrangement.End else Arrangement.Center,
                 )
             }
         }

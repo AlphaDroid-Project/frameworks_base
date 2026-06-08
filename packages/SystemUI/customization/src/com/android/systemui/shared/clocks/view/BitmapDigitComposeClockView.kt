@@ -524,9 +524,24 @@ class BitmapDigitComposeClockView @JvmOverloads constructor(
         val canvasHeightDp = with(LocalDensity.current) {
             (digitHeightPx * 2 + lineSpacing).toDp()
         }
+        val sidePadding = if (isSideAligned) {
+            (clockPaddingStart / context.resources.displayMetrics.density).dp
+        } else {
+            0.dp
+        }
+
+        val colAlign = when {
+            isLeftAligned -> Alignment.Start
+            isRightAligned -> Alignment.End
+            else -> Alignment.CenterHorizontally
+        }
+
         Column(
-            modifier = Modifier.fillMaxSize(),
-            horizontalAlignment = Alignment.CenterHorizontally,
+            modifier = Modifier.fillMaxSize().padding(
+                start = if (isRightAligned) 0.dp else sidePadding,
+                end = if (isRightAligned) sidePadding else 0.dp,
+            ),
+            horizontalAlignment = colAlign,
             verticalArrangement = Arrangement.Center,
         ) {
             Canvas(
@@ -546,8 +561,16 @@ class BitmapDigitComposeClockView @JvmOverloads constructor(
                 val sampleBitmap = bitmaps['0'] ?: return@Canvas
                 val digitHeight = sampleBitmap.height * scale
 
-                val hoursX = (size.width - hoursWidth) / 2f
-                val minutesX = (size.width - minutesWidth) / 2f
+                val hoursX = when {
+                    isLeftAligned -> 0f
+                    isRightAligned -> size.width - hoursWidth
+                    else -> (size.width - hoursWidth) / 2f
+                }
+                val minutesX = when {
+                    isLeftAligned -> 0f
+                    isRightAligned -> size.width - minutesWidth
+                    else -> (size.width - minutesWidth) / 2f
+                }
 
                 drawDigitLine(hours, bitmaps, scale, hoursX, 0f, finalSpacing, tintColor)
                 drawDigitLine(minutes, bitmaps, scale, minutesX, digitHeight + lineSpacing, finalSpacing, tintColor)
@@ -558,6 +581,7 @@ class BitmapDigitComposeClockView @JvmOverloads constructor(
                 textColor = tintColor,
                 textSize = 16.sp,
                 iconSize = 18.dp,
+                rowArrangement = if (isLeftAligned) Arrangement.Start else if (isRightAligned) Arrangement.End else Arrangement.Center,
             )
         }
     }
@@ -599,9 +623,24 @@ class BitmapDigitComposeClockView @JvmOverloads constructor(
         }
         val canvasHeightDp = fontLayout.canvasHeightDp
 
+        val sidePadding = if (isSideAligned) {
+            (clockPaddingStart / context.resources.displayMetrics.density).dp
+        } else {
+            0.dp
+        }
+
+        val colAlign = when {
+            isLeftAligned -> Alignment.Start
+            isRightAligned -> Alignment.End
+            else -> Alignment.CenterHorizontally
+        }
+
         Column(
-            modifier = Modifier.fillMaxSize(),
-            horizontalAlignment = Alignment.CenterHorizontally,
+            modifier = Modifier.fillMaxSize().padding(
+                start = if (isRightAligned) 0.dp else sidePadding,
+                end = if (isRightAligned) sidePadding else 0.dp,
+            ),
+            horizontalAlignment = colAlign,
             verticalArrangement = Arrangement.Center,
         ) {
             Canvas(
@@ -631,7 +670,11 @@ class BitmapDigitComposeClockView @JvmOverloads constructor(
                 fun drawCenteredLine(digits: String, baselineY: Float, weightStart: Int) {
                     if (digits.isEmpty()) return
                     val lineWidth = cellWidth * digits.length
-                    var cellX = (size.width - lineWidth) / 2f
+                    var cellX = when {
+                        isLeftAligned -> 0f
+                        isRightAligned -> size.width - lineWidth
+                        else -> (size.width - lineWidth) / 2f
+                    }
                     for (i in digits.indices) {
                         fontPaint.typeface = getCachedTypeface(
                             fontWeights.getOrElse(weightStart + i) { mode.lsFontWeight },
@@ -653,6 +696,7 @@ class BitmapDigitComposeClockView @JvmOverloads constructor(
                 textColor = tintColor,
                 textSize = 16.sp,
                 iconSize = 18.dp,
+                rowArrangement = if (isLeftAligned) Arrangement.Start else if (isRightAligned) Arrangement.End else Arrangement.Center,
             )
         }
     }

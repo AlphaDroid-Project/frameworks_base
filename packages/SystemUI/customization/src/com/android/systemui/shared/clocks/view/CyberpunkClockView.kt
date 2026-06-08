@@ -212,9 +212,28 @@ class CyberpunkClockView @JvmOverloads constructor(
         val progress = glitchProgress.value
         val glitchSeed = remember(fidget) { kotlin.random.Random.nextFloat() }
 
+        val contentAlign = when {
+            isLeftAligned -> Alignment.CenterStart
+            isRightAligned -> Alignment.CenterEnd
+            else -> Alignment.Center
+        }
+        val colAlign = when {
+            isLeftAligned -> Alignment.Start
+            isRightAligned -> Alignment.End
+            else -> Alignment.CenterHorizontally
+        }
+        val sidePadding = if (isSideAligned) {
+            (clockPaddingStart / context.resources.displayMetrics.density).dp
+        } else {
+            0.dp
+        }
+
         Box(
-            modifier = Modifier.fillMaxSize(),
-            contentAlignment = Alignment.Center
+            modifier = Modifier.fillMaxSize().padding(
+                start = if (isRightAligned) 0.dp else sidePadding,
+                end = if (isRightAligned) sidePadding else 0.dp,
+            ),
+            contentAlignment = contentAlign
         ) {
             Column(
                 modifier = Modifier
@@ -226,7 +245,7 @@ class CyberpunkClockView @JvmOverloads constructor(
                             alpha = if (glitchSeed > 0.8f) 0.3f else 1f
                         }
                     },
-                horizontalAlignment = Alignment.CenterHorizontally,
+                horizontalAlignment = colAlign,
                 verticalArrangement = Arrangement.Center
             ) {
                 val (hours, minutes) = splitTimeLines(time)
@@ -330,7 +349,7 @@ class CyberpunkClockView @JvmOverloads constructor(
                     letterSpacing = 1.sp,
                     iconSize = 16.dp,
                     uppercase = true,
-                    rowArrangement = Arrangement.Center,
+                    rowArrangement = if (isLeftAligned) Arrangement.Start else if (isRightAligned) Arrangement.End else Arrangement.Center,
                 )
             }
 
@@ -343,7 +362,7 @@ class CyberpunkClockView @JvmOverloads constructor(
                 ) {
                     Column(
                         modifier = Modifier.fillMaxSize(),
-                        horizontalAlignment = Alignment.CenterHorizontally,
+                        horizontalAlignment = colAlign,
                         verticalArrangement = Arrangement.Center
                     ) {
                         val (gh, gm) = splitTimeLines(time)
