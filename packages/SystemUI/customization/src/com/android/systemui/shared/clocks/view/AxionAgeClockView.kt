@@ -112,10 +112,18 @@ class AxionAgeClockView @JvmOverloads constructor(
         val infoIconSize = if (large) 24.dp else 16.dp
         val infoSpacing = if (large) 6.dp else 4.dp
 
+        val sidePadding = if (isSideAligned) {
+            (clockPaddingStart / context.resources.displayMetrics.density).dp
+        } else {
+            0.dp
+        }
+
         Box(
-            modifier = Modifier.fillMaxSize(),
+            modifier = Modifier.fillMaxSize().padding(
+                start = if (isRightAligned) 0.dp else sidePadding,
+                end = if (isRightAligned) sidePadding else 0.dp,
+            ),
             contentAlignment = when {
-                large -> Alignment.Center
                 isLeftAligned -> Alignment.CenterStart
                 isRightAligned -> Alignment.CenterEnd
                 else -> Alignment.Center
@@ -136,14 +144,20 @@ class AxionAgeClockView @JvmOverloads constructor(
         infoTextSize: androidx.compose.ui.unit.TextUnit, infoIconSize: Dp, infoSpacing: Dp,
         textColor: Color,
     ) {
+        val colAlign = when {
+            isLeftAligned -> Alignment.Start
+            isRightAligned -> Alignment.End
+            else -> Alignment.CenterHorizontally
+        }
+
         Column(
             verticalArrangement = Arrangement.spacedBy(16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
+            horizontalAlignment = colAlign,
         ) {
             if (time.length >= 4) {
                 Column(
                     verticalArrangement = Arrangement.spacedBy(16.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally,
+                    horizontalAlignment = colAlign,
                 ) {
                     Row(horizontalArrangement = Arrangement.spacedBy(digitSpacing)) {
                         AxDigit(time[0], isDark, fidgetValue, digitW, digitH, digitStroke, glowExtra, textColor)
@@ -159,6 +173,7 @@ class AxionAgeClockView @JvmOverloads constructor(
                 textColor = textColor,
                 textSize = infoTextSize,
                 iconSize = infoIconSize,
+                rowArrangement = if (isLeftAligned) Arrangement.Start else if (isRightAligned) Arrangement.End else Arrangement.Center,
             )
         }
     }

@@ -141,7 +141,8 @@ abstract class AxClockView @JvmOverloads constructor(
     val scaleRatio get() = context.scaleRatio
     val sizeScale get() = when {
         isPreviewMode -> 1f
-        else -> ClockSettingsRepository.sizeScale.value
+        isLargeClock -> ClockSettingsRepository.largeScale.value
+        else -> ClockSettingsRepository.smallScale.value
     }
     val iconSize get() = context.scaledDimenInt(R.dimen.clock_icon_secondary_size)
 
@@ -278,7 +279,12 @@ abstract class AxClockView @JvmOverloads constructor(
         }
         depthController.onAttached()
         uiScope?.launch {
-            ClockSettingsRepository.sizeScale.collect { requestLayout() }
+            val scaleFlow = if (isLargeClock) ClockSettingsRepository.largeScale else ClockSettingsRepository.smallScale
+            scaleFlow.collect { requestLayout() }
+        }
+        uiScope?.launch {
+            val alignFlow = if (isLargeClock) ClockSettingsRepository.largeAlignment else ClockSettingsRepository.smallAlignment
+            alignFlow.collect { state.alignmentState.value = it }
         }
         refreshTime()
         state.timeState.value = interactor.timeStr
@@ -427,7 +433,8 @@ abstract class AxClockView @JvmOverloads constructor(
     @Composable
     protected fun digitScaleModifier(): Modifier {
         if (isPreviewMode) return Modifier
-        val scaleValue by ClockSettingsRepository.sizeScale.collectAsState()
+        val scaleFlow = if (isLargeClock) ClockSettingsRepository.largeScale else ClockSettingsRepository.smallScale
+        val scaleValue by scaleFlow.collectAsState()
         if (scaleValue == 1f) return Modifier
         return Modifier.graphicsLayer {
             scaleX = scaleValue

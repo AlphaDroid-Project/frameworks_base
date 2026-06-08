@@ -34,6 +34,11 @@ object ClockSettingsRepository {
     const val SETTING_DATE_POSITION = "ax_clock_compose_date_position"
     const val SETTING_CLOCK_COLOR = "ax_clock_color"
 
+    const val SETTING_ALIGNMENT_SMALL = "ax_clock_alignment_small"
+    const val SETTING_ALIGNMENT_LARGE = "ax_clock_alignment_large"
+    const val SETTING_SCALE_SMALL = "ax_clock_scale_small"
+    const val SETTING_SCALE_LARGE = "ax_clock_scale_large"
+
     const val COLOR_AUTO = "auto"
 
     const val ALIGNMENT_LEFT = "left"
@@ -48,18 +53,32 @@ object ClockSettingsRepository {
 
     @JvmField val clockFaceUri: Uri = Settings.Secure.getUriFor(SETTING_CLOCK_FACE)
     @JvmField val alignmentUri: Uri = Settings.Secure.getUriFor(SETTING_ALIGNMENT)
+    @JvmField val alignmentSmallUri: Uri = Settings.Secure.getUriFor(SETTING_ALIGNMENT_SMALL)
+    @JvmField val alignmentLargeUri: Uri = Settings.Secure.getUriFor(SETTING_ALIGNMENT_LARGE)
     @JvmField val sizeUri: Uri = Settings.Secure.getUriFor(SETTING_SIZE)
+    @JvmField val scaleSmallUri: Uri = Settings.Secure.getUriFor(SETTING_SCALE_SMALL)
+    @JvmField val scaleLargeUri: Uri = Settings.Secure.getUriFor(SETTING_SCALE_LARGE)
     @JvmField val datePositionUri: Uri = Settings.Secure.getUriFor(SETTING_DATE_POSITION)
     @JvmField val clockColorUri: Uri = Settings.Secure.getUriFor(SETTING_CLOCK_COLOR)
 
     private val _clockId = MutableStateFlow("DEFAULT")
     val clockId: StateFlow<String> = _clockId.asStateFlow()
 
-    private val _alignment = MutableStateFlow(ALIGNMENT_CENTER)
-    val alignment: StateFlow<String> = _alignment.asStateFlow()
+    private val _smallAlignment = MutableStateFlow(ALIGNMENT_CENTER)
+    val smallAlignment: StateFlow<String> = _smallAlignment.asStateFlow()
+    
+    private val _largeAlignment = MutableStateFlow(ALIGNMENT_CENTER)
+    val largeAlignment: StateFlow<String> = _largeAlignment.asStateFlow()
 
-    private val _sizeScale = MutableStateFlow(1f)
-    val sizeScale: StateFlow<Float> = _sizeScale.asStateFlow()
+    val alignment: StateFlow<String> = smallAlignment // Legacy back-compat
+
+    private val _smallScale = MutableStateFlow(1f)
+    val smallScale: StateFlow<Float> = _smallScale.asStateFlow()
+    
+    private val _largeScale = MutableStateFlow(1f)
+    val largeScale: StateFlow<Float> = _largeScale.asStateFlow()
+
+    val sizeScale: StateFlow<Float> = smallScale // Legacy back-compat
 
     private val _isDateBelow = MutableStateFlow(false)
     val isDateBelow: StateFlow<Boolean> = _isDateBelow.asStateFlow()
@@ -82,12 +101,23 @@ object ClockSettingsRepository {
                     _clockId.value = readClockId(cr)
                     _shouldCenterIcons.value = computeShouldCenter(cr)
                 }
-                alignmentUri -> {
-                    _alignment.value = readAlignment(cr)
+                alignmentSmallUri -> {
+                    val align = readSmallAlignment(cr)
+                    _smallAlignment.value = align
                     _shouldCenterIcons.value = computeShouldCenter(cr)
+                    // Write-through to legacy key for compatibility
+                    try {
+                        Settings.Secure.putString(cr, SETTING_ALIGNMENT, align)
+                    } catch (_: Exception) {}
                 }
-                sizeUri -> {
-                    _sizeScale.value = readSizeScale(cr)
+                alignmentLargeUri -> {
+                    _largeAlignment.value = readLargeAlignment(cr)
+                }
+                scaleSmallUri -> {
+                    _smallScale.value = readSmallScale(cr)
+                }
+                scaleLargeUri -> {
+                    _largeScale.value = readLargeScale(cr)
                 }
                 datePositionUri -> {
                     _isDateBelow.value = readDateBelow(cr)
@@ -111,14 +141,20 @@ object ClockSettingsRepository {
         registered = true
 
         cr.registerContentObserver(clockFaceUri, false, observer)
-        cr.registerContentObserver(alignmentUri, false, observer)
-        cr.registerContentObserver(sizeUri, false, observer)
+        cr.registerContentObserver(alignmentSmallUri, false, observer)
+        cr.registerContentObserver(alignmentLargeUri, false, observer)
+        cr.registerContentObserver(scaleSmallUri, false, observer)
+        cr.registerContentObserver(scaleLargeUri, false, observer)
         cr.registerContentObserver(datePositionUri, false, observer)
         cr.registerContentObserver(clockColorUri, false, observer)
 
+        performMigrationIfNeeded(cr)
+
         _clockId.value = readClockId(cr)
-        _alignment.value = readAlignment(cr)
-        _sizeScale.value = readSizeScale(cr)
+        _smallAlignment.value = readSmallAlignment(cr)
+        _largeAlignment.value = readLargeAlignment(cr)
+        _smallScale.value = readSmallScale(cr)
+        _largeScale.value = readLargeScale(cr)
         _isDateBelow.value = readDateBelow(cr)
         _clockColorOverride.value = readClockColor(cr)
         _shouldCenterIcons.value = computeShouldCenter(cr)
@@ -140,13 +176,41 @@ object ClockSettingsRepository {
         }
     }
 
-    private fun readAlignment(cr: ContentResolver): String {
-        return Settings.Secure.getString(cr, SETTING_ALIGNMENT) ?: ALIGNMENT_CENTER
+    private fun performMigrationIfNeeded(cr: ContentResolver) {
+        val smallScaleStr = Settings.Secure.getString(cr, SETTING_SCALE_SMALL)
+        if (smallScaleStr == null) {
+            // First time initialization / migration
+            val legacySize = Settings.Secure.getString(cr, SETTING_SIZE)
+            val legacyAlignment = Settings.Secure.getString(cr, SETTING_ALIGNMENT) ?: ALIGNMENT_CENTER
+            
+            val initialSmallScale = if (legacySize == SIZE_LARGE) 140 else 100
+            val initialLargeScale = 100
+            
+            try {
+                Settings.Secure.putInt(cr, SETTING_SCALE_SMALL, initialSmallScale)
+                Settings.Secure.putInt(cr, SETTING_SCALE_LARGE, initialLargeScale)
+                Settings.Secure.putString(cr, SETTING_ALIGNMENT_SMALL, legacyAlignment)
+                Settings.Secure.putString(cr, SETTING_ALIGNMENT_LARGE, legacyAlignment)
+            } catch (_: Exception) {}
+        }
     }
 
-    private fun readSizeScale(cr: ContentResolver): Float {
-        return if (Settings.Secure.getString(cr, SETTING_SIZE) == SIZE_LARGE) LARGE_SIZE_SCALE
-        else 1f
+    private fun readSmallAlignment(cr: ContentResolver): String {
+        return Settings.Secure.getString(cr, SETTING_ALIGNMENT_SMALL) ?: ALIGNMENT_CENTER
+    }
+    
+    private fun readLargeAlignment(cr: ContentResolver): String {
+        return Settings.Secure.getString(cr, SETTING_ALIGNMENT_LARGE) ?: ALIGNMENT_CENTER
+    }
+
+    private fun readSmallScale(cr: ContentResolver): Float {
+        val pct = Settings.Secure.getInt(cr, SETTING_SCALE_SMALL, 100)
+        return pct / 100f
+    }
+    
+    private fun readLargeScale(cr: ContentResolver): Float {
+        val pct = Settings.Secure.getInt(cr, SETTING_SCALE_LARGE, 100)
+        return pct / 100f
     }
 
     private fun readDateBelow(cr: ContentResolver): Boolean {
@@ -164,7 +228,7 @@ object ClockSettingsRepository {
     }
 
     private fun computeShouldCenter(cr: ContentResolver): Boolean {
-        val align = readAlignment(cr)
+        val align = readSmallAlignment(cr)
         if (align == ALIGNMENT_LEFT || align == ALIGNMENT_RIGHT) return false
         if (align == ALIGNMENT_CENTER) return true
         val id = readClockId(cr)

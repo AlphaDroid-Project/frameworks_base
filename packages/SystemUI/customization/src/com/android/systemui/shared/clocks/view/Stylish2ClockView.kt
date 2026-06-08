@@ -214,6 +214,7 @@ class Stylish2ClockView @JvmOverloads constructor(
                 textColor = tintColor,
                 textSize = 16.sp,
                 iconSize = 18.dp,
+                rowArrangement = if (isLeftAligned) Arrangement.Start else if (isRightAligned) Arrangement.End else Arrangement.Center,
             )
         }
     }
