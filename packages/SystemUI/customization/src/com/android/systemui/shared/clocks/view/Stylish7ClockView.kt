@@ -91,7 +91,7 @@ class Stylish7ClockView @JvmOverloads constructor(
     @Composable
     private fun SmallContent() {
         val (time, date, isDoze, screenOff, regionDark) = rememberClockState()
-        val dynSizeScale by ClockSettingsRepository.sizeScale.collectAsState()
+        val dynSizeScale by scaleFlow.collectAsState()
 
         val accent1 = Color(context.getColor(android.R.color.system_accent1_600))
         val accent3 = Color(context.getColor(android.R.color.system_accent3_600))

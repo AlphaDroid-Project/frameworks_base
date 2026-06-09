@@ -58,7 +58,7 @@ class Stylish2ClockView @JvmOverloads constructor(
     @Composable
     private fun SmallContent() {
         val (time, date, isDoze, screenOff, regionDark) = rememberClockState()
-        val dynSizeScale by ClockSettingsRepository.sizeScale.collectAsState()
+        val dynSizeScale by scaleFlow.collectAsState()
         val tintColor = tintColor(isDoze, screenOff, regionDark)
 
         val bgColor = if (isDoze) Color.Transparent else tintColor.copy(alpha = 0.12f)

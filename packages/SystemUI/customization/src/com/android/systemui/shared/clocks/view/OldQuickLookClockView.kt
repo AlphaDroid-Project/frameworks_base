@@ -83,7 +83,7 @@ class OldQuickLookClockView @JvmOverloads constructor(
     private fun SmallContent() {
         val (time, date, isDoze, screenOff, regionDark, icon, tintIcon, display) = rememberClockState()
 
-        val dynSizeScale by ClockSettingsRepository.sizeScale.collectAsState()
+        val dynSizeScale by scaleFlow.collectAsState()
         val textColor = tintColor(isDoze, screenOff, regionDark)
         val horizontalAlign = when {
             isLeftAligned -> Alignment.Start

@@ -70,7 +70,7 @@ class SimpleClockView @JvmOverloads constructor(
         val timeFont = remember(state.fontVersion.intValue) {
             resolveClockTimeFontFamily(context.resources)
         }
-        val dynSizeScale by ClockSettingsRepository.sizeScale.collectAsState()
+        val dynSizeScale by scaleFlow.collectAsState()
         val dateBelow by state.dateBelowState
         val horizontalAlign = when {
             isLeftAligned -> Alignment.Start

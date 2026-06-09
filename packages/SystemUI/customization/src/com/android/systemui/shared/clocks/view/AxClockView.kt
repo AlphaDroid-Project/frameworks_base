@@ -48,6 +48,7 @@ import com.android.systemui.shared.clocks.ClockSettingsRepository
 import com.android.systemui.shared.clocks.extensions.*
 import java.util.Locale
 import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.StateFlow
 
 /**
  * Base view for all AlphaDroid custom lockscreen clocks.
@@ -139,11 +140,13 @@ abstract class AxClockView @JvmOverloads constructor(
     val clockDateTextSize get() = context.scaledDimen(R.dimen.clock_date_text_size)
     val clockDateMarginTop get() = context.scaledDimen(R.dimen.clock_date_margin_top)
     val scaleRatio get() = context.scaleRatio
-    val sizeScale get() = when {
-        isPreviewMode -> 1f
-        isLargeClock -> ClockSettingsRepository.largeScale.value
-        else -> ClockSettingsRepository.smallScale.value
-    }
+
+    val scaleFlow: StateFlow<Float>
+        get() = if (isLargeClock) ClockSettingsRepository.largeScale else ClockSettingsRepository.smallScale
+
+    val sizeScale: Float
+        get() = if (isPreviewMode) 1f else scaleFlow.value
+
     val iconSize get() = context.scaledDimenInt(R.dimen.clock_icon_secondary_size)
 
     protected val config: ClockConfigs.ClockStyleConfig?
