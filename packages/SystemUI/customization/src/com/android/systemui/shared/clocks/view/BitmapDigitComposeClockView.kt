@@ -326,9 +326,8 @@ class BitmapDigitComposeClockView @JvmOverloads constructor(
 
     @Composable
     private fun SmallFontContent(config: BitmapFaceConfig, mode: RenderMode.FontDigit) {
-        val (time, _, isDoze, screenOff, regionDark) = rememberClockState()
-
-        val dynSizeScale by ClockSettingsRepository.sizeScale.collectAsState()
+        val (time, date, isDoze, screenOff, regionDark, icon, tintIcon, display) = rememberClockState()
+        val dynSizeScale by scaleFlow.collectAsState()
         val scale = context.scaleRatio * dynSizeScale
         val canvasHeight = remember(scale) {
             fontPaint.textSize = mode.fontSize * scale

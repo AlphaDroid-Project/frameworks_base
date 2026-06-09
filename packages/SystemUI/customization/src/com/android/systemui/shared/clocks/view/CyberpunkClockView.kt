@@ -184,9 +184,8 @@ class CyberpunkClockView @JvmOverloads constructor(
         val cpCyan = Color(0xFF00F0FF)
         val primaryTimeColor = if (isDoze) Color.White else cpYellow
         val accentColor = if (isDoze) Color.White else cpCyan
-        val dynSizeScale by ClockSettingsRepository.sizeScale.collectAsState()
+        val dynSizeScale by scaleFlow.collectAsState()
         val sz = dynSizeScale
-        val timeFont = remember(state.fontVersion.intValue) { resolveClockTimeFontFamily(context.resources) }
 
         // Derive the large digit size from the shared large_clock_text_size dimen (which
         // scales across density buckets) rather than a hardcoded sp.
@@ -255,7 +254,7 @@ class CyberpunkClockView @JvmOverloads constructor(
                     style = TextStyle(
                         fontSize = largeFontSize,
                         fontWeight = FontWeight.Black,
-                        fontFamily = timeFont,
+                        fontFamily = FontFamily.Monospace,
                         color = primaryTimeColor,
                         letterSpacing = (-8).sp,
                         lineHeight = largeFontSize,
@@ -331,7 +330,7 @@ class CyberpunkClockView @JvmOverloads constructor(
                     style = TextStyle(
                         fontSize = largeFontSize,
                         fontWeight = FontWeight.Black,
-                        fontFamily = timeFont,
+                        fontFamily = FontFamily.Monospace,
                         color = primaryTimeColor,
                         letterSpacing = (-8).sp,
                         lineHeight = largeFontSize,
@@ -426,14 +425,13 @@ class CyberpunkClockView @JvmOverloads constructor(
                     .padding(horizontal = 24.dp, vertical = 6.dp)
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    val dynSizeScale by ClockSettingsRepository.sizeScale.collectAsState()
-                    val badgeTimeFont = remember(state.fontVersion.intValue) { resolveClockTimeFontFamily(context.resources) }
+                    val dynSizeScale by scaleFlow.collectAsState()
                     Text(
                         text = time,
                         style = TextStyle(
                             fontSize = 80.sp * dynSizeScale,
                             fontWeight = FontWeight.Black,
-                            fontFamily = badgeTimeFont,
+                            fontFamily = FontFamily.Monospace,
                             color = primaryColor,
                             letterSpacing = (-4).sp,
                             drawStyle = if (isDoze) Stroke(width = 5f) else Fill

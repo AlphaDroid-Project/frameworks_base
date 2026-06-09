@@ -234,7 +234,7 @@ class GeneralClockView @JvmOverloads constructor(
     private fun SmallContent() {
         val (time, date, isDoze, screenOff, regionDark, icon, tintIcon, display) = rememberClockState()
 
-        val dynSizeScale by ClockSettingsRepository.sizeScale.collectAsState()
+        val dynSizeScale by scaleFlow.collectAsState()
         val scale = context.scaleRatio * dynSizeScale
         val paddingV = context.scaledDimen(R.dimen.clock_padding) * dynSizeScale
         val dotSz = context.scaledDimen(R.dimen.dot_small_size)

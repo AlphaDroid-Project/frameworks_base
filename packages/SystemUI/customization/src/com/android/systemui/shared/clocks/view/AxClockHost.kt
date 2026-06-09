@@ -75,9 +75,7 @@ class AxClockHost(private val clock: AxClockView) {
         LaunchedEffect(Unit) {
             ClockSettingsRepository.isDateBelow.collect { state.dateBelowState.value = it }
         }
-        LaunchedEffect(Unit) {
-            ClockSettingsRepository.alignment.collect { state.alignmentState.value = it }
-        }
+
         LaunchedEffect(Unit) {
             ClockSettingsRepository.clockColorOverride.collect { state.clockColorOverrideState.value = it }
         }

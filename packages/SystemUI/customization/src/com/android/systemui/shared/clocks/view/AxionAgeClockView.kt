@@ -101,7 +101,7 @@ class AxionAgeClockView @JvmOverloads constructor(
         val fidgetValue = weightFidget.value
         val textColor = tintColor(isDoze, screenOff, regionDark)
         val isDark = isDoze || regionDark
-        val dynSizeScale by ClockSettingsRepository.sizeScale.collectAsState()
+        val dynSizeScale by scaleFlow.collectAsState()
         val sz = if (large) sizeScale else dynSizeScale
         val digitW = (if (large) 90.dp else 48.dp) * sz
         val digitH = (if (large) 150.dp else 108.dp) * sz

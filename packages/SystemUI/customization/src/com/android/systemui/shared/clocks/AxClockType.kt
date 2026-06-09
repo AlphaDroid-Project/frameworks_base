@@ -22,7 +22,9 @@ enum class AxClockType(
     val nameRes: Int,
     val viewId: Int,
     val largeViewId: Int = viewId,
-    val bitmapFaceStyle: ClockFaceStyle? = null
+    val bitmapFaceStyle: ClockFaceStyle? = null,
+    val maxScaleSmall: Float = 140f,
+    val maxScaleLarge: Float = 180f
 ) {
     SIMPLE(
         clockId = R.string.clock_id_simple,
@@ -62,7 +64,8 @@ enum class AxClockType(
         nameRes = R.string.clock_name_ntype,
         viewId = R.layout.clock_bitmap_compose,
         largeViewId = R.layout.clock_bitmap_compose_large,
-        bitmapFaceStyle = ClockFaceStyle.NTYPE
+        bitmapFaceStyle = ClockFaceStyle.NTYPE,
+        maxScaleLarge = 160f
     ),
     OLD_QUICKLOOK(
         clockId = R.string.clock_id_old_quick_look,
@@ -75,7 +78,8 @@ enum class AxClockType(
         nameRes = R.string.clock_name_space_age,
         viewId = R.layout.clock_bitmap_compose,
         largeViewId = R.layout.clock_bitmap_compose_large,
-        bitmapFaceStyle = ClockFaceStyle.SPACE_AGE
+        bitmapFaceStyle = ClockFaceStyle.SPACE_AGE,
+        maxScaleLarge = 160f
     ),
     POLYLINE(
         clockId = R.string.clock_id_polyline,
@@ -88,7 +92,8 @@ enum class AxClockType(
         clockId = R.string.clock_id_cyberpunk,
         nameRes = R.string.clock_name_cyberpunk,
         viewId = R.layout.clock_cyberpunk,
-        largeViewId = R.layout.clock_cyberpunk_large
+        largeViewId = R.layout.clock_cyberpunk_large,
+        maxScaleLarge = 220f
     ),
     AXION_AGE(
         clockId = R.string.clock_id_axion_age,

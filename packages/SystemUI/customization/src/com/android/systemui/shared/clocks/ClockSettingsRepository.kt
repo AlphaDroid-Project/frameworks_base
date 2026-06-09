@@ -64,7 +64,7 @@ object ClockSettingsRepository {
     private val _clockId = MutableStateFlow("DEFAULT")
     val clockId: StateFlow<String> = _clockId.asStateFlow()
 
-    private val _smallAlignment = MutableStateFlow(ALIGNMENT_CENTER)
+    private val _smallAlignment = MutableStateFlow(ALIGNMENT_LEFT)
     val smallAlignment: StateFlow<String> = _smallAlignment.asStateFlow()
     
     private val _largeAlignment = MutableStateFlow(ALIGNMENT_CENTER)
@@ -181,7 +181,7 @@ object ClockSettingsRepository {
         if (smallScaleStr == null) {
             // First time initialization / migration
             val legacySize = Settings.Secure.getString(cr, SETTING_SIZE)
-            val legacyAlignment = Settings.Secure.getString(cr, SETTING_ALIGNMENT) ?: ALIGNMENT_CENTER
+            val legacyAlignment = Settings.Secure.getString(cr, SETTING_ALIGNMENT)
             
             val initialSmallScale = if (legacySize == SIZE_LARGE) 140 else 100
             val initialLargeScale = 100
@@ -189,14 +189,14 @@ object ClockSettingsRepository {
             try {
                 Settings.Secure.putInt(cr, SETTING_SCALE_SMALL, initialSmallScale)
                 Settings.Secure.putInt(cr, SETTING_SCALE_LARGE, initialLargeScale)
-                Settings.Secure.putString(cr, SETTING_ALIGNMENT_SMALL, legacyAlignment)
-                Settings.Secure.putString(cr, SETTING_ALIGNMENT_LARGE, legacyAlignment)
+                Settings.Secure.putString(cr, SETTING_ALIGNMENT_SMALL, legacyAlignment ?: ALIGNMENT_LEFT)
+                Settings.Secure.putString(cr, SETTING_ALIGNMENT_LARGE, legacyAlignment ?: ALIGNMENT_CENTER)
             } catch (_: Exception) {}
         }
     }
 
     private fun readSmallAlignment(cr: ContentResolver): String {
-        return Settings.Secure.getString(cr, SETTING_ALIGNMENT_SMALL) ?: ALIGNMENT_CENTER
+        return Settings.Secure.getString(cr, SETTING_ALIGNMENT_SMALL) ?: ALIGNMENT_LEFT
     }
     
     private fun readLargeAlignment(cr: ContentResolver): String {
