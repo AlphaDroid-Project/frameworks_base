@@ -123,7 +123,7 @@ constructor(
         windInfo.text = "${info.windSpeed} ${info.windUnits}"
         windDirection.text = info.windDirection ?: ""
 
-        humidityInfo.text = "${info.humidity}%"
+        humidityInfo.text = info.humidity?.removeSuffix("%")?.plus("%") ?: ""
 
         populateForecasts(info.forecasts ?: emptyList())
     }
