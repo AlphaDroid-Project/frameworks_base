@@ -53,7 +53,7 @@ constructor(
 
         interactor.uiState
             .map { state ->
-                state.events.isEmpty() || state.events.all { it is IslandEvent.AospChip }
+                state.events.isEmpty()
             }
             .distinctUntilChanged()
             .onEach { shouldCollapse ->
@@ -73,7 +73,7 @@ constructor(
 
     fun expand() {
         val state = interactor.uiState.value
-        if (state.events.isEmpty() || state.events.all { it is IslandEvent.AospChip }) return
+        if (state.events.isEmpty()) return
         _intent.value = true
     }
 
