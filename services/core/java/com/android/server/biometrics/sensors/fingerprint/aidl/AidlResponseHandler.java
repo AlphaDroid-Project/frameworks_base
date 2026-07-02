@@ -19,7 +19,9 @@ package com.android.server.biometrics.sensors.fingerprint.aidl;
 import android.annotation.NonNull;
 import android.annotation.Nullable;
 import android.content.Context;
+import android.hardware.biometrics.BiometricFingerprintConstants;
 import android.hardware.biometrics.face.Error;
+import android.hardware.biometrics.fingerprint.AcquiredInfo;
 import android.hardware.biometrics.fingerprint.ISessionCallback;
 import android.hardware.fingerprint.Fingerprint;
 import android.hardware.keymaster.HardwareAuthToken;
@@ -132,6 +134,14 @@ public class AidlResponseHandler extends ISessionCallback.Stub {
 
     @Override
     public void onAcquired(byte info, int vendorCode) {
+        // Some HALs (e.g. OPlus/Goodix) report vendor acquired codes directly in the
+        // AcquiredInfo field instead of AcquiredInfo.VENDOR + vendorCode. Remap them so the
+        // message can be resolved from the fingerprint_acquired_vendor overlay.
+        if (info > AcquiredInfo.POWER_PRESS) {
+            handleResponse(AcquisitionClient.class, (c) -> c.onAcquired(
+                    BiometricFingerprintConstants.FINGERPRINT_ACQUIRED_VENDOR, info));
+            return;
+        }
         handleResponse(AcquisitionClient.class, (c) -> c.onAcquired(
                 AidlConversionUtils.toFrameworkAcquiredInfo(info), vendorCode));
     }
