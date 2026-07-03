@@ -196,6 +196,19 @@ constructor(
         _chipCenterXFraction.value = fraction
     }
 
+    /**
+     * Actual on-screen bounds (window px, badge-safe padding included) of the cutout pill or
+     * ring — whatever is currently rendered. [AxDynamicBarExpandedPanel] carves the overlay
+     * window's touchable region to this rect so the badge/guard slack in the WM window stays
+     * visual-only and never swallows touches meant for the app or status bar underneath.
+     */
+    private val _pillTouchBoundsPx = MutableStateFlow<android.graphics.Rect?>(null)
+    val pillTouchBoundsPx: StateFlow<android.graphics.Rect?> = _pillTouchBoundsPx.asStateFlow()
+
+    fun updatePillTouchBounds(bounds: android.graphics.Rect?) {
+        _pillTouchBoundsPx.value = bounds
+    }
+
     val isExpanded: StateFlow<Boolean> = statusBarExpansion.isExpanded
 
     /** True when the user tapped expand-all (full stack UI). */

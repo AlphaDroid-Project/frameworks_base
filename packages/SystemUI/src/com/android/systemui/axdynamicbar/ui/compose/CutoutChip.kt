@@ -45,6 +45,7 @@ import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -122,6 +123,34 @@ private val CenterRightLaneWidth = CutoutCenterContentAreaWidth
 
 // Content padding inside the pill (between pill edge and content).
 private val ContentPad = 8.dp
+
+// Touchable-region slack beyond the reported pill/ring bounds. Horizontal covers the stack
+// badge protrusion (12dp offset + 14dp badge outside the pill edge) plus tap comfort; bottom
+// covers the badge's 4dp downward offset. Must stay within the WM window slack
+// (CUTOUT_WM_HORIZONTAL_GUARD_DP / CUTOUT_WM_VERTICAL_BADGE_BLEED_DP) or touches get clipped
+// at the window edge instead of the region edge.
+private val TouchRegionPadHorizontal = 28.dp
+private val TouchRegionPadTop = 4.dp
+private val TouchRegionPadBottom = 12.dp
+
+private fun reportTouchBounds(
+    viewModel: AxDynamicBarChipViewModel,
+    density: androidx.compose.ui.unit.Density,
+    coords: androidx.compose.ui.layout.LayoutCoordinates,
+) {
+    val b = coords.boundsInWindow()
+    if (b.width <= 0f || b.height <= 0f) return
+    with(density) {
+        viewModel.updatePillTouchBounds(
+            Rect(
+                (b.left - TouchRegionPadHorizontal.toPx()).toInt().coerceAtLeast(0),
+                (b.top - TouchRegionPadTop.toPx()).toInt().coerceAtLeast(0),
+                (b.right + TouchRegionPadHorizontal.toPx()).toInt(),
+                (b.bottom + TouchRegionPadBottom.toPx()).toInt(),
+            )
+        )
+    }
+}
 
 private fun collapseIdentityKey(event: IslandEvent): String = when (event) {
     is IslandEvent.Timer -> "timer:${event.isPaused}"
@@ -228,6 +257,15 @@ fun CutoutChip(
 
     // Fully rounded pill shape.
     val pillShape = RoundedCornerShape(pillHeightDp / 2)
+
+    // Empty the touchable region as soon as nothing is rendered, so the fading/lingering
+    // overlay window stops intercepting touches immediately.
+    LaunchedEffect(state == null) {
+        if (state == null) viewModel.updatePillTouchBounds(null)
+    }
+    DisposableEffect(Unit) {
+        onDispose { viewModel.updatePillTouchBounds(null) }
+    }
 
     AnimatedVisibility(
         visible = state != null,
@@ -361,6 +399,7 @@ private fun CutoutPillLeft(
     val basePillWidth = cutoutZone + StatusBarPillWidth
 
     val motionScheme = MaterialTheme.motionScheme
+    val density = LocalDensity.current
 
     // Ring collapse: same idle timer as CENTER, only when collapseToRing is enabled.
     var isCollapsedToRing by remember { mutableStateOf(false) }
@@ -401,6 +440,7 @@ private fun CutoutPillLeft(
                 Box(
                     modifier = Modifier
                         .islandGestures(viewModel = viewModel, touchSlop = touchSlop)
+                        .onGloballyPositioned { reportTouchBounds(viewModel, density, it) }
                         .semantics(mergeDescendants = true) {
                             contentDescription = "Dynamic bar"
                             onClick(label = "Expand") { viewModel.togglePanel(); true }
@@ -427,6 +467,7 @@ private fun CutoutPillLeft(
                             val bounds = coords.boundsInWindow()
                             val centerX = (bounds.left + bounds.right) / 2f
                             if (screenWidthPx > 0f) viewModel.updateChipCenterX(centerX / screenWidthPx)
+                            reportTouchBounds(viewModel, density, coords)
                         }
                         .semantics(mergeDescendants = true) {
                             contentDescription = if (chipState.eventCount > 1) "Dynamic bar, ${chipState.eventCount} notifications" else "Dynamic bar"
@@ -494,6 +535,7 @@ private fun CutoutPillRight(
     ringStrokeDp: Float = 3f,
 ) {
     val motionScheme = MaterialTheme.motionScheme
+    val density = LocalDensity.current
     val cutoutZone = cutoutWidthDp + padSideDp * 2
     val basePillWidth = cutoutZone + StatusBarPillWidth
 
@@ -536,6 +578,7 @@ private fun CutoutPillRight(
                 Box(
                     modifier = Modifier
                         .islandGestures(viewModel = viewModel, touchSlop = touchSlop)
+                        .onGloballyPositioned { reportTouchBounds(viewModel, density, it) }
                         .semantics(mergeDescendants = true) {
                             contentDescription = "Dynamic bar"
                             onClick(label = "Expand") { viewModel.togglePanel(); true }
@@ -562,6 +605,7 @@ private fun CutoutPillRight(
                             val bounds = coords.boundsInWindow()
                             val centerX = (bounds.left + bounds.right) / 2f
                             if (screenWidthPx > 0f) viewModel.updateChipCenterX(centerX / screenWidthPx)
+                            reportTouchBounds(viewModel, density, coords)
                         }
                         .semantics(mergeDescendants = true) {
                             contentDescription = if (chipState.eventCount > 1) "Dynamic bar, ${chipState.eventCount} notifications" else "Dynamic bar"
@@ -629,6 +673,7 @@ private fun CutoutPillCenter(
     ringStrokeDp: Float = 3f,
 ) {
     val motionScheme = MaterialTheme.motionScheme
+    val density = LocalDensity.current
     val gapWidth = cutoutWidthDp + padSideDp * 2
 
     // Track measured side widths for the correction offset.
@@ -678,6 +723,7 @@ private fun CutoutPillCenter(
                 Box(
                     modifier = Modifier
                         .islandGestures(viewModel = viewModel, touchSlop = touchSlop)
+                        .onGloballyPositioned { reportTouchBounds(viewModel, density, it) }
                         .semantics(mergeDescendants = true) {
                             contentDescription = "Dynamic bar"
                             onClick(label = "Expand") { viewModel.togglePanel(); true }
@@ -715,6 +761,7 @@ private fun CutoutPillCenter(
                             val bounds = coords.boundsInWindow()
                             val centerX = (bounds.left + bounds.right) / 2f
                             if (screenWidthPx > 0f) viewModel.updateChipCenterX(centerX / screenWidthPx)
+                            reportTouchBounds(viewModel, density, coords)
                         }
                         .semantics(mergeDescendants = true) {
                             contentDescription = if (chipState.eventCount > 1) "Dynamic bar, ${chipState.eventCount} notifications" else "Dynamic bar"

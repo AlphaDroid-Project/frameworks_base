@@ -3,6 +3,7 @@ package com.android.systemui.axdynamicbar.ui
 import android.content.Context
 import android.graphics.PixelFormat
 import android.view.Gravity
+import android.view.ViewTreeObserver
 import android.view.WindowManager
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.MutableTransitionState
@@ -106,6 +107,37 @@ constructor(
     private val _statusBarHeightPx = MutableStateFlow(0)
     private val statusBarHeightPx: StateFlow<Int> = _statusBarHeightPx.asStateFlow()
 
+    // Pill-only mode: restrict the window's touchable area to the Compose-reported pill/ring
+    // bounds so the badge/guard slack in the WM window stays visual-only — touches beside the
+    // pill reach the app / status bar below instead of dying in this window (unconsumed events
+    // are never re-dispatched to other windows). Expanded/alert modes keep the full frame
+    // (scrim taps, card buttons). An empty region while bounds are unknown steals nothing;
+    // the pill re-reports on its first layout pass.
+    private val internalInsetsListener =
+        ViewTreeObserver.OnComputeInternalInsetsListener { info ->
+            // Deliberately independent of isCutoutDisplayEnabled: during the 400ms teardown
+            // grace after cutout mode flips off (rotation to landscape, entering fullscreen)
+            // the lingering window must keep the carved region, not revert to full frame.
+            val pillOnly =
+                !viewModel.isExpanded.value &&
+                    viewModel.interactor.uiState.value.notificationAlert == null
+            if (pillOnly) {
+                info.setTouchableInsets(
+                    ViewTreeObserver.InternalInsetsInfo.TOUCHABLE_INSETS_REGION
+                )
+                val bounds = viewModel.pillTouchBoundsPx.value
+                if (bounds != null) {
+                    info.touchableRegion.set(bounds)
+                } else {
+                    info.touchableRegion.setEmpty()
+                }
+            } else {
+                info.setTouchableInsets(
+                    ViewTreeObserver.InternalInsetsInfo.TOUCHABLE_INSETS_FRAME
+                )
+            }
+        }
+
     fun init() {
         viewModel.interactor.onCollapseRequested = { viewModel.collapsePanel() }
         viewModel.interactor.onFocusableRequested = { focusable -> setOverlayFocusable(focusable) }
@@ -159,6 +191,12 @@ constructor(
         ) { expanded, alert, rect, hint ->
             updateOverlayWindow(expanded, alert != null, rect, hint)
         }.launchIn(applicationScope)
+
+        // The touchable region is read during view traversals; schedule one when the reported
+        // pill/ring bounds change (collapse animation, ring swap, event change).
+        viewModel.pillTouchBoundsPx
+            .onEach { ensureMainThread { overlayView?.requestLayout() } }
+            .launchIn(applicationScope)
 
         // Re-apply window geometry when ring offset/scale settings change (user compensation).
         combine(
@@ -236,16 +274,20 @@ constructor(
             WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_ALWAYS
         params.title = "AxDynamicBarExpanded"
 
-        windowManager.addView(view, params)
-        overlayView = view
-        // Apply the latest geometry immediately so first-render cutout pills get
-        // the badge-safe WM viewport before any subsequent flow emission.
-        updateOverlayWindow(
-            expanded = viewModel.isExpanded.value,
+        // Apply mode geometry before the window is added: in pill-only mode the window must
+        // never exist at its full-width default, or the first frame is a touch-stealing strip
+        // across the top of the screen.
+        applyWindowGeometry(
+            params,
+            expanded = isCurrentlyExpanded,
             hasAlert = viewModel.interactor.uiState.value.notificationAlert != null,
             cutoutRect = viewModel.interactor.cutoutRectPx.value,
             hint = viewModel.cutoutPlacementHint.value,
         )
+
+        windowManager.addView(view, params)
+        view.viewTreeObserver.addOnComputeInternalInsetsListener(internalInsetsListener)
+        overlayView = view
     }
 
     private fun hideOverlay() {
@@ -256,6 +298,7 @@ constructor(
         shrinkRunnable?.let { mainHandler.removeCallbacks(it) }
         shrinkRunnable = null
         overlayView?.let { view ->
+            view.viewTreeObserver.removeOnComputeInternalInsetsListener(internalInsetsListener)
             panelLifecycleOwner?.apply {
                 handleLifecycleEvent(Lifecycle.Event.ON_PAUSE)
                 handleLifecycleEvent(Lifecycle.Event.ON_STOP)
@@ -277,6 +320,22 @@ constructor(
     ) = ensureMainThread {
         val view = overlayView ?: return@ensureMainThread
         val params = view.layoutParams as? WindowManager.LayoutParams ?: return@ensureMainThread
+        if (applyWindowGeometry(params, expanded, hasAlert, cutoutRect, hint)) {
+            windowManager.updateViewLayout(view, params)
+        }
+    }
+
+    /**
+     * Mutates [params] for the current mode. Returns false when neither branch applies
+     * (pill-only mode without a cutout rect) so callers skip the WM relayout.
+     */
+    private fun applyWindowGeometry(
+        params: WindowManager.LayoutParams,
+        expanded: Boolean,
+        hasAlert: Boolean,
+        cutoutRect: android.graphics.Rect?,
+        hint: com.android.systemui.axdynamicbar.model.CutoutPlacementHint,
+    ): Boolean {
         val density = context.resources.displayMetrics.density
         val padSidePx = (CutoutPadSide.value * density).roundToInt()
         val padBotPx = (CutoutPadBottom.value * density).roundToInt()
@@ -370,9 +429,11 @@ constructor(
                     params.x = effectiveRect.centerX() - params.width / 2
                 }
             }
+        } else {
+            return false
         }
 
-        windowManager.updateViewLayout(view, params)
+        return true
     }
 
     private fun setOverlayFocusable(focusable: Boolean) = ensureMainThread {

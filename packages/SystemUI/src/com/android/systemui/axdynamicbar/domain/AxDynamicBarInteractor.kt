@@ -26,6 +26,8 @@ import com.android.systemui.shade.domain.interactor.ShadeInteractor
 import com.android.systemui.statusbar.KeyguardIndicationController
 import com.android.systemui.statusbar.StatusBarState
 import com.android.systemui.statusbar.chips.screenrecord.domain.interactor.ScreenRecordChipInteractor
+import com.android.systemui.statusbar.data.repository.StatusBarModeRepositoryStore
+import com.android.systemui.statusbar.policy.ConfigurationController
 import com.android.systemui.statusbar.policy.KeyguardStateController
 import com.android.systemui.statusbar.policy.ZenModeController
 import com.android.systemui.util.settings.GlobalSettings
@@ -44,6 +46,7 @@ import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
+import android.content.res.Configuration
 import android.hardware.display.DisplayManager
 import android.graphics.Path
 import android.graphics.Rect
@@ -73,6 +76,8 @@ constructor(
     private val globalSettings: GlobalSettings,
     private val audioManager: AudioManager,
     private val screenRecordChipInteractor: ScreenRecordChipInteractor,
+    private val configurationController: ConfigurationController,
+    private val statusBarModeRepository: StatusBarModeRepositoryStore,
 ) : IslandActions {
     private val _uiState = MutableStateFlow(IslandUiState())
     val uiState: StateFlow<IslandUiState> = _uiState.asStateFlow()
@@ -93,6 +98,8 @@ constructor(
 
     private val _isCutoutDisplayEnabled = MutableStateFlow(false)
     val isCutoutDisplayEnabled: StateFlow<Boolean> = _isCutoutDisplayEnabled.asStateFlow()
+
+    private val _isLandscape = MutableStateFlow(false)
 
     /** Hardware-derived placement hint computed from the display cutout geometry. */
     private val _cutoutPlacementHint = MutableStateFlow(CutoutPlacementHint.CENTER)
@@ -217,8 +224,38 @@ constructor(
 
         settings.init()
 
+        _isLandscape.value =
+            context.resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
+        configurationController.addCallback(
+            object : ConfigurationController.ConfigurationListener {
+                override fun onConfigChanged(newConfig: Configuration) {
+                    _isLandscape.value =
+                        newConfig.orientation == Configuration.ORIENTATION_LANDSCAPE
+                }
+            }
+        )
+
+        // Cutout rendering needs the top status bar band: in landscape the cutout sits on a
+        // side edge, and in fullscreen (immersive) the overlay would float over the app and
+        // steal touches around the cutout. In both cases fall back to status bar rendering —
+        // the chip then follows the status bar's own visibility (hidden in immersive, shown
+        // with the transient bar).
         applicationScope.launch {
-            settings.showInCutout.collect { _isCutoutDisplayEnabled.value = it }
+            combine(
+                settings.showInCutout,
+                _isLandscape,
+                statusBarModeRepository.defaultDisplay.isInFullscreenMode,
+            ) { showInCutout, landscape, fullscreen ->
+                showInCutout && !landscape && !fullscreen
+            }
+                .distinctUntilChanged()
+                .collect { active ->
+                    val changed = _isCutoutDisplayEnabled.value != active
+                    _isCutoutDisplayEnabled.value = active
+                    // The expanded card is anchored to the rendering surface; collapse instead
+                    // of re-anchoring mid-rotation.
+                    if (changed && _isPanelExpanded.value) onCollapseRequested?.invoke()
+                }
         }
 
         // Derive hardware cutout placement hint from the display cutout geometry.

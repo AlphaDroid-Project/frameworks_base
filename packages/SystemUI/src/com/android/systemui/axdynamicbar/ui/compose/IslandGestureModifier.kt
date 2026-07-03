@@ -25,8 +25,12 @@ import kotlinx.coroutines.withTimeoutOrNull
  *   [AxDynamicBarChipViewModel.openSettings]
  * - Horizontal swipe right → [AxDynamicBarChipViewModel.cyclePrev]
  * - Horizontal swipe left  → [AxDynamicBarChipViewModel.cycleNext]
- * - Vertical swipe         → not consumed; pointer is drained until release so QS / shade can
- *   handle the same gesture on the window below when appropriate.
+ * - Vertical swipe         → not consumed; pointer is drained until release. Note this only
+ *   lets *sibling views in the same window* (status bar / shade) handle the gesture — Android
+ *   never re-dispatches unconsumed touches to other windows. For the cutout-mode overlay the
+ *   equivalent is handled at the window level: [AxDynamicBarExpandedPanel] carves the window's
+ *   touchable region down to the pill/ring bounds, so touches outside them never enter the
+ *   overlay in the first place.
  */
 internal fun Modifier.islandGestures(
     viewModel: AxDynamicBarChipViewModel,
