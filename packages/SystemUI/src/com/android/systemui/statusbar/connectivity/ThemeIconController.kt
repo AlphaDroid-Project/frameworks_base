@@ -37,10 +37,18 @@ object ThemeIconController {
     private const val NEW_WIFI_HEIGHT_DP = 12.58f
 
     /**
-     * Applied when rendering ThemeEngine wifi/signal bitmaps (dedicated RROs and icon-pack
-     * fallbacks). Overlay vectors often use tighter padding than stock status-bar art.
+     * Padding-compensation boost applied when rendering ThemeEngine wifi/signal bitmaps (dedicated
+     * RROs and icon-pack fallbacks). Overlay vectors carry internal transparent padding, so once the
+     * fixed 15sp status-bar ImageView (FIT_CENTER) rescales the bitmap the glyph looks noticeably
+     * smaller than adjacent status-bar icons. Overshooting the draw bounds by this factor makes the
+     * glyph fill more of the bitmap; the overshoot crops the vector's own padding rather than content.
+     *
+     * Wifi art typically has ~10% vertical padding so it tolerates a larger boost, whereas signal
+     * bar art runs nearly full-height (~8% padding), so it uses a gentler factor to avoid clipping
+     * the tallest bar.
      */
-    private const val THEME_ICON_SIZE_SCALE = 1.1f
+    private const val WIFI_ICON_SIZE_SCALE = 1.2f
+    private const val SIGNAL_ICON_SIZE_SCALE = 1.15f
 
     private val SIGNAL_4BAR_NAMES = arrayOf(
         "ic_signal_cellular_0_4_bar",
@@ -103,7 +111,7 @@ object ThemeIconController {
         val names = if (numLevels > 5) SIGNAL_5BAR_NAMES else SIGNAL_4BAR_NAMES
         if (level < 0 || level >= names.size) return null
         val d = engine.getSystemThemeIconDrawable(names[level]) ?: return null
-        return scaleDrawable(context, d, NEW_SIGNAL_WIDTH_DP, NEW_SIGNAL_HEIGHT_DP)
+        return scaleDrawable(context, d, NEW_SIGNAL_WIDTH_DP, NEW_SIGNAL_HEIGHT_DP, SIGNAL_ICON_SIZE_SCALE)
     }
 
     @JvmStatic
@@ -169,7 +177,7 @@ object ThemeIconController {
         if (level < 0) return null
         val engine = ThemeEngine.getInstance(context) ?: return null
         val d = engine.getSystemThemeIconDrawable(WIFI_ICON_NAMES[level]) ?: return null
-        return scaleDrawable(context, d, NEW_WIFI_WIDTH_DP, NEW_WIFI_HEIGHT_DP)
+        return scaleDrawable(context, d, NEW_WIFI_WIDTH_DP, NEW_WIFI_HEIGHT_DP, WIFI_ICON_SIZE_SCALE)
     }
 
     @JvmStatic
@@ -211,14 +219,34 @@ object ThemeIconController {
     }
 
     private fun scaleDrawable(
-        context: Context, d: Drawable, widthDp: Float, heightDp: Float
+        context: Context, d: Drawable, widthDp: Float, heightDp: Float, sizeScale: Float
     ): Drawable {
         val density = context.resources.displayMetrics.density
         val w = (widthDp * density).toInt()
         val h = (heightDp * density).toInt()
         val bitmap = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888)
         val canvas = Canvas(bitmap)
-        d.setBounds(0, 0, w, h)
+
+        // Preserve the source's intrinsic aspect ratio. The status-bar box (w x h) is authored for
+        // the non-square stock vectors; icon-pack vectors are usually square (e.g. 24x24 viewport),
+        // so filling the box directly would stretch them horizontally. Fit inside the box and
+        // center instead, keeping the bitmap size fixed so status-bar alignment is unchanged.
+        val iw = d.intrinsicWidth
+        val ih = d.intrinsicHeight
+        if (iw > 0 && ih > 0) {
+            // Aspect-preserving fit, then a padding-compensation boost (sizeScale).
+            // The boost overshoots the box so the glyph fills more of the bitmap and reads at the
+            // same visual weight as neighbouring status-bar icons; the overshoot crops the vector's
+            // internal transparent padding, so real content survives.
+            val scale = minOf(w.toFloat() / iw, h.toFloat() / ih) * sizeScale
+            val drawnW = (iw * scale).toInt()
+            val drawnH = (ih * scale).toInt()
+            val left = (w - drawnW) / 2
+            val top = (h - drawnH) / 2
+            d.setBounds(left, top, left + drawnW, top + drawnH)
+        } else {
+            d.setBounds(0, 0, w, h)
+        }
         d.draw(canvas)
         return BitmapDrawable(context.resources, bitmap)
     }
