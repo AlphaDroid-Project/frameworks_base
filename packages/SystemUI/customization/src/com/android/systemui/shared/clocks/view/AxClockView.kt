@@ -280,6 +280,10 @@ abstract class AxClockView @JvmOverloads constructor(
             it.clipChildren = false
             it.clipToPadding = false
         }
+        // Don't clip the compose host: user position offsets translate it, potentially past our
+        // own bounds.
+        clipChildren = false
+        clipToPadding = false
         depthController.onAttached()
         uiScope?.launch {
             val scaleFlow = if (isLargeClock) ClockSettingsRepository.largeScale else ClockSettingsRepository.smallScale
@@ -288,6 +292,14 @@ abstract class AxClockView @JvmOverloads constructor(
         uiScope?.launch {
             val alignFlow = if (isLargeClock) ClockSettingsRepository.largeAlignment else ClockSettingsRepository.smallAlignment
             alignFlow.collect { state.alignmentState.value = it }
+        }
+        uiScope?.launch {
+            val offsetXFlow = if (isLargeClock) ClockSettingsRepository.largeOffsetX else ClockSettingsRepository.smallOffsetX
+            offsetXFlow.collect { dp -> applyUserOffsetX(dp) }
+        }
+        uiScope?.launch {
+            val offsetYFlow = if (isLargeClock) ClockSettingsRepository.largeOffsetY else ClockSettingsRepository.smallOffsetY
+            offsetYFlow.collect { dp -> applyUserOffsetY(dp) }
         }
         refreshTime()
         state.timeState.value = interactor.timeStr
@@ -369,20 +381,28 @@ abstract class AxClockView @JvmOverloads constructor(
             cv.scaleX = 1f
             cv.scaleY = 1f
         } else {
-            cv.pivotX = (cv.width.takeIf { it > 0 } ?: width) / 2f
+            // Pivot the shrink at the aligned edge so a left/right-aligned clock stays flush
+            // to that edge instead of drifting toward centre when the height clamp fires.
+            val cvWidth = (cv.width.takeIf { it > 0 } ?: width).toFloat()
+            cv.pivotX = when {
+                isLeftAligned -> 0f
+                isRightAligned -> cvWidth
+                else -> cvWidth / 2f
+            }
             cv.pivotY = 0f
             cv.scaleX = largeContentScale
             cv.scaleY = largeContentScale
         }
 
-        // Center vertically if there is leftover space
+        // Center vertically if there is leftover space, then fold in the user vertical offset.
         val viewHeight = height.takeIf { it > 0 } ?: measuredHeight
         val contentHeight = (cv.measuredHeight * largeContentScale).toInt()
-        if (viewHeight > 0 && contentHeight > 0 && viewHeight > contentHeight) {
-            cv.translationY = (viewHeight - contentHeight) / 2f
-        } else {
-            cv.translationY = 0f
-        }
+        cv.translationY =
+            if (viewHeight > 0 && contentHeight > 0 && viewHeight > contentHeight) {
+                (viewHeight - contentHeight) / 2f + userOffsetYPx
+            } else {
+                userOffsetYPx
+            }
     }
 
     override fun onLayout(changed: Boolean, l: Int, t: Int, r: Int, b: Int) {
@@ -410,6 +430,24 @@ abstract class AxClockView @JvmOverloads constructor(
         super.onSizeChanged(w, h, oldw, oldh)
         pivotX = w / 2f
         pivotY = h / 2f
+    }
+
+    // User-configurable clock position offsets (px), applied to the compose host rather than this
+    // view. The keyguard root binder owns this view's translationX/Y for burn-in and swipe
+    // transitions and would clobber an offset placed here; the host child is never touched by it.
+    // Skipped in preview mode so the picker tiles stay centred.
+    private var userOffsetXPx = 0f
+    private var userOffsetYPx = 0f
+
+    private fun applyUserOffsetX(dp: Int) {
+        userOffsetXPx = if (isPreviewMode) 0f else dp * resources.displayMetrics.density
+        host.view.translationX = userOffsetXPx
+    }
+
+    private fun applyUserOffsetY(dp: Int) {
+        userOffsetYPx = if (isPreviewMode) 0f else dp * resources.displayMetrics.density
+        // Large clock folds the offset into its vertical centring; small applies it directly.
+        if (isLargeClock) applyLargeContentScale() else host.view.translationY = userOffsetYPx
     }
 
     protected open fun getContentBounds(): RectF? = null

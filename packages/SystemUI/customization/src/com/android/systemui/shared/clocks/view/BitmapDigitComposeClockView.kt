@@ -554,11 +554,21 @@ class BitmapDigitComposeClockView @JvmOverloads constructor(
                 val (hours, minutes) = splitTimeLines(time)
                 if (hours.isEmpty()) return@Canvas
 
-                val hoursWidth = computeLineWidth(hours, bitmaps, scale, finalSpacing)
-                val minutesWidth = computeLineWidth(minutes, bitmaps, scale, finalSpacing)
+                // Shrink digits + spacing uniformly so the wider line fits the view width and
+                // left/right alignment never overflows past the edges at high scale.
+                val naturalMax = maxOf(
+                    computeLineWidth(hours, bitmaps, scale, finalSpacing),
+                    computeLineWidth(minutes, bitmaps, scale, finalSpacing),
+                )
+                val fitScale = fitToWidth(naturalMax)
+                val drawScale = scale * fitScale
+                val drawSpacing = finalSpacing * fitScale
+
+                val hoursWidth = computeLineWidth(hours, bitmaps, drawScale, drawSpacing)
+                val minutesWidth = computeLineWidth(minutes, bitmaps, drawScale, drawSpacing)
 
                 val sampleBitmap = bitmaps['0'] ?: return@Canvas
-                val digitHeight = sampleBitmap.height * scale
+                val digitHeight = sampleBitmap.height * drawScale
 
                 val hoursX = when {
                     isLeftAligned -> 0f
@@ -571,8 +581,8 @@ class BitmapDigitComposeClockView @JvmOverloads constructor(
                     else -> (size.width - minutesWidth) / 2f
                 }
 
-                drawDigitLine(hours, bitmaps, scale, hoursX, 0f, finalSpacing, tintColor)
-                drawDigitLine(minutes, bitmaps, scale, minutesX, digitHeight + lineSpacing, finalSpacing, tintColor)
+                drawDigitLine(hours, bitmaps, drawScale, hoursX, 0f, drawSpacing, tintColor)
+                drawDigitLine(minutes, bitmaps, drawScale, minutesX, digitHeight + lineSpacing, drawSpacing, tintColor)
             }
 
             Spacer(modifier = Modifier.height(16.dp))
@@ -662,7 +672,12 @@ class BitmapDigitComposeClockView @JvmOverloads constructor(
                 val (hours, minutes) = splitTimeLines(displayTime)
                 if (hours.isEmpty()) return@Canvas
 
-                val cellWidth = fontLayout.cellWidth
+                // Shrink glyph cell + font size uniformly so the wider line fits the view width;
+                // keeps left/right alignment from overflowing the edges at high scale.
+                val naturalCell = fontLayout.cellWidth
+                val fitScale = fitToWidth(naturalCell * maxOf(hours.length, minutes.length))
+                if (fitScale < 1f) fontPaint.textSize = largeFontSize * fitScale
+                val cellWidth = naturalCell * fitScale
                 val hoursBaselineY = -fontLayout.visualTopOffset
                 val minutesBaselineY = hoursBaselineY + fontLayout.visualHeight + mode.lineSpacing * scale
 
