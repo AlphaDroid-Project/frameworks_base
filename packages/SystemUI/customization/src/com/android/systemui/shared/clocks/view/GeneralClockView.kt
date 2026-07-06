@@ -173,17 +173,27 @@ class GeneralClockView @JvmOverloads constructor(
                 if (hours.isEmpty()) return@Canvas
 
                 val sampleDigit = bitmaps['0'] ?: return@Canvas
-                val dh = sampleDigit.height * largeScale
 
-                fun lineWidth(digits: String): Float {
+                fun lineWidth(digits: String, s: Float, sp: Float): Float {
                     var w = 0f
                     digits.forEachIndexed { i, c ->
                         val bmp = bitmaps[c] ?: return@forEachIndexed
-                        w += bmp.width * largeScale
-                        if (i < digits.lastIndex) w += digitSpacing
+                        w += bmp.width * s
+                        if (i < digits.lastIndex) w += sp
                     }
                     return w
                 }
+
+                // Shrink digits + spacing uniformly so the wider line always fits the view
+                // width; keeps left/right alignment from overflowing past the edges at high scale.
+                val naturalMax = maxOf(
+                    lineWidth(hours, largeScale, digitSpacing),
+                    lineWidth(minutes, largeScale, digitSpacing),
+                )
+                val fitScale = fitToWidth(naturalMax)
+                val drawScale = largeScale * fitScale
+                val drawSpacing = digitSpacing * fitScale
+                val dh = sampleDigit.height * drawScale
 
                 fun drawLine(digits: String, lineX: Float, lineY: Float) {
                     var x = lineX
@@ -194,15 +204,15 @@ class GeneralClockView @JvmOverloads constructor(
                             srcOffset = IntOffset.Zero,
                             srcSize = IntSize(bmp.width, bmp.height),
                             dstOffset = IntOffset(x.toInt(), lineY.toInt()),
-                            dstSize = IntSize((bmp.width * largeScale).toInt(), (bmp.height * largeScale).toInt()),
+                            dstSize = IntSize((bmp.width * drawScale).toInt(), (bmp.height * drawScale).toInt()),
                             colorFilter = ColorFilter.tint(tintColor, BlendMode.SrcIn),
                         )
-                        x += bmp.width * largeScale + digitSpacing
+                        x += bmp.width * drawScale + drawSpacing
                     }
                 }
 
-                val hoursW = lineWidth(hours)
-                val minutesW = lineWidth(minutes)
+                val hoursW = lineWidth(hours, drawScale, drawSpacing)
+                val minutesW = lineWidth(minutes, drawScale, drawSpacing)
 
                 val hoursX = when {
                     isLeftAligned -> 0f

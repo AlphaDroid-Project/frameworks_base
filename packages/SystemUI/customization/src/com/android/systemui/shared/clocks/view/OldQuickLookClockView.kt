@@ -229,33 +229,18 @@ class OldQuickLookClockView @JvmOverloads constructor(
                 horizontalAlignment = horizontalAlign,
                 verticalArrangement = Arrangement.Center,
             ) {
-                Column(
-                    modifier = Modifier.fillMaxWidth(),
+                FittedTimeColumn(
+                    hours = hours,
+                    minutes = minutes,
+                    baseStyle = TextStyle(
+                        fontSize = largeFontSize,
+                        fontWeight = FontWeight.Bold,
+                        fontFamily = clockFontFamily,
+                        color = textColor,
+                        lineHeight = largeFontSize,
+                    ),
                     horizontalAlignment = horizontalAlign,
-                ) {
-                    Text(
-                        text = hours,
-                        maxLines = 1,
-                        style = TextStyle(
-                            fontSize = largeFontSize,
-                            fontWeight = FontWeight.Bold,
-                            fontFamily = clockFontFamily,
-                            color = textColor,
-                            lineHeight = largeFontSize,
-                        ),
-                    )
-                    Text(
-                        text = minutes,
-                        maxLines = 1,
-                        style = TextStyle(
-                            fontSize = largeFontSize,
-                            fontWeight = FontWeight.Bold,
-                            fontFamily = clockFontFamily,
-                            color = textColor,
-                            lineHeight = largeFontSize,
-                        ),
-                    )
-                }
+                )
 
                 Spacer(modifier = Modifier.height(16.dp))
 

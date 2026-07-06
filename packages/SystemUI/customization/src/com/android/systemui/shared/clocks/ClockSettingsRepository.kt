@@ -39,6 +39,19 @@ object ClockSettingsRepository {
     const val SETTING_SCALE_SMALL = "ax_clock_scale_small"
     const val SETTING_SCALE_LARGE = "ax_clock_scale_large"
 
+    const val SETTING_OFFSET_X_SMALL = "ax_clock_offset_x_small"
+    const val SETTING_OFFSET_X_LARGE = "ax_clock_offset_x_large"
+    const val SETTING_OFFSET_Y_SMALL = "ax_clock_offset_y_small"
+    const val SETTING_OFFSET_Y_LARGE = "ax_clock_offset_y_large"
+
+    // User clock position offsets, stored in dp and clamped to these ranges.
+    const val OFFSET_X_MIN = -20
+    const val OFFSET_X_MAX = 20
+    const val OFFSET_Y_SMALL_MIN = -20
+    const val OFFSET_Y_SMALL_MAX = 20
+    const val OFFSET_Y_LARGE_MIN = -100
+    const val OFFSET_Y_LARGE_MAX = 50
+
     const val COLOR_AUTO = "auto"
 
     const val ALIGNMENT_LEFT = "left"
@@ -58,6 +71,10 @@ object ClockSettingsRepository {
     @JvmField val sizeUri: Uri = Settings.Secure.getUriFor(SETTING_SIZE)
     @JvmField val scaleSmallUri: Uri = Settings.Secure.getUriFor(SETTING_SCALE_SMALL)
     @JvmField val scaleLargeUri: Uri = Settings.Secure.getUriFor(SETTING_SCALE_LARGE)
+    @JvmField val offsetXSmallUri: Uri = Settings.Secure.getUriFor(SETTING_OFFSET_X_SMALL)
+    @JvmField val offsetXLargeUri: Uri = Settings.Secure.getUriFor(SETTING_OFFSET_X_LARGE)
+    @JvmField val offsetYSmallUri: Uri = Settings.Secure.getUriFor(SETTING_OFFSET_Y_SMALL)
+    @JvmField val offsetYLargeUri: Uri = Settings.Secure.getUriFor(SETTING_OFFSET_Y_LARGE)
     @JvmField val datePositionUri: Uri = Settings.Secure.getUriFor(SETTING_DATE_POSITION)
     @JvmField val clockColorUri: Uri = Settings.Secure.getUriFor(SETTING_CLOCK_COLOR)
 
@@ -79,6 +96,18 @@ object ClockSettingsRepository {
     val largeScale: StateFlow<Float> = _largeScale.asStateFlow()
 
     val sizeScale: StateFlow<Float> = smallScale // Legacy back-compat
+
+    private val _smallOffsetX = MutableStateFlow(0)
+    val smallOffsetX: StateFlow<Int> = _smallOffsetX.asStateFlow()
+
+    private val _largeOffsetX = MutableStateFlow(0)
+    val largeOffsetX: StateFlow<Int> = _largeOffsetX.asStateFlow()
+
+    private val _smallOffsetY = MutableStateFlow(0)
+    val smallOffsetY: StateFlow<Int> = _smallOffsetY.asStateFlow()
+
+    private val _largeOffsetY = MutableStateFlow(0)
+    val largeOffsetY: StateFlow<Int> = _largeOffsetY.asStateFlow()
 
     private val _isDateBelow = MutableStateFlow(false)
     val isDateBelow: StateFlow<Boolean> = _isDateBelow.asStateFlow()
@@ -119,6 +148,18 @@ object ClockSettingsRepository {
                 scaleLargeUri -> {
                     _largeScale.value = readLargeScale(cr)
                 }
+                offsetXSmallUri -> {
+                    _smallOffsetX.value = readSmallOffsetX(cr)
+                }
+                offsetXLargeUri -> {
+                    _largeOffsetX.value = readLargeOffsetX(cr)
+                }
+                offsetYSmallUri -> {
+                    _smallOffsetY.value = readSmallOffsetY(cr)
+                }
+                offsetYLargeUri -> {
+                    _largeOffsetY.value = readLargeOffsetY(cr)
+                }
                 datePositionUri -> {
                     _isDateBelow.value = readDateBelow(cr)
                 }
@@ -145,6 +186,10 @@ object ClockSettingsRepository {
         cr.registerContentObserver(alignmentLargeUri, false, observer)
         cr.registerContentObserver(scaleSmallUri, false, observer)
         cr.registerContentObserver(scaleLargeUri, false, observer)
+        cr.registerContentObserver(offsetXSmallUri, false, observer)
+        cr.registerContentObserver(offsetXLargeUri, false, observer)
+        cr.registerContentObserver(offsetYSmallUri, false, observer)
+        cr.registerContentObserver(offsetYLargeUri, false, observer)
         cr.registerContentObserver(datePositionUri, false, observer)
         cr.registerContentObserver(clockColorUri, false, observer)
 
@@ -155,6 +200,10 @@ object ClockSettingsRepository {
         _largeAlignment.value = readLargeAlignment(cr)
         _smallScale.value = readSmallScale(cr)
         _largeScale.value = readLargeScale(cr)
+        _smallOffsetX.value = readSmallOffsetX(cr)
+        _largeOffsetX.value = readLargeOffsetX(cr)
+        _smallOffsetY.value = readSmallOffsetY(cr)
+        _largeOffsetY.value = readLargeOffsetY(cr)
         _isDateBelow.value = readDateBelow(cr)
         _clockColorOverride.value = readClockColor(cr)
         _shouldCenterIcons.value = computeShouldCenter(cr)
@@ -212,6 +261,20 @@ object ClockSettingsRepository {
         val pct = Settings.Secure.getInt(cr, SETTING_SCALE_LARGE, 100)
         return pct / 100f
     }
+
+    private fun readSmallOffsetX(cr: ContentResolver): Int =
+        Settings.Secure.getInt(cr, SETTING_OFFSET_X_SMALL, 0).coerceIn(OFFSET_X_MIN, OFFSET_X_MAX)
+
+    private fun readLargeOffsetX(cr: ContentResolver): Int =
+        Settings.Secure.getInt(cr, SETTING_OFFSET_X_LARGE, 0).coerceIn(OFFSET_X_MIN, OFFSET_X_MAX)
+
+    private fun readSmallOffsetY(cr: ContentResolver): Int =
+        Settings.Secure.getInt(cr, SETTING_OFFSET_Y_SMALL, 0)
+            .coerceIn(OFFSET_Y_SMALL_MIN, OFFSET_Y_SMALL_MAX)
+
+    private fun readLargeOffsetY(cr: ContentResolver): Int =
+        Settings.Secure.getInt(cr, SETTING_OFFSET_Y_LARGE, 0)
+            .coerceIn(OFFSET_Y_LARGE_MIN, OFFSET_Y_LARGE_MAX)
 
     private fun readDateBelow(cr: ContentResolver): Boolean {
         return Settings.Secure.getString(cr, SETTING_DATE_POSITION) == DATE_POSITION_BELOW

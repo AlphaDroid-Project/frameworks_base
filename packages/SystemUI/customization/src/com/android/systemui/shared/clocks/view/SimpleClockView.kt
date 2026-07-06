@@ -203,6 +203,16 @@ class SimpleClockView @JvmOverloads constructor(
                 else -> Alignment.Center
             },
         ) {
+            val timeStyle = TextStyle(
+                fontSize = largeFontSize,
+                fontWeight = FontWeight.Light,
+                fontFamily = timeFont,
+                color = tint,
+                lineHeight = largeFontSize,
+                textAlign = textAlignment,
+                letterSpacing = (-2).sp,
+            )
+
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -213,31 +223,11 @@ class SimpleClockView @JvmOverloads constructor(
                 horizontalAlignment = horizontalAlign,
                 verticalArrangement = Arrangement.Center,
             ) {
-                Text(
-                    text = hours,
-                    maxLines = 1,
-                    style = TextStyle(
-                        fontSize = largeFontSize,
-                        fontWeight = FontWeight.Light,
-                        fontFamily = timeFont,
-                        color = tint,
-                        lineHeight = largeFontSize,
-                        textAlign = textAlignment,
-                        letterSpacing = (-2).sp,
-                    ),
-                )
-                Text(
-                    text = minutes,
-                    maxLines = 1,
-                    style = TextStyle(
-                        fontSize = largeFontSize,
-                        fontWeight = FontWeight.Light,
-                        fontFamily = timeFont,
-                        color = tint,
-                        lineHeight = largeFontSize,
-                        textAlign = textAlignment,
-                        letterSpacing = (-2).sp,
-                    ),
+                FittedTimeColumn(
+                    hours = hours,
+                    minutes = minutes,
+                    baseStyle = timeStyle,
+                    horizontalAlignment = horizontalAlign,
                 )
 
                 Spacer(modifier = Modifier.height(16.dp))
