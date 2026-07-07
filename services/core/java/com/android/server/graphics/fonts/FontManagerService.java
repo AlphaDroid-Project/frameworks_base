@@ -26,6 +26,7 @@ import android.graphics.fonts.FontFamily;
 import android.graphics.fonts.FontManager;
 import android.graphics.fonts.FontUpdateRequest;
 import android.graphics.fonts.SystemFonts;
+import android.os.Binder;
 import android.os.Build;
 import android.os.ParcelFileDescriptor;
 import android.os.ResultReceiver;
@@ -181,12 +182,41 @@ public final class FontManagerService extends IFontManager.Stub {
 
         private final String[] mDerCertPaths;
 
-        FsverityUtilImpl(String[] derCertPaths) {
+        private final Context mContext;
+
+        FsverityUtilImpl(Context context, String[] derCertPaths) {
+            mContext = context;
             mDerCertPaths = derCertPaths;
+        }
+
+        // AlphaThemePicker is platform-signed and shares the system UID; it installs
+        // user-picked fonts that are not signed by the preinstalled font-update cert.
+        // Trust it so its font updates aren't rejected as "Fs-verity is not enabled".
+        private static final String TRUSTED_FONT_INSTALLER_PKG = "com.android.alpha.themepicker";
+
+        private boolean isTrustedFontInstaller() {
+            try {
+                final String[] pkgs =
+                        mContext.getPackageManager().getPackagesForUid(Binder.getCallingUid());
+                if (pkgs == null) {
+                    return false;
+                }
+                for (String pkg : pkgs) {
+                    if (TRUSTED_FONT_INSTALLER_PKG.equals(pkg)) {
+                        return true;
+                    }
+                }
+            } catch (Exception e) {
+                Log.w(TAG, "Failed to resolve calling package for font install", e);
+            }
+            return false;
         }
 
         @Override
         public boolean isFromTrustedProvider(String fontPath, byte[] pkcs7Signature) {
+            if (isTrustedFontInstaller()) {
+                return true;
+            }
             final byte[] digest = VerityUtils.getFsverityDigest(fontPath);
             if (digest == null) {
                 Log.w(TAG, "Failed to get fs-verity digest for " + fontPath);
@@ -295,7 +325,7 @@ public final class FontManagerService extends IFontManager.Stub {
         }
 
         return new UpdatableFontDir(new File(FONT_FILES_DIR), new OtfFontFileParser(),
-                new FsverityUtilImpl(certs), new File(CONFIG_XML_FILE));
+                new FsverityUtilImpl(mContext, certs), new File(CONFIG_XML_FILE));
     }
 
     /**
