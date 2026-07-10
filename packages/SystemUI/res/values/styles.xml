@@ -81,6 +81,7 @@
         <item name="android:layout_height">match_parent</item>
         <item name="android:layout_gravity">center_vertical|start</item>
         <item name="android:layout_marginStart">@dimen/ongoing_activity_chip_margin_start</item>
+        <item name="android:layout_marginEnd">@dimen/ongoing_activity_chip_margin_start</item>
     </style>
 
     <style name="StatusBar.Chip.Text">
@@ -99,6 +100,8 @@
         <item name="android:layout_width">wrap_content</item>
         <item name="android:layout_height">wrap_content</item>
         <item name="android:layout_gravity">center</item>
+        <item name="android:layout_marginStart">@dimen/ongoing_activity_chip_margin_start</item>
+        <item name="android:layout_marginEnd">@dimen/ongoing_activity_chip_margin_start</item>
         <item name="android:gravity">center</item>
         <item name="android:clipToOutline">true</item>
         <item name="android:background">@drawable/statusbar_chip_bg</item>

@@ -465,12 +465,15 @@ public class Clock extends TextView implements
 
         // Note: The padding for the clock in the shade is controlled by ShadeHeaderController so
         // this just affects the status bar clock.
+        boolean isLeftClock = getId() == R.id.clock;
         setPaddingRelative(
                 mContext.getResources().getDimensionPixelSize(
-                        R.dimen.status_bar_clock_starting_padding),
+                        isLeftClock ? R.dimen.status_bar_left_clock_starting_padding
+                                : R.dimen.status_bar_clock_starting_padding),
                 0,
                 mContext.getResources().getDimensionPixelSize(
-                        R.dimen.status_bar_clock_end_padding),
+                        isLeftClock ? R.dimen.status_bar_left_clock_end_padding
+                                : R.dimen.status_bar_clock_end_padding),
                 0);
     }
 
