@@ -68,8 +68,8 @@ import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.compose.foundation.basicMarquee
 import androidx.core.content.ContextCompat
 import androidx.core.graphics.drawable.toBitmap
@@ -485,6 +485,48 @@ class BitmapDigitComposeClockView @JvmOverloads constructor(
         }
     }
 
+    /**
+     * Column wrapper for the large digit faces that positions the shared EnhancedDateArea
+     * above or below the time according to the user's date-position setting, matching SmallShell.
+     */
+    @Composable
+    private fun LargeShell(
+        colAlign: Alignment.Horizontal,
+        sidePadding: Dp,
+        tintColor: Color,
+        content: @Composable ColumnScope.() -> Unit,
+    ) {
+        val dateBelow by state.dateBelowState
+        val dateArea = @Composable {
+            // Match the small clock's date size (EnhancedDateArea defaults: 18.sp / 16.dp).
+            EnhancedDateArea(
+                textColor = tintColor,
+                rowArrangement = if (isLeftAligned) Arrangement.Start else if (isRightAligned) Arrangement.End else Arrangement.Center,
+            )
+        }
+
+        Column(
+            modifier = Modifier.fillMaxSize().padding(
+                start = if (isRightAligned) 0.dp else sidePadding,
+                end = if (isRightAligned) sidePadding else 0.dp,
+            ),
+            horizontalAlignment = colAlign,
+            verticalArrangement = Arrangement.Center,
+        ) {
+            if (!dateBelow) {
+                dateArea()
+                Spacer(modifier = Modifier.height(16.dp))
+            }
+
+            content()
+
+            if (dateBelow) {
+                Spacer(modifier = Modifier.height(16.dp))
+                dateArea()
+            }
+        }
+    }
+
     @Composable
     private fun LargeContent() {
         val config = cachedConfig ?: return
@@ -535,14 +577,7 @@ class BitmapDigitComposeClockView @JvmOverloads constructor(
             else -> Alignment.CenterHorizontally
         }
 
-        Column(
-            modifier = Modifier.fillMaxSize().padding(
-                start = if (isRightAligned) 0.dp else sidePadding,
-                end = if (isRightAligned) sidePadding else 0.dp,
-            ),
-            horizontalAlignment = colAlign,
-            verticalArrangement = Arrangement.Center,
-        ) {
+        LargeShell(colAlign, sidePadding, tintColor) {
             Canvas(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -584,14 +619,6 @@ class BitmapDigitComposeClockView @JvmOverloads constructor(
                 drawDigitLine(hours, bitmaps, drawScale, hoursX, 0f, drawSpacing, tintColor)
                 drawDigitLine(minutes, bitmaps, drawScale, minutesX, digitHeight + lineSpacing, drawSpacing, tintColor)
             }
-
-            Spacer(modifier = Modifier.height(16.dp))
-            EnhancedDateArea(
-                textColor = tintColor,
-                textSize = 16.sp,
-                iconSize = 18.dp,
-                rowArrangement = if (isLeftAligned) Arrangement.Start else if (isRightAligned) Arrangement.End else Arrangement.Center,
-            )
         }
     }
 
@@ -644,14 +671,7 @@ class BitmapDigitComposeClockView @JvmOverloads constructor(
             else -> Alignment.CenterHorizontally
         }
 
-        Column(
-            modifier = Modifier.fillMaxSize().padding(
-                start = if (isRightAligned) 0.dp else sidePadding,
-                end = if (isRightAligned) sidePadding else 0.dp,
-            ),
-            horizontalAlignment = colAlign,
-            verticalArrangement = Arrangement.Center,
-        ) {
+        LargeShell(colAlign, sidePadding, tintColor) {
             Canvas(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -704,20 +724,13 @@ class BitmapDigitComposeClockView @JvmOverloads constructor(
                 drawCenteredLine(hours, hoursBaselineY, 0)
                 drawCenteredLine(minutes, minutesBaselineY, hours.length)
             }
-
-            Spacer(modifier = Modifier.height(16.dp))
-            EnhancedDateArea(
-                textColor = tintColor,
-                textSize = 16.sp,
-                iconSize = 18.dp,
-                rowArrangement = if (isLeftAligned) Arrangement.Start else if (isRightAligned) Arrangement.End else Arrangement.Center,
-            )
         }
     }
 
     @Composable
     private fun LargeAnalogContent(config: BitmapFaceConfig) {
         val (time, date, isDoze, screenOff, regionDark) = rememberClockState()
+        val dateBelow by state.dateBelowState
 
         Box(
             modifier = Modifier.fillMaxWidth().aspectRatio(1f),
@@ -731,14 +744,16 @@ class BitmapDigitComposeClockView @JvmOverloads constructor(
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .align(Alignment.BottomCenter)
-                    .padding(bottom = 24.dp),
+                    .align(if (dateBelow) Alignment.BottomCenter else Alignment.TopCenter)
+                    .padding(
+                        top = if (dateBelow) 0.dp else 24.dp,
+                        bottom = if (dateBelow) 24.dp else 0.dp,
+                    ),
                 contentAlignment = Alignment.Center,
             ) {
+                // Match the small clock's date size (EnhancedDateArea defaults: 18.sp / 16.dp).
                 EnhancedDateArea(
                     textColor = tintColor,
-                    textSize = 16.sp,
-                    iconSize = 18.dp,
                     rowArrangement = Arrangement.Center,
                 )
             }

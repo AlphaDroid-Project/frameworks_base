@@ -166,6 +166,7 @@ class SimpleClockView @JvmOverloads constructor(
     private fun LargeContent() {
         val (time, _, isDoze, screenOff, regionDark) = rememberClockState()
         val tint = tintColor(isDoze, screenOff, regionDark)
+        val dateBelow by state.dateBelowState
         val timeFont = remember(state.fontVersion.intValue) {
             resolveClockTimeFontFamily(context.resources)
         }
@@ -213,25 +214,7 @@ class SimpleClockView @JvmOverloads constructor(
                 letterSpacing = (-2).sp,
             )
 
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(
-                        start = if (isRightAligned) 0.dp else sidePadding,
-                        end = if (isRightAligned) sidePadding else 0.dp,
-                    ),
-                horizontalAlignment = horizontalAlign,
-                verticalArrangement = Arrangement.Center,
-            ) {
-                FittedTimeColumn(
-                    hours = hours,
-                    minutes = minutes,
-                    baseStyle = timeStyle,
-                    horizontalAlignment = horizontalAlign,
-                )
-
-                Spacer(modifier = Modifier.height(16.dp))
-
+            val dateArea = @Composable {
                 EnhancedDateArea(
                     textColor = tint.copy(alpha = if (isDoze) 0.6f else 0.85f),
                     textSize = 16.sp,
@@ -242,6 +225,35 @@ class SimpleClockView @JvmOverloads constructor(
                         else -> Arrangement.Center
                     },
                 )
+            }
+
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(
+                        start = if (isRightAligned) 0.dp else sidePadding,
+                        end = if (isRightAligned) sidePadding else 0.dp,
+                    ),
+                horizontalAlignment = horizontalAlign,
+                verticalArrangement = Arrangement.Center,
+            ) {
+                // Date position honors the user setting (default "above"), matching SmallContent.
+                if (!dateBelow) {
+                    dateArea()
+                    Spacer(modifier = Modifier.height(16.dp))
+                }
+
+                FittedTimeColumn(
+                    hours = hours,
+                    minutes = minutes,
+                    baseStyle = timeStyle,
+                    horizontalAlignment = horizontalAlign,
+                )
+
+                if (dateBelow) {
+                    Spacer(modifier = Modifier.height(16.dp))
+                    dateArea()
+                }
             }
         }
     }
