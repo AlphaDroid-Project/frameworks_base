@@ -27,7 +27,6 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import com.android.systemui.Dumpable
-import com.android.systemui.classifier.Classifier
 import com.android.systemui.dagger.SysUISingleton
 import com.android.systemui.dagger.qualifiers.Application
 import com.android.systemui.dump.DumpManager
@@ -38,13 +37,8 @@ import com.android.systemui.media.controls.ui.view.MediaHost
 import com.android.systemui.media.controls.ui.view.MediaHostState
 import com.android.systemui.media.dagger.MediaModule.KEYGUARD
 import com.android.systemui.media.remedia.shared.flag.MediaControlsInComposeFlag
-import com.android.systemui.media.remedia.ui.compose.Media
-import com.android.systemui.media.remedia.ui.compose.MediaPresentationStyle
-import com.android.systemui.media.remedia.ui.compose.MediaUiBehavior
-import com.android.systemui.media.remedia.ui.viewmodel.MediaCarouselVisibility
-import com.android.systemui.media.remedia.ui.viewmodel.MediaFalsingSystem
-import com.android.systemui.media.remedia.ui.viewmodel.MediaViewModel
 import com.android.systemui.plugins.statusbar.StatusBarStateController
+import com.android.systemui.qs.ax.ui.keyguard.AxKeyguardMediaContent
 import com.android.systemui.scene.shared.flag.SceneContainerFlag
 import com.android.systemui.shade.ShadeDisplayAware
 import com.android.systemui.statusbar.StatusBarState
@@ -81,9 +75,8 @@ constructor(
     private val splitShadeStateController: SplitShadeStateController,
     private val logger: KeyguardMediaControllerLogger,
     dumpManager: DumpManager,
-    private val mediaViewModelFactory: MediaViewModel.Factory,
     private val mediaCarouselInteractor: MediaCarouselInteractor,
-    private val falsingSystem: MediaFalsingSystem,
+    private val axMediaContent: AxKeyguardMediaContent,
 ) : Dumpable {
     private var lastUsedStatusBarState = -1
 
@@ -98,6 +91,7 @@ constructor(
                 }
             }
         }
+    private val composeHost = axMediaContent.createHost(composeView)
 
     private var isMediaVisibleOnLockscreen = false
         set(value) {
@@ -125,11 +119,11 @@ constructor(
             applicationScope.launch {
                 combine(
                         mediaCarouselInteractor.allowMediaOnLockscreen,
-                        mediaCarouselInteractor.hasActiveMedia,
+                        axMediaContent.hasVisibleMedia,
                         mediaCarouselInteractor.isOnLockscreen,
-                    ) { allowMediaOnLockscreen, activeMedia, isOnLockscreen ->
+                    ) { allowMediaOnLockscreen, visibleMedia, isOnLockscreen ->
                         if (allowMediaOnLockscreen && isOnLockscreen) {
-                            activeMedia
+                            visibleMedia
                         } else {
                             false
                         }
@@ -159,20 +153,7 @@ constructor(
     }
 
     private fun setComposeContent(composeView: ComposeView) {
-        composeView.setContent {
-            Media(
-                viewModelFactory = mediaViewModelFactory,
-                presentationStyle = MediaPresentationStyle.Default,
-                behavior =
-                    MediaUiBehavior(
-                        carouselVisibility = MediaCarouselVisibility.WhenAnyCardIsActive,
-                        isCarouselScrollFalseTouch = {
-                            falsingSystem.isFalseTouch(Classifier.MEDIA_CAROUSEL_SWIPE)
-                        },
-                    ),
-                onDismissed = { mediaCarouselInteractor.onSwipeToDismiss() },
-            )
-        }
+        axMediaContent.setContent(composeView)
     }
 
     private fun updateResources() {
@@ -235,7 +216,7 @@ constructor(
                 return
             }
             if (MediaControlsInComposeFlag.isEnabled) {
-                composeView.layoutParams.apply {
+                composeHost.layoutParams.apply {
                     height = ViewGroup.LayoutParams.WRAP_CONTENT
                     width = ViewGroup.LayoutParams.MATCH_PARENT
                 }
@@ -271,9 +252,9 @@ constructor(
         }
         if (activeContainer?.childCount == 0) {
             if (MediaControlsInComposeFlag.isEnabled) {
-                composeView.parent?.let { (it as? ViewGroup)?.removeView(composeView) }
-                activeContainer.addView(composeView)
-                composeView.layoutParams.apply {
+                composeHost.parent?.let { (it as? ViewGroup)?.removeView(composeHost) }
+                activeContainer.addView(composeHost)
+                composeHost.layoutParams.apply {
                     height = ViewGroup.LayoutParams.WRAP_CONTENT
                     width = ViewGroup.LayoutParams.MATCH_PARENT
                 }
@@ -289,7 +270,7 @@ constructor(
 
     fun isWithinMediaViewBounds(x: Int, y: Int): Boolean {
         if (MediaControlsInComposeFlag.isEnabled) {
-            return composeView.boundsOnScreen.contains(x, y)
+            return composeHost.boundsOnScreen.contains(x, y)
         }
         val bounds = Rect()
         mediaHost.hostView.getBoundsOnScreen(bounds)

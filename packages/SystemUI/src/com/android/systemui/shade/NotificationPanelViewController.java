@@ -150,6 +150,7 @@ import com.android.systemui.plugins.statusbar.StatusBarStateController;
 import com.android.systemui.plugins.statusbar.StatusBarStateController.StateListener;
 import com.android.systemui.power.domain.interactor.PowerInteractor;
 import com.android.systemui.power.shared.model.WakefulnessModel;
+import com.android.systemui.qs.ax.shared.AxQsMediaPolicy;
 import com.android.systemui.qs.flags.QSComposeFragment;
 import com.android.systemui.res.R;
 import com.android.systemui.scene.shared.flag.SceneContainerFlag;
@@ -2051,8 +2052,10 @@ public final class NotificationPanelViewController implements
         mHeadsUpManager.onExpandingFinished();
         mConversationNotificationManager.onNotificationPanelExpandStateChanged(isFullyCollapsed());
         mIsExpandingOrCollapsing = false;
-        mMediaHierarchyManager.setCollapsingShadeFromQS(false);
-        mMediaHierarchyManager.setQsExpanded(mQsController.getExpanded());
+        if (AxQsMediaPolicy.useStockQsMediaHost) {
+            mMediaHierarchyManager.setCollapsingShadeFromQS(false);
+            mMediaHierarchyManager.setQsExpanded(mQsController.getExpanded());
+        }
         if (isFullyCollapsed()) {
             DejankUtils.postAfterTraversal(() -> setListening(false));
 
@@ -2335,7 +2338,7 @@ public final class NotificationPanelViewController implements
             mOpenCloseListener.onClosingFinished();
         }
         setClosingWithAlphaFadeout(false);
-        if (!MediaControlsInComposeFlag.isEnabled()) {
+        if (AxQsMediaPolicy.useStockQsMediaHost && !MediaControlsInComposeFlag.isEnabled()) {
             mMediaHierarchyManager.closeGuts();
         }
     }
