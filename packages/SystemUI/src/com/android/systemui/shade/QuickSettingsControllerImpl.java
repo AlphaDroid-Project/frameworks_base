@@ -1682,6 +1682,9 @@ public class QuickSettingsControllerImpl implements QuickSettingsController, Dum
             flingQs(0, FLING_COLLAPSE, null, true);
         } else if (isExpansionEnabled()) {
             mLockscreenGestureLogger.write(MetricsProto.MetricsEvent.ACTION_SHADE_QS_TAP, 0, 0);
+            if (mQs != null) {
+                mQs.setForceQsEvent(true);
+            }
             flingQs(0, FLING_EXPAND, null, true);
         }
     }
@@ -1763,6 +1766,9 @@ public class QuickSettingsControllerImpl implements QuickSettingsController, Dum
         }
         if (mTwoFingerExpandPossible && isOpenQsEvent(event) && isInStatusBar) {
             mMetricsLogger.count(COUNTER_PANEL_OPEN_QS, 1);
+            if (mQs != null) {
+                mQs.setForceQsEvent(true);
+            }
             setExpandImmediate(true);
             mNotificationStackScrollLayoutController.setQuickQsHidden(true);
             mNotificationStackScrollLayoutController.setShouldShowShelfOnly(!mSplitShadeEnabled);
