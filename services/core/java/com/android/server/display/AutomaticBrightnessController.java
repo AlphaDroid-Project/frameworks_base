@@ -52,6 +52,7 @@ import android.util.SparseArray;
 import android.util.TimeUtils;
 import android.view.Display;
 
+import com.android.internal.R;
 import com.android.internal.annotations.VisibleForTesting;
 import com.android.internal.display.BrightnessSynchronizer;
 import com.android.internal.os.BackgroundThread;
@@ -158,6 +159,10 @@ public class AutomaticBrightnessController {
     // brightness based on the current sensor reads. If false, the controller will collect more data
     // and only then decide whether to change brightness.
     private final boolean mResetAmbientLuxAfterWarmUpConfig;
+
+    // If true, fully clear short-term user brightness bias whenever auto-brightness becomes
+    // active again (display power-on and auto-brightness toggled back on).
+    private final boolean mForceResetShortTermModelOnEnable;
 
     // Period of time in which to consider light samples for a short/long-term estimate of ambient
     // light in milliseconds.
@@ -352,6 +357,8 @@ public class AutomaticBrightnessController {
         mBrighteningLightDebounceConfigIdle = brighteningLightDebounceConfigIdle;
         mDarkeningLightDebounceConfigIdle = darkeningLightDebounceConfigIdle;
         mResetAmbientLuxAfterWarmUpConfig = resetAmbientLuxAfterWarmUpConfig;
+        mForceResetShortTermModelOnEnable = context.getResources().getBoolean(
+                R.bool.config_autoBrightnessShortTermModelForceReset);
         mAmbientLightHorizonLong = ambientLightHorizonLong;
         mAmbientLightHorizonShort = ambientLightHorizonShort;
         mWeightingIntercept = ambientLightHorizonLong;
@@ -459,6 +466,7 @@ public class AutomaticBrightnessController {
             boolean userChangedAutoBrightnessAdjustment, int displayPolicy, int displayState,
             boolean useNormalBrightnessForDoze, boolean shouldResetShortTermModel,
             boolean autoBrightnessOneShot) {
+        final int previousState = mState;
         mState = state;
         boolean changed = setBrightnessConfiguration(configuration, shouldResetShortTermModel);
         changed |= setDisplayPolicy(displayPolicy);
@@ -468,6 +476,14 @@ public class AutomaticBrightnessController {
             changed |= setAutoBrightnessAdjustment(adjustment);
         }
         final boolean enable = mState == AUTO_BRIGHTNESS_ENABLED;
+        // Real-clear short-term bias when AB becomes active again (display on, or AB toggle on).
+        // Do this before applying a new user data point so a concurrent slider settle still lands.
+        if (mForceResetShortTermModelOnEnable
+                && enable
+                && previousState != AUTO_BRIGHTNESS_ENABLED) {
+            resetShortTermModel();
+            changed = true;
+        }
         if (userChangedBrightness && enable) {
             // Update the brightness curve with the new user control point. It's critical this
             // happens after we update the autobrightness adjustment since it may reset it.
@@ -639,6 +655,7 @@ public class AutomaticBrightnessController {
         ipw.println("mBrighteningLightDebounceConfigIdle=" + mBrighteningLightDebounceConfigIdle);
         ipw.println("mDarkeningLightDebounceConfigIdle=" + mDarkeningLightDebounceConfigIdle);
         ipw.println("mResetAmbientLuxAfterWarmUpConfig=" + mResetAmbientLuxAfterWarmUpConfig);
+        ipw.println("mForceResetShortTermModelOnEnable=" + mForceResetShortTermModelOnEnable);
         ipw.println("mAmbientLightHorizonLong=" + mAmbientLightHorizonLong);
         ipw.println("mAmbientLightHorizonShort=" + mAmbientLightHorizonShort);
         ipw.println("mWeightingIntercept=" + mWeightingIntercept);
