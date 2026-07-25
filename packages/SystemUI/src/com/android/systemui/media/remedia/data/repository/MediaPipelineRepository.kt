@@ -20,6 +20,7 @@ import android.content.Context
 import android.os.UserHandle
 import android.provider.Settings
 import com.android.internal.logging.InstanceId
+import com.android.systemui.axdynamicbar.domain.AxDynamicBarSettings
 import com.android.systemui.dagger.qualifiers.Application
 import com.android.systemui.dagger.qualifiers.Background
 import com.android.systemui.media.controls.data.model.MediaSortKeyModel
@@ -150,7 +151,12 @@ abstract class MediaPipelineRepository(
     private fun listenForLockscreenSettingChanges(scope: CoroutineScope): Job {
         return scope.launch {
             secureSettings
-                .observerFlow(UserHandle.USER_ALL, Settings.Secure.MEDIA_CONTROLS_LOCK_SCREEN)
+                .observerFlow(
+                    UserHandle.USER_ALL,
+                    Settings.Secure.MEDIA_CONTROLS_LOCK_SCREEN,
+                    AxDynamicBarSettings.KEY_ENABLED,
+                    AxDynamicBarSettings.KEY_KEYGUARD_ENABLED,
+                )
                 .onStart { emit(Unit) }
                 .map { getMediaLockScreenSetting() }
                 .distinctUntilChanged()
@@ -161,11 +167,28 @@ abstract class MediaPipelineRepository(
 
     private suspend fun getMediaLockScreenSetting(): Boolean {
         return withContext(backgroundDispatcher) {
-            secureSettings.getBoolForUser(
-                Settings.Secure.MEDIA_CONTROLS_LOCK_SCREEN,
-                true,
-                UserHandle.USER_CURRENT,
-            )
+            val mediaLockscreenEnabled =
+                secureSettings.getBoolForUser(
+                    Settings.Secure.MEDIA_CONTROLS_LOCK_SCREEN,
+                    true,
+                    UserHandle.USER_CURRENT,
+                )
+            // The Dynamic Bar keyguard chip already surfaces media, so suppress the lockscreen
+            // player when it is on. Mirrors MediaHierarchyManager#updateLockscreenMediaSetting,
+            // which only covers the legacy (non-compose) media path.
+            val dynamicBarEnabled =
+                secureSettings.getBoolForUser(
+                    AxDynamicBarSettings.KEY_ENABLED,
+                    false,
+                    UserHandle.USER_CURRENT,
+                )
+            val dynamicBarLockscreenEnabled =
+                secureSettings.getBoolForUser(
+                    AxDynamicBarSettings.KEY_KEYGUARD_ENABLED,
+                    true,
+                    UserHandle.USER_CURRENT,
+                )
+            mediaLockscreenEnabled && !(dynamicBarEnabled && dynamicBarLockscreenEnabled)
         }
     }
 }
