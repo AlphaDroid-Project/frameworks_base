@@ -47,7 +47,7 @@ data class AxQsSpan(val columns: Int, val rows: Int) {
 
         val TileDefault = AxQsSpan(1, 1)
         val TileWideDefault = AxQsSpan(2, 1)
-        val ControlTileMin = TileDefault
+        val ControlTileMin = TileWideDefault
         val MediaDefault = AxQsSpan(2, 2)
         val MediaMin = AxQsSpan(2, 1)
         val Max = AxQsSpan(4, 4)
