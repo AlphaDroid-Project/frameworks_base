@@ -12,13 +12,16 @@ interface IAxSandboxManager {
     int getAppLockState(String packageName);
     int getAppLockStateForUser(String packageName, int userId);
     boolean isPackageHidden(String packageName);
+    boolean isPackageHiddenFromLauncher(String packageName);
 
     void addLockedApp(String packageName);
     void removeLockedApp(String packageName);
     void setPackageHidden(String packageName, boolean hidden);
+    void setPackageHiddenFromLauncher(String packageName, boolean hidden);
 
     List<String> getLockedPackages();
     List<String> getHiddenPackages();
+    List<String> getHiddenFromLauncherPackages();
     List<String> getLockablePackages();
 
     boolean isPackageLockable(String packageName);

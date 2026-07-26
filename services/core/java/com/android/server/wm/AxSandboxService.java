@@ -311,6 +311,12 @@ public class AxSandboxService extends IAxSandboxManager.Stub implements IAxSandb
     }
 
     @Override
+    public boolean isPackageHiddenFromLauncher(String packageName) {
+        if (mAppControlController == null) return false;
+        return mAppControlController.isPackageHiddenFromLauncher(packageName);
+    }
+
+    @Override
     public void addLockedApp(String packageName) {
         mAppControlController.addLockedApp(packageName);
         notifyAppLockStateChanged(packageName, true);
@@ -334,6 +340,12 @@ public class AxSandboxService extends IAxSandboxManager.Stub implements IAxSandb
     }
 
     @Override
+    public void setPackageHiddenFromLauncher(String packageName, boolean hidden) {
+        mAppControlController.setPackageHiddenFromLauncher(packageName, hidden);
+        broadcastPackageChanged(packageName);
+    }
+
+    @Override
     public List<String> getLockedPackages() {
         return mAppControlController.getLockedPackages();
     }
@@ -341,6 +353,11 @@ public class AxSandboxService extends IAxSandboxManager.Stub implements IAxSandb
     @Override
     public List<String> getHiddenPackages() {
         return mAppControlController.getHiddenPackages();
+    }
+
+    @Override
+    public List<String> getHiddenFromLauncherPackages() {
+        return mAppControlController.getHiddenFromLauncherPackages();
     }
 
     @Override
