@@ -16,12 +16,11 @@
 */
 -->
 <resources>
-<<<<<<< HEAD
     <!-- QS -->
     <dimen name="ax_qs_notification_top_padding">0dp</dimen>
     <dimen name="ax_qs_offset_reduction">10dp</dimen>
     <dimen name="ax_qs_top_padding">24dp</dimen>
-=======
+
     <!-- Size of media cards in the QSPanel carousel -->
     <dimen name="qs_media_session_enabled_seekbar_vertical_padding_bottom">9.2989dp</dimen>
     <dimen name="qs_media_text_size_12">9.2989dp</dimen>
@@ -32,5 +31,4 @@
     <dimen name="kg_widget_side_padding">14dp</dimen>
     <dimen name="kg_widget_top_padding">16dp</dimen>
     <dimen name="kg_widget_corner_radius">16dp</dimen>
->>>>>>> 85cf82ddeb68 ([feature] adding lockscreen widgets feature)
 </resources>
