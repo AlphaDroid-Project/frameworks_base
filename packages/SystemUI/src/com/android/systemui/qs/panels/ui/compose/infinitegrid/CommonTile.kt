@@ -125,7 +125,6 @@ private const val TEST_TAG_SMALL = "qs_tile_small"
 private const val TEST_TAG_LARGE = "qs_tile_large"
 
 @Composable
-@Composable
 fun LargeTileContent(
     label: String,
     secondaryLabel: String?,
