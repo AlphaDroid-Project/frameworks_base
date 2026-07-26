@@ -69,6 +69,7 @@ import com.android.systemui.qs.ax.shared.model.AxQsControl
 import com.android.systemui.qs.ax.shared.model.AxQsSpan
 import com.android.systemui.qs.ax.shared.model.AxQsVerticalSliderStyle
 import com.android.systemui.qs.panels.ui.compose.infinitegrid.CommonTileDefaults
+import com.android.systemui.qs.panels.ui.compose.infinitegrid.LocalQSTileShape
 import com.android.systemui.qs.panels.ui.compose.infinitegrid.LocalTileScale
 import com.android.systemui.qs.panels.ui.compose.infinitegrid.SmallTileContent
 import com.android.systemui.qs.panels.ui.compose.infinitegrid.TileColors
@@ -343,7 +344,7 @@ private fun VerticalSliderStylePager(
                     }
                     Box(
                         Modifier.fillMaxSize()
-                            .clip(axQsControlShape(control, span, style))
+                            .clip(axQsControlShape(control, span, style, LocalQSTileShape.current))
                             .clickable(
                                 enabled = canAdd,
                                 onClickLabel = clickLabel,
@@ -414,16 +415,17 @@ private fun AxAddItemCell(
     val sliderStyle =
         (item as? AxAddItem.Control)?.control?.let(verticalSliderStyle)
             ?: AxQsVerticalSliderStyle.M3_EXPRESSIVE
+    val tileShape = LocalQSTileShape.current
     val previewShape =
         when (item) {
             is AxAddItem.Tile ->
                 if (circleTile) {
-                    CircleShape
+                    tileShape
                 } else {
                     RoundedCornerShape(CommonTileDefaults.InactiveCornerRadius)
                 }
             is AxAddItem.Control ->
-                axQsControlShape(item.control, span, sliderStyle)
+                axQsControlShape(item.control, span, sliderStyle, tileShape)
         }
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -551,7 +553,7 @@ fun AxQsEditTile(
         )
     val shape =
         if (circle && span == AxQsSpan.TileDefault) {
-            CircleShape
+            LocalQSTileShape.current
         } else {
             RoundedCornerShape(CommonTileDefaults.InactiveCornerRadius)
         }

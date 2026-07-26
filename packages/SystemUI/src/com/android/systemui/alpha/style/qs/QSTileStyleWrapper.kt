@@ -5,8 +5,6 @@
 
 package com.android.systemui.alpha.style.qs
 
-import android.os.UserHandle
-import android.provider.Settings
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.shape.CircleShape
@@ -20,7 +18,6 @@ import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Density
 import com.android.systemui.alpha.style.qs.renderers.QSTileStyleRenderer
@@ -55,18 +52,11 @@ fun QSTileStyleWrapper(
     }
 
     val density = LocalDensity.current
-    val shapeMode = rememberTileShapeMode()
 
-    // For dynamic shape (shapeMode == 0), compute fresh each recomposition
-    // For static shapes (1, 2, 3, 4), cache with remember
-    val cornerRadiusPx = if (shapeMode == 0) {
-        // Dynamic: shape animates based on state, compute fresh
+    // Keyed on the shape itself, so state-animated shapes (which allocate a new instance per
+    // frame) recompute while user-selected shapes stay cached.
+    val cornerRadiusPx = remember(shape, density) {
         computeCornerRadius(shape, density)
-    } else {
-        // Static: shape doesn't change based on state, safe to cache
-        remember(shape, density) {
-            computeCornerRadius(shape, density)
-        }
     }
 
     val styledModifier = modifier
@@ -127,31 +117,5 @@ private fun computeCornerRadius(shape: Shape, density: Density): Float {
             with(density) { shape.topStart.toPx(Size.Unspecified, this) }
         }
         else -> 0f
-    }
-}
-
-/**
- * Remembers the tile shape mode setting.
- * 0 = Dynamic (animates based on state)
- * 1 = Always pill
- * 2 = Always medium rounded
- * 3 = Always square
- * 4 = Always circle (small tiles only)
- */
-@Composable
-private fun rememberTileShapeMode(): Int {
-    val context = LocalContext.current
-    return remember {
-        val cr = context.contentResolver
-        try {
-            Settings.System.getIntForUser(
-                cr,
-                Settings.System.QS_TILE_SHAPE,
-                0,
-                UserHandle.USER_CURRENT
-            )
-        } catch (_: Throwable) {
-            0
-        }
     }
 }

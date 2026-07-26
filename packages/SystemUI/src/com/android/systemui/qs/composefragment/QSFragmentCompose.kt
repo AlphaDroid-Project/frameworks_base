@@ -165,7 +165,9 @@ import com.android.systemui.qs.composefragment.viewmodel.QSFragmentComposeViewMo
 import com.android.systemui.qs.flags.QSComposeFragment
 import com.android.systemui.qs.panels.shared.model.QSFragmentComposeClippingTableLog
 import com.android.systemui.qs.panels.ui.compose.infinitegrid.CommonTileDefaults
+import com.android.systemui.qs.panels.ui.compose.infinitegrid.LocalQSTileShape
 import com.android.systemui.qs.panels.ui.compose.infinitegrid.LocalTileScale
+import com.android.systemui.qs.panels.ui.compose.infinitegrid.rememberQSTileShape
 import com.android.systemui.qs.panels.ui.viewmodel.DetailsViewModel
 import com.android.systemui.qs.shared.ui.QuickSettings.Elements
 import com.android.systemui.qs.tiles.ringer.LocalRingerSliderViewModel
@@ -373,8 +375,10 @@ constructor(
                     val alphaColorScheme = remember(defaultScheme, styleRenderer) {
                         styleRenderer?.produceColorScheme(defaultScheme) ?: defaultScheme
                     }
+                    val qsTileShape = rememberQSTileShape()
                     CompositionLocalProvider(
                         LocalAlphaColorScheme provides alphaColorScheme,
+                        LocalQSTileShape provides qsTileShape,
                         LocalTileScale provides tileScale,
                         LocalBlurEnabled provides blurEnabled,
                         LocalQsScrolling provides scrollState.isScrollInProgress,

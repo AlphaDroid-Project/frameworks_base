@@ -37,7 +37,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
@@ -93,6 +92,7 @@ import com.android.systemui.qs.ax.shared.model.AxQsVerticalSliderStyle
 import com.android.systemui.qs.ax.ui.model.AxQsGridItem
 import com.android.systemui.qs.ax.ui.viewmodel.AxQsViewModel
 import com.android.systemui.qs.panels.ui.compose.infinitegrid.CommonTileDefaults
+import com.android.systemui.qs.panels.ui.compose.infinitegrid.LocalQSTileShape
 import com.android.systemui.qs.panels.ui.compose.infinitegrid.LocalTileScale
 import com.android.systemui.qs.panels.ui.compose.selection.TileState
 import com.android.systemui.qs.panels.ui.viewmodel.EditModeViewModel
@@ -768,16 +768,19 @@ private fun AxEditableGridSection(
                 val controlStyle =
                     (value as? AxEditGridValue.Control)?.control?.let(verticalSliderStyle)
                         ?: AxQsVerticalSliderStyle.M3_EXPRESSIVE
+                val tileShape = LocalQSTileShape.current
                 val selectionShape =
                     when (value) {
                         is AxEditGridValue.Tile ->
-                            if (section == AxQsGridSection.TILES && circleCells) {
-                                CircleShape
+                            // Mirrors the panel's rule in AxQsMixedGrid: a tile takes the user's
+                            // shape when its cell is actually square, in either section.
+                            if (circleCells && item.span == AxQsSpan.TileDefault) {
+                                tileShape
                             } else {
                                 RoundedCornerShape(CommonTileDefaults.InactiveCornerRadius)
                             }
                         is AxEditGridValue.Control ->
-                            axQsControlShape(value.control, item.span, controlStyle)
+                            axQsControlShape(value.control, item.span, controlStyle, tileShape)
                     }
                 val selectionColor =
                     if (sliderControl != null) {

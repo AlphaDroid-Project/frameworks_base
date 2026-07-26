@@ -192,7 +192,7 @@ fun ContentScope.Tile(
     span: AxQsSpan = if (iconOnly) AxQsSpan.TileDefault else AxQsSpan.TileWideDefault,
     fillHeight: Boolean = span.rows > 1,
     compactIconSize: Dp = CommonTileDefaults.IconSize,
-    tileShapeOverride: RoundedCornerShape? = null,
+    tileShapeOverride: Shape? = null,
 ) {
     trace(tile.traceName) {
         val compact = span.columns == 1
@@ -230,6 +230,10 @@ fun ContentScope.Tile(
         val animationStyle = rememberQSTileAnimationStyle()
         val tileShape =
             tileShapeOverride ?: TileDefaults.animateTileShapeAsState(uiState.state).value
+        // The focus ring is drawn as a rounded rect, so a path shape has no corner to hand it.
+        // Fall back to a fully rounded corner, which tracks every shape we offer closely enough.
+        val focusCornerSize =
+            (tileShape as? RoundedCornerShape)?.topEnd ?: CornerSize(percent = 50)
         val animatedColor by animateColorAsState(colors.background, label = "QSTileBackgroundColor")
         val isDualTarget = uiState.handlesSecondaryClick
 
@@ -268,7 +272,7 @@ fun ContentScope.Tile(
                             bounceEnd = currentBounceableInfo!!.bounceEnd,
                         )
                     }
-                    .borderOnFocus(color = MaterialTheme.colorScheme.secondary, tileShape.topEnd),
+                    .borderOnFocus(color = MaterialTheme.colorScheme.secondary, focusCornerSize),
         ) { expandable ->
             // Use main click on long press for small, available dual target tiles.
             // Open settings otherwise.

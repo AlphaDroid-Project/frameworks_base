@@ -22,7 +22,6 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Icon as MaterialIcon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
@@ -44,6 +43,7 @@ import com.android.systemui.qs.ax.shared.model.AxQsControl
 import com.android.systemui.qs.ax.shared.model.AxQsSpan
 import com.android.systemui.qs.ax.shared.model.AxQsVerticalSliderStyle
 import com.android.systemui.qs.ax.ui.viewmodel.AxMediaViewModel
+import com.android.systemui.qs.panels.ui.compose.infinitegrid.LocalQSTileShape
 import com.android.systemui.qs.tiles.ringer.RingerSliderTileContent
 import com.android.systemui.res.R
 import com.android.systemui.volume.panel.component.volume.slider.ui.viewmodel.AudioStreamSliderViewModel
@@ -126,7 +126,9 @@ private fun AxQsButtonControl(
         modifier =
             modifier
                 .fillMaxSize()
-                .clip(CircleShape)
+                // AUTO_BRIGHTNESS and VOLUME_MUTE are pinned to 1x1, so they always take the
+                // user's tile shape.
+                .clip(LocalQSTileShape.current)
                 .background(background)
                 .clickable(enabled = interactive, role = Role.Switch, onClick = onClick)
                 .semantics { contentDescription = description },

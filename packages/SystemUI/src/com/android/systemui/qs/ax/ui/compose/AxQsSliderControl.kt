@@ -193,6 +193,7 @@ internal fun axQsControlShape(
     control: AxQsControl,
     span: AxQsSpan,
     verticalStyle: AxQsVerticalSliderStyle = AxQsVerticalSliderStyle.M3_EXPRESSIVE,
+    tileShape: Shape = CircleShape,
 ): Shape {
     return when {
         control == AxQsControl.RINGER -> CircleShape
@@ -202,7 +203,8 @@ internal fun axQsControlShape(
                 AxQsVerticalSliderStyle.PLATFORM -> CircleShape
             }
         control.isHorizontalSlider -> HorizontalSliderShape
-        span == AxQsSpan.TileDefault && control != AxQsControl.MEDIA -> CircleShape
+        // 1x1 controls are the buttons, which follow the user's tile shape.
+        span == AxQsSpan.TileDefault && control != AxQsControl.MEDIA -> tileShape
         else -> RoundedCornerShape(AxQsControlCornerRadius)
     }
 }
