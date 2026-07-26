@@ -976,12 +976,16 @@ private fun AxEditableGridSection(
     }
 }
 
+// Section is derived from resizability bounds, not current span. Tile-grid tiles are locked to
+// 1x1 (min == max == TileDefault). Control-zone tiles keep a wider max even when currently 1x1,
+// so resizing a control tile down to 1x1 must not teleport it into the tiles section (that used
+// to force ControlTileMin = 2x1).
 private val AxQsGridItem<AxEditGridValue>.section: AxQsGridSection
     get() =
         when (value) {
             is AxEditGridValue.Control -> AxQsGridSection.CONTROLS
             is AxEditGridValue.Tile ->
-                if (span == AxQsSpan.TileDefault) {
+                if (minSpan == AxQsSpan.TileDefault && maxSpan == AxQsSpan.TileDefault) {
                     AxQsGridSection.TILES
                 } else {
                     AxQsGridSection.CONTROLS

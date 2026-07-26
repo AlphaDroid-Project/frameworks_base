@@ -47,7 +47,10 @@ data class AxQsSpan(val columns: Int, val rows: Int) {
 
         val TileDefault = AxQsSpan(1, 1)
         val TileWideDefault = AxQsSpan(2, 1)
-        val ControlTileMin = TileWideDefault
+        // Min size for QS tiles living in the controls zone (default placement is still
+        // TileWideDefault). Must stay ≤ TileDefault so 1x1 resize is allowed; do not use this
+        // as the default span when adding/moving a tile into controls.
+        val ControlTileMin = TileDefault
         val MediaDefault = AxQsSpan(2, 2)
         val MediaMin = AxQsSpan(2, 1)
         val Max = AxQsSpan(4, 4)
