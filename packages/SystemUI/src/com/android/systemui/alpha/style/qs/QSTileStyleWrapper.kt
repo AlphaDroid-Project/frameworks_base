@@ -107,8 +107,10 @@ fun QSTileStyleWrapper(
 }
 
 /**
- * Computes corner radius from shape.
- * Returns -1f for CircleShape (to be computed from size later).
+ * Computes corner radius from shape for any radius-based fallbacks.
+ * Returns -1f for CircleShape / path shapes (resolved to half min side at draw time).
+ * Path silhouettes should prefer outline drawing via drawShapeStroke; this is only a
+ * stand-in when a renderer still needs a single radius.
  */
 private fun computeCornerRadius(shape: Shape, density: Density): Float {
     return when {
@@ -116,6 +118,8 @@ private fun computeCornerRadius(shape: Shape, density: Density): Float {
         shape is RoundedCornerShape -> {
             with(density) { shape.topStart.toPx(Size.Unspecified, this) }
         }
-        else -> 0f
+        // Path shapes (Outline.Generic): treat like a full pill so leftover round-rect
+        // code paths don't stroke a sharp square over a curved clip.
+        else -> -1f
     }
 }

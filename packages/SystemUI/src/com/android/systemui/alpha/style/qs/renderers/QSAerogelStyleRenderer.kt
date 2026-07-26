@@ -5,18 +5,14 @@
 
 package com.android.systemui.alpha.style.qs.renderers
 
-import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
-import androidx.compose.ui.geometry.RoundRect
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.drawscope.DrawScope
-import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
 import androidx.core.graphics.ColorUtils
@@ -85,7 +81,7 @@ class QSAerogelStyleRenderer(
         isSmallTile: Boolean,
         density: Density
     ) {
-        drawAerogelEffect(tileBounds, cornerRadius, density, state == TileState.STATE_ACTIVE)
+        drawAerogelEffect(tileBounds, shape, density, state == TileState.STATE_ACTIVE)
     }
 
     override fun DrawScope.renderIconBackgroundOverlay(
@@ -96,12 +92,12 @@ class QSAerogelStyleRenderer(
         state: Int,
         density: Density
     ) {
-        drawAerogelEffect(iconBackgroundBounds, cornerRadius, density, state == TileState.STATE_ACTIVE)
+        drawAerogelEffect(iconBackgroundBounds, shape, density, state == TileState.STATE_ACTIVE)
     }
 
     private fun DrawScope.drawAerogelEffect(
         bounds: Rect,
-        cornerRadius: Float,
+        shape: Shape,
         density: Density,
         isActive: Boolean
     ) {
@@ -113,6 +109,7 @@ class QSAerogelStyleRenderer(
             radius = bounds.width * 0.9f
         )
 
+        // Clipped by QSTileStyleWrapper's .clip(shape).
         drawRect(
             brush = overheadGlow,
             topLeft = Offset(bounds.left, bounds.top),
@@ -120,25 +117,12 @@ class QSAerogelStyleRenderer(
         )
 
         if (isActive) {
-            val strokeWidth = with(density) { 1.dp.toPx() }
-            val halfStroke = strokeWidth / 2f
-
-            val rimPath = Path().apply {
-                addRoundRect(
-                    RoundRect(
-                        left = bounds.left + halfStroke,
-                        top = bounds.top + halfStroke,
-                        right = bounds.right - halfStroke,
-                        bottom = bounds.bottom - halfStroke,
-                        cornerRadius = CornerRadius((cornerRadius - halfStroke).coerceAtLeast(0f))
-                    )
-                )
-            }
-
-            drawPath(
-                path = rimPath,
+            drawShapeStroke(
+                shape = shape,
+                bounds = bounds,
+                density = density,
+                strokeWidthPx = with(density) { 1.dp.toPx() },
                 color = Color.White.copy(alpha = 0.2f),
-                style = Stroke(width = strokeWidth)
             )
         }
     }

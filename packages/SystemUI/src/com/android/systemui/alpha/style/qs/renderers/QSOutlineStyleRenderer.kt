@@ -7,16 +7,13 @@ package com.android.systemui.alpha.style.qs.renderers
 
 import android.content.Context
 import android.service.quicksettings.Tile
-import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
-import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.drawscope.DrawScope
-import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.unit.Density
 import androidx.core.graphics.ColorUtils
 import com.android.systemui.alpha.style.common.GradientHelper
@@ -51,8 +48,6 @@ class QSOutlineStyleRenderer(
         density: Density
     ) {
         val strokeWidthPx = with(density) { theme.strokeWidth.toPx() } * userSettings.strength
-        val halfStroke = strokeWidthPx / 2f
-
         val isActive = state == Tile.STATE_ACTIVE
 
         val borderStart = if (isActive) theme.activeBorderStart else theme.inactiveBorderStart
@@ -73,19 +68,20 @@ class QSOutlineStyleRenderer(
             endColor = endColor.copy(alpha = 0.38f)
         }
 
-        val (gradStart, gradEnd) = calculateGradientOffsets(tileBounds, theme.borderGradientAngle + userSettings.angle)
+        val (gradStart, gradEnd) =
+            calculateGradientOffsets(tileBounds, theme.borderGradientAngle + userSettings.angle)
         val gradientBrush = Brush.linearGradient(
             colors = listOf(startColor, endColor),
             start = gradStart,
             end = gradEnd
         )
 
-        drawRoundRect(
+        drawShapeStroke(
+            shape = shape,
+            bounds = tileBounds,
+            density = density,
+            strokeWidthPx = strokeWidthPx,
             brush = gradientBrush,
-            topLeft = Offset(tileBounds.left + halfStroke, tileBounds.top + halfStroke),
-            size = Size(tileBounds.width - strokeWidthPx, tileBounds.height - strokeWidthPx),
-            cornerRadius = CornerRadius((cornerRadius - halfStroke).coerceAtLeast(0f)),
-            style = Stroke(width = strokeWidthPx)
         )
     }
 
@@ -98,8 +94,6 @@ class QSOutlineStyleRenderer(
         density: Density
     ) {
         val strokeWidthPx = with(density) { theme.strokeWidth.toPx() } * userSettings.strength
-        val halfStroke = strokeWidthPx / 2f
-
         val isActive = state == Tile.STATE_ACTIVE
 
         val borderStart = if (isActive) theme.activeBorderStart else theme.inactiveBorderStart
@@ -115,19 +109,23 @@ class QSOutlineStyleRenderer(
             endColor = blendColors(endColor, tintColor, tintAlpha)
         }
 
-        val (gradStart, gradEnd) = calculateGradientOffsets(iconBackgroundBounds, theme.borderGradientAngle + userSettings.angle)
+        val (gradStart, gradEnd) =
+            calculateGradientOffsets(
+                iconBackgroundBounds,
+                theme.borderGradientAngle + userSettings.angle,
+            )
         val gradientBrush = Brush.linearGradient(
             colors = listOf(startColor, endColor),
             start = gradStart,
             end = gradEnd
         )
 
-        drawRoundRect(
+        drawShapeStroke(
+            shape = shape,
+            bounds = iconBackgroundBounds,
+            density = density,
+            strokeWidthPx = strokeWidthPx,
             brush = gradientBrush,
-            topLeft = Offset(iconBackgroundBounds.left + halfStroke, iconBackgroundBounds.top + halfStroke),
-            size = Size(iconBackgroundBounds.width - strokeWidthPx, iconBackgroundBounds.height - strokeWidthPx),
-            cornerRadius = CornerRadius((cornerRadius - halfStroke).coerceAtLeast(0f)),
-            style = Stroke(width = strokeWidthPx)
         )
     }
 
@@ -169,11 +167,6 @@ class QSOutlineStyleRenderer(
         val dx = cosAngle * bounds.width / 2f
         val dy = sinAngle * bounds.height / 2f
 
-        val startX = centerX - dx
-        val startY = centerY - dy
-        val endX = centerX + dx
-        val endY = centerY + dy
-
-        return Offset(startX, startY) to Offset(endX, endY)
+        return Offset(centerX - dx, centerY - dy) to Offset(centerX + dx, centerY + dy)
     }
 }

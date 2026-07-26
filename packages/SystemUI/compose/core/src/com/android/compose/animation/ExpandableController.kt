@@ -51,6 +51,7 @@ import com.android.systemui.animation.DialogCuj
 import com.android.systemui.animation.DialogTransitionAnimator
 import com.android.systemui.animation.Expandable
 import com.android.systemui.animation.TransitionAnimator
+import kotlin.math.min
 import kotlin.math.roundToInt
 
 /** A controller that can control animated launches from an [Expandable]. */
@@ -300,11 +301,13 @@ internal class ExpandableControllerImpl(
 
                             topCornerRadius to bottomCornerRadius
                         }
-                        else ->
-                            error(
-                                "ExpandableState only supports (rounded) rectangles at the " +
-                                    "moment."
-                            )
+                        // Path-based QS tile shapes (squircle, teardrop, …) produce
+                        // Outline.Generic. Approximate as a fully-rounded rect so dialog
+                        // expand animations still run instead of crashing SystemUI.
+                        else -> {
+                            val r = min(boundsInRoot.width, boundsInRoot.height) / 2f
+                            r to r
+                        }
                     }
 
                 val rootLocation = rootLocationOnScreen()

@@ -5,18 +5,14 @@
 
 package com.android.systemui.alpha.style.qs.renderers
 
-import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
-import androidx.compose.ui.geometry.RoundRect
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.drawscope.DrawScope
-import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
 import androidx.core.graphics.ColorUtils
@@ -85,7 +81,7 @@ class QSReflectiveStyleRenderer(
         isSmallTile: Boolean,
         density: Density
     ) {
-        drawGlassyEffect(tileBounds, cornerRadius, density)
+        drawGlassyEffect(tileBounds, shape, density)
     }
 
     override fun DrawScope.renderIconBackgroundOverlay(
@@ -96,12 +92,12 @@ class QSReflectiveStyleRenderer(
         state: Int,
         density: Density
     ) {
-        drawGlassyEffect(iconBackgroundBounds, cornerRadius, density)
+        drawGlassyEffect(iconBackgroundBounds, shape, density)
     }
 
     private fun DrawScope.drawGlassyEffect(
         bounds: Rect,
-        cornerRadius: Float,
+        shape: Shape,
         density: Density
     ) {
         val reflectionHeight = bounds.height * theme.reflectionHeight
@@ -114,14 +110,13 @@ class QSReflectiveStyleRenderer(
             endY = bounds.top + reflectionHeight
         )
 
+        // Clipped by QSTileStyleWrapper's .clip(shape).
         drawRect(
             brush = reflectionBrush,
             topLeft = Offset(bounds.left, bounds.top),
             size = Size(bounds.width, reflectionHeight)
         )
 
-        val strokeWidth = with(density) { 1.5.dp.toPx() }
-        val halfStroke = strokeWidth / 2f
         val rimBrush = Brush.verticalGradient(
             colors = listOf(
                 Color.White.copy(alpha = theme.rimAlpha),
@@ -132,22 +127,12 @@ class QSReflectiveStyleRenderer(
             endY = bounds.bottom
         )
 
-        val rimPath = Path().apply {
-            addRoundRect(
-                RoundRect(
-                    left = bounds.left + halfStroke,
-                    top = bounds.top + halfStroke,
-                    right = bounds.right - halfStroke,
-                    bottom = bounds.bottom - halfStroke,
-                    cornerRadius = CornerRadius((cornerRadius - halfStroke).coerceAtLeast(0f))
-                )
-            )
-        }
-
-        drawPath(
-            path = rimPath,
+        drawShapeStroke(
+            shape = shape,
+            bounds = bounds,
+            density = density,
+            strokeWidthPx = with(density) { 1.5.dp.toPx() },
             brush = rimBrush,
-            style = Stroke(width = strokeWidth)
         )
     }
 }

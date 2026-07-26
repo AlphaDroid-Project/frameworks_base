@@ -11,21 +11,17 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Path
-import androidx.compose.ui.graphics.PathFillType
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.drawscope.DrawScope
-import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.unit.Density
-import androidx.compose.ui.unit.dp
 import androidx.core.graphics.ColorUtils
 import com.android.systemui.alpha.style.common.AlphaColorScheme
 import com.android.internal.alpha.style.UserStyleSettings
 import com.android.systemui.alpha.style.themes.BevelTheme
 import com.android.systemui.alpha.style.themes.BevelLightTheme
 import com.android.systemui.alpha.style.themes.BevelDarkTheme
-import kotlin.math.cos // Added
-import kotlin.math.sin // Added
+import kotlin.math.cos
+import kotlin.math.sin
 
 class QSBevelStyleRenderer(
     private val accentColor: Color,
@@ -41,7 +37,6 @@ class QSBevelStyleRenderer(
     private val theme: BevelTheme = if (isDarkTheme) BevelDarkTheme else BevelLightTheme
 
     override fun produceColorScheme(default: AlphaColorScheme): AlphaColorScheme {
-        // Apply user settings to default colors since Bevel doesn't use ColorParams
         return default.copy(
             accent = tuneColor(default.accent),
             neutral = tuneColor(default.neutral),
@@ -76,7 +71,7 @@ class QSBevelStyleRenderer(
     ) {
         drawBevel(
             bounds = tileBounds,
-            cornerRadius = cornerRadius,
+            shape = shape,
             isActive = state == TileState.STATE_ACTIVE,
             density = density
         )
@@ -92,7 +87,7 @@ class QSBevelStyleRenderer(
     ) {
         drawBevel(
             bounds = iconBackgroundBounds,
-            cornerRadius = cornerRadius,
+            shape = shape,
             isActive = state == TileState.STATE_ACTIVE,
             density = density
         )
@@ -100,7 +95,7 @@ class QSBevelStyleRenderer(
 
     private fun DrawScope.drawBevel(
         bounds: Rect,
-        cornerRadius: Float,
+        shape: Shape,
         isActive: Boolean,
         density: Density
     ) {
@@ -114,43 +109,24 @@ class QSBevelStyleRenderer(
         }
 
         if (bevelWidthPx > 0f && (highlightColor.alpha > 0f || shadowColor.alpha > 0f)) {
-            val outerRadius = cornerRadius
-            val innerRadius = (outerRadius - bevelWidthPx).coerceAtLeast(0f)
-
-            val borderPath = Path().apply {
-                fillType = PathFillType.EvenOdd
-                addRoundRect(
-                    androidx.compose.ui.geometry.RoundRect(
-                        left = bounds.left,
-                        top = bounds.top,
-                        right = bounds.right,
-                        bottom = bounds.bottom,
-                        cornerRadius = androidx.compose.ui.geometry.CornerRadius(outerRadius)
-                    )
-                )
-                addRoundRect(
-                    androidx.compose.ui.geometry.RoundRect(
-                        left = bounds.left + bevelWidthPx,
-                        top = bounds.top + bevelWidthPx,
-                        right = bounds.right - bevelWidthPx,
-                        bottom = bounds.bottom - bevelWidthPx,
-                        cornerRadius = androidx.compose.ui.geometry.CornerRadius(innerRadius)
-                    )
-                )
-            }
-
-            val (bevelStart, bevelEnd) = calculateGradientOffsets(bounds, theme.bevelAngle + userSettings.angle)
-            drawPath(
-                path = borderPath,
+            val (bevelStart, bevelEnd) =
+                calculateGradientOffsets(bounds, theme.bevelAngle + userSettings.angle)
+            drawShapeStroke(
+                shape = shape,
+                bounds = bounds,
+                density = density,
+                strokeWidthPx = bevelWidthPx,
                 brush = Brush.linearGradient(
                     colors = listOf(highlightColor, shadowColor),
                     start = bevelStart,
-                    end = bevelEnd
-                )
+                    end = bevelEnd,
+                ),
             )
         }
 
-        val (gradStart, gradEnd) = calculateGradientOffsets(bounds, theme.surfaceGradientAngle + userSettings.angle)
+        // Full-bound fills are clipped by QSTileStyleWrapper's .clip(shape).
+        val (gradStart, gradEnd) =
+            calculateGradientOffsets(bounds, theme.surfaceGradientAngle + userSettings.angle)
         drawRect(
             brush = Brush.linearGradient(
                 colors = listOf(
@@ -165,22 +141,19 @@ class QSBevelStyleRenderer(
         )
 
         if (outlineWidthPx > 0f) {
-            val halfOutline = outlineWidthPx / 2f
             val outlineAlpha = if (isActive) theme.outlineActiveAlpha else theme.outlineInactiveAlpha
-
-            drawRoundRect(
+            drawShapeStroke(
+                shape = shape,
+                bounds = bounds,
+                density = density,
+                strokeWidthPx = outlineWidthPx,
                 color = Color.Black.copy(alpha = outlineAlpha),
-                topLeft = Offset(bounds.left + halfOutline, bounds.top + halfOutline),
-                size = Size(bounds.width - outlineWidthPx, bounds.height - outlineWidthPx),
-                cornerRadius = androidx.compose.ui.geometry.CornerRadius((cornerRadius - halfOutline).coerceAtLeast(0f)),
-                style = Stroke(width = outlineWidthPx)
             )
         }
 
         if (isActive) {
-            val tintColor = accentColor
             drawRect(
-                color = tintColor.copy(alpha = theme.tintAlpha),
+                color = accentColor.copy(alpha = theme.tintAlpha),
                 topLeft = Offset(bounds.left, bounds.top),
                 size = Size(bounds.width, bounds.height)
             )
@@ -201,11 +174,6 @@ class QSBevelStyleRenderer(
         val dx = cosAngle * bounds.width / 2f
         val dy = sinAngle * bounds.height / 2f
 
-        val startX = centerX - dx
-        val startY = centerY - dy
-        val endX = centerX + dx
-        val endY = centerY + dy
-
-        return Offset(startX, startY) to Offset(endX, endY)
+        return Offset(centerX - dx, centerY - dy) to Offset(centerX + dx, centerY + dy)
     }
 }
