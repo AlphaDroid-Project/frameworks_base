@@ -16,6 +16,8 @@
 
 package com.android.systemui.qs.tiles.ringer
 
+import android.service.quicksettings.Tile.STATE_ACTIVE
+import android.service.quicksettings.Tile.STATE_INACTIVE
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.LinearOutSlowInEasing
 import androidx.compose.animation.core.animateFloatAsState
@@ -49,6 +51,9 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.unit.dp
 import com.android.compose.theme.LocalAndroidColorScheme
+import com.android.systemui.alpha.style.common.LocalAlphaColorScheme
+import com.android.systemui.alpha.style.qs.QSTileStyleWrapper
+import com.android.systemui.alpha.style.qs.rememberQsTileStyleRenderer
 import com.android.systemui.qs.composefragment.LocalBlurEnabled
 import kotlin.math.roundToInt
 
@@ -81,18 +86,20 @@ fun RingerSliderTileContent(
         }
     }
 
-    val activeBg = MaterialTheme.colorScheme.primary
-    val activeIcon = MaterialTheme.colorScheme.onPrimary
-
+    val styleRenderer = rememberQsTileStyleRenderer()
+    val scheme = LocalAlphaColorScheme.current
     val blurEnabled = LocalBlurEnabled.current
 
-    val neutralBg = if (blurEnabled) {
-        LocalAndroidColorScheme.current.surfaceEffect1
-    } else {
-        MaterialTheme.colorScheme.surfaceBright
-    }
-
-    val neutralDot = MaterialTheme.colorScheme.onSurface
+    // Match control buttons / tiles: accent thumb, surface track, scheme-tinted idle dots.
+    val activeBg = scheme.accent
+    val activeIcon = scheme.onAccent
+    val trackBg =
+        if (blurEnabled) {
+            LocalAndroidColorScheme.current.surfaceEffect1
+        } else {
+            MaterialTheme.colorScheme.surfaceBright
+        }
+    val neutralDot = scheme.onNeutral
 
     val canInteract = interactable && !isZenMuted
 
@@ -116,11 +123,22 @@ fun RingerSliderTileContent(
     BoxWithConstraints(
         modifier = modifier
             .graphicsLayer { alpha = zenAlpha }
-            .background(neutralBg, shape)
             .clip(shape)
             .then(interactionModifier),
         contentAlignment = Alignment.CenterStart
     ) {
+        // Track body — inactive small-tile style over the control shape (pill when wide).
+        QSTileStyleWrapper(
+            renderer = styleRenderer,
+            shape = shape,
+            state = STATE_INACTIVE,
+            materialColor = trackBg,
+            isSmallTile = true,
+            modifier = Modifier.matchParentSize(),
+        ) {
+            Box(Modifier.fillMaxSize().background(trackBg, shape))
+        }
+
         val controlWidth = maxWidth
         val slotSize =
             minOf(
@@ -159,13 +177,23 @@ fun RingerSliderTileContent(
             }
         }
 
+        // Active mode thumb — active small-tile style on a circle.
         Box(
             modifier =
                 Modifier.offset(x = indicatorOffset)
-                    .size(slotSize)
-                    .background(activeBg, CircleShape),
+                    .size(slotSize),
             contentAlignment = Alignment.Center,
         ) {
+            QSTileStyleWrapper(
+                renderer = styleRenderer,
+                shape = CircleShape,
+                state = STATE_ACTIVE,
+                materialColor = activeBg,
+                isSmallTile = true,
+                modifier = Modifier.matchParentSize(),
+            ) {
+                Box(Modifier.fillMaxSize().background(activeBg, CircleShape))
+            }
             Icon(
                 imageVector = viewModel.availableModes[currentIndex].icon,
                 contentDescription = null,
