@@ -8051,6 +8051,90 @@ public final class Settings {
         public static final String QS_TILE_HAPTIC = "qs_tile_haptic";
 
         /**
+         * Customize QS tile shape.
+         * @hide
+         */
+        public static final String QS_TILE_SHAPE = "qs_tile_shape";
+
+        /**
+         * Select tile shape for classic QS panel style
+         * @hide
+         */
+        public static final String QS_TILE_ICON_SHAPE = "qs_tile_icon_shape";
+
+        /**
+         * Whether to use classic QS panel style for tiles
+         * @hide
+         */
+        public static final String QS_PANEL_STYLE = "qs_panel_style";
+
+        /**
+         * Whether to hide label under tiles in classic QS panel style
+         * @hide
+         */
+        public static final String QS_TILE_LABEL_HIDE = "qs_tile_label_hide";
+
+        /**
+         * @hide
+         */
+        public static final String QS_TILES_COLUMNS = "qs_tiles_columns";
+
+        /**
+         * @hide
+         */
+        public static final String QS_TILES_COLUMNS_LANDSCAPE = "qs_tiles_columns_landscape";
+
+        /**
+         * @hide
+         */
+        public static final String QS_TILES_ROWS = "qs_tiles_rows";
+
+        /**
+         * @hide
+         */
+        public static final String QS_TILES_ROWS_LANDSCAPE = "qs_tiles_rows_landscape";
+
+        /**
+         * @hide
+         */
+        public static final String QQS_TILES_ROWS = "qqs_tiles_rows";
+
+        /**
+         * @hide
+         */
+        public static final String QQS_TILES_ROWS_LANDSCAPE = "qqs_tiles_rows_landscape";
+
+        /**
+         * Show Edit icon in QS Footer.
+         * @hide
+         */
+        public static final String QS_FOOTER_SHOW_EDIT = "qs_footer_show_edit";
+
+        /**
+         * Show Settings icon in QS Footer
+         * @hide
+         */
+        public static final String QS_FOOTER_SHOW_SETTINGS = "qs_footer_show_settings";
+
+        /**
+         * Show power menu icon in QS Footer.
+         * @hide
+         */
+        public static final String QS_FOOTER_SHOW_POWER_MENU = "qs_footer_show_power_menu";
+
+        /**
+         * Whether to show daily/weekly data usage in the QS footer.
+         * @hide
+         */
+        public static final String QS_SHOW_DATA_USAGE = "qs_show_data_usage";
+
+        /**
+         * Persist setting for showing either daily or weekly data usage in the QS footer.
+         * @hide
+         */
+        public static final String QS_SHOW_DATA_USAGE_WINDOW = "qs_show_data_usage_window";
+
+        /**
          * Lockscreen Media Art
          * @hide
          */
