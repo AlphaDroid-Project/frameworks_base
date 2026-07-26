@@ -705,7 +705,7 @@ private fun AxVolumeSliderContent(
         icon = { iconModifier ->
             val icon = state.icon
             if (icon != null) {
-                SystemUiIcon(icon = icon, modifier = iconModifier)
+                SystemUiIcon(icon = icon.unshared(), modifier = iconModifier)
             } else {
                 Icon(
                     painter = painterResource(R.drawable.ic_music_note),

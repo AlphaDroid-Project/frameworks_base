@@ -38,6 +38,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.android.systemui.brightness.ui.viewmodel.BrightnessSliderViewModel
+import com.android.systemui.common.shared.model.Icon as IconModel
 import com.android.systemui.common.ui.compose.Icon
 import com.android.systemui.qs.ax.shared.model.AxQsControl
 import com.android.systemui.qs.ax.shared.model.AxQsSpan
@@ -94,10 +95,27 @@ internal fun AxQsVolumeMuteButton(
         modifier = modifier,
     ) { tint ->
         state.icon?.let { icon ->
-            Icon(icon = icon, tint = tint, modifier = Modifier.size(AxButtonControlIconSize))
+            Icon(
+                icon = icon.unshared(),
+                tint = tint,
+                modifier = Modifier.size(AxButtonControlIconSize),
+            )
         }
     }
 }
+
+/**
+ * [AudioStreamSliderViewModel] hands every consumer the *same* [android.graphics.drawable.Drawable]
+ * instance, and Compose tints a Drawable by mutating its `colorFilter`. The panel slider, the edit
+ * screen's slider preview and the mute button all read the same slider state, so they overwrite
+ * each other's tint and the last one to draw wins for all of them — most visible on the mute icon,
+ * where the button asks for `onPrimary` while the sliders want an on-surface colour.
+ *
+ * Re-wrap as [IconModel.Resource] whenever the resource id is known: that path renders through
+ * `VectorPainter`, which receives the tint per draw call and shares no mutable state.
+ */
+internal fun IconModel.unshared(): IconModel =
+    resId?.let { IconModel.Resource(it, contentDescription) } ?: this
 
 @Composable
 private fun AxQsButtonControl(
