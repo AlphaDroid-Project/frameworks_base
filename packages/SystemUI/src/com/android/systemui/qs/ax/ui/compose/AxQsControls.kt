@@ -16,6 +16,8 @@
 
 package com.android.systemui.qs.ax.ui.compose
 
+import android.service.quicksettings.Tile.STATE_ACTIVE
+import android.service.quicksettings.Tile.STATE_INACTIVE
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -23,12 +25,10 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Icon as MaterialIcon
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -37,6 +37,9 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.android.systemui.alpha.style.common.LocalAlphaColorScheme
+import com.android.systemui.alpha.style.qs.QSTileStyleWrapper
+import com.android.systemui.alpha.style.qs.rememberQsTileStyleRenderer
 import com.android.systemui.brightness.ui.viewmodel.BrightnessSliderViewModel
 import com.android.systemui.common.shared.model.Icon as IconModel
 import com.android.systemui.common.ui.compose.Icon
@@ -126,17 +129,19 @@ private fun AxQsButtonControl(
     modifier: Modifier = Modifier,
     icon: @Composable (Color) -> Unit,
 ) {
+    // Same pipeline as 1x1 QS tiles: UI Styles + user tile shape on a small cell.
+    val styleRenderer = rememberQsTileStyleRenderer()
+    val shape = LocalQSTileShape.current
+    val scheme = LocalAlphaColorScheme.current
+    val tileState = if (active) STATE_ACTIVE else STATE_INACTIVE
     val background by
         animateColorAsState(
-            targetValue =
-                if (active) MaterialTheme.colorScheme.primary else AxTileDefaults.backgroundColor(),
+            targetValue = if (active) scheme.accent else AxTileDefaults.backgroundColor(),
             label = "AxQsButtonBackground",
         )
     val foreground by
         animateColorAsState(
-            targetValue =
-                if (active) MaterialTheme.colorScheme.onPrimary
-                else MaterialTheme.colorScheme.onSurface,
+            targetValue = if (active) scheme.onAccent else scheme.onNeutral,
             label = "AxQsButtonForeground",
         )
     Box(
@@ -144,13 +149,19 @@ private fun AxQsButtonControl(
         modifier =
             modifier
                 .fillMaxSize()
-                // AUTO_BRIGHTNESS and VOLUME_MUTE are pinned to 1x1, so they always take the
-                // user's tile shape.
-                .clip(LocalQSTileShape.current)
-                .background(background)
                 .clickable(enabled = interactive, role = Role.Switch, onClick = onClick)
                 .semantics { contentDescription = description },
     ) {
+        QSTileStyleWrapper(
+            renderer = styleRenderer,
+            shape = shape,
+            state = tileState,
+            materialColor = background,
+            isSmallTile = true,
+            modifier = Modifier.matchParentSize(),
+        ) {
+            Box(Modifier.fillMaxSize().background(background, shape))
+        }
         icon(foreground)
     }
 }
