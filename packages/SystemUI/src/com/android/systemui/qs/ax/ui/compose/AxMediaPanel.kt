@@ -20,6 +20,8 @@ package com.android.systemui.qs.ax.ui.compose
 
 import android.annotation.SuppressLint
 import android.content.res.ColorStateList
+import android.service.quicksettings.Tile.STATE_ACTIVE
+import android.service.quicksettings.Tile.STATE_INACTIVE
 import android.text.format.DateUtils
 import android.view.MotionEvent
 import android.view.View
@@ -48,6 +50,7 @@ import androidx.compose.foundation.indication
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -112,6 +115,8 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.android.compose.animation.Expandable as ExpandableContainer
 import com.android.compose.animation.rememberExpandableController
+import com.android.systemui.alpha.style.qs.QSTileStyleWrapper
+import com.android.systemui.alpha.style.qs.rememberQsTileStyleRenderer
 import com.android.systemui.common.shared.model.Icon as IconModel
 import com.android.systemui.common.shared.model.asImageBitmap
 import com.android.systemui.common.ui.compose.Icon
@@ -357,7 +362,13 @@ private fun AxMediaCard(
             null
         }
     ExpandableContainer(
-        controller = rememberExpandableController(color = { background }, shape = shape),
+        // Empty cards paint their own styled fill; keep expandable transparent so the style
+        // wrapper is the sole chrome. Session cards keep media/artwork colors for the morph.
+        controller =
+            rememberExpandableController(
+                color = { if (session == null) Color.Transparent else background },
+                shape = shape,
+            ),
         modifier = modifier.fillMaxSize().clip(shape),
         onClick = null,
         onClickLabel = null,
@@ -365,6 +376,15 @@ private fun AxMediaCard(
         useModifierBasedImplementation = true,
     ) { expandable ->
         Box(Modifier.fillMaxSize()) {
+            // (1) Empty / "not playing" card body — inactive small-tile UI Styles.
+            if (session == null) {
+                MediaStyledSurface(
+                    shape = shape,
+                    active = false,
+                    color = tileBackground,
+                    modifier = Modifier.fillMaxSize(),
+                )
+            }
             Box(
                 Modifier.fillMaxSize().combinedClickable(
                     enabled = interactive && (session != null || lastMediaPackage != null),
@@ -1018,14 +1038,19 @@ private fun MediaOutputChip(
                         session?.let { viewModel.openOutput(it.outputDevice, expandable) }
                     },
         ) {
-            Row(
-                horizontalArrangement = Arrangement.Center,
-                verticalAlignment = Alignment.CenterVertically,
-                modifier =
-                    Modifier.clip(CircleShape)
-                        .background(colors.primary)
-                        .indication(interactionSource, ripple())
-                        .then(
+            // (6) Output chip — active small-tile style on a pill/circle.
+            Box(contentAlignment = Alignment.Center) {
+                MediaStyledSurface(
+                    shape = CircleShape,
+                    active = true,
+                    color = colors.primary,
+                    modifier = Modifier.matchParentSize(),
+                )
+                Row(
+                    horizontalArrangement = Arrangement.Center,
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier =
+                        Modifier.indication(interactionSource, ripple()).then(
                             if (showLabel) {
                                 Modifier.padding(
                                     horizontal = if (compact) 6.dp else 8.dp,
@@ -1035,30 +1060,31 @@ private fun MediaOutputChip(
                                 Modifier.size(chipHeight)
                             }
                         ),
-            ) {
-                if (session != null) {
-                    Icon(
-                        icon = session.outputDevice.icon,
-                        tint = colors.onPrimary,
-                        modifier = Modifier.size(iconSize),
-                    )
-                } else {
-                    MaterialIcon(
-                        painter = painterResource(R.drawable.ic_music_note),
-                        contentDescription = null,
-                        tint = colors.onPrimary,
-                        modifier = Modifier.size(iconSize),
-                    )
-                }
-                if (showLabel) {
-                    Text(
-                        text = label ?: outputDescription,
-                        color = colors.onPrimary,
-                        style = MaterialTheme.typography.labelMedium,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                        modifier = Modifier.padding(start = 4.dp),
-                    )
+                ) {
+                    if (session != null) {
+                        Icon(
+                            icon = session.outputDevice.icon,
+                            tint = colors.onPrimary,
+                            modifier = Modifier.size(iconSize),
+                        )
+                    } else {
+                        MaterialIcon(
+                            painter = painterResource(R.drawable.ic_music_note),
+                            contentDescription = null,
+                            tint = colors.onPrimary,
+                            modifier = Modifier.size(iconSize),
+                        )
+                    }
+                    if (showLabel) {
+                        Text(
+                            text = label ?: outputDescription,
+                            color = colors.onPrimary,
+                            style = MaterialTheme.typography.labelMedium,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            modifier = Modifier.padding(start = 4.dp),
+                        )
+                    }
                 }
             }
         }
@@ -1383,17 +1409,22 @@ private fun PlaceholderMediaAction(
         )
     val buttonBackground by
         animateColorAsState(targetValue = background, label = "AxMediaPlaceholderBackground")
+    // Filled play/pause (4) uses active style; bare skip chips (5) use inactive outline chrome.
+    val filled = buttonBackground.alpha > 0.01f
     Box(
         contentAlignment = Alignment.Center,
         modifier =
-            Modifier.size(width = buttonWidth, height = buttonHeight)
-                .clip(shape)
-                .background(buttonBackground)
-                .semantics {
-                    contentDescription = description
-                    disabled()
-                },
+            Modifier.size(width = buttonWidth, height = buttonHeight).semantics {
+                contentDescription = description
+                disabled()
+            },
     ) {
+        MediaStyledSurface(
+            shape = shape,
+            active = filled,
+            color = buttonBackground,
+            modifier = Modifier.matchParentSize(),
+        )
         if (imageVector != null) {
             MaterialIcon(
                 imageVector = imageVector,
@@ -1460,18 +1491,26 @@ private fun MediaAction(
         )
     val buttonBackground by
         animateColorAsState(targetValue = background, label = "AxMediaActionBackground")
+    val filled = buttonBackground.alpha > 0.01f
     when (action) {
         is MediaActionModel.Action -> {
             Box(
                 contentAlignment = Alignment.Center,
                 modifier =
-                    Modifier.size(width = buttonWidth, height = buttonHeight)
-                        .clip(shape)
-                        .background(buttonBackground)
-                        .clickable(enabled = interactive && action.onClick != null) {
-                            viewModel.runAction(action)
-                        },
+                    Modifier.size(width = buttonWidth, height = buttonHeight).clickable(
+                        enabled = interactive && action.onClick != null
+                    ) {
+                        viewModel.runAction(action)
+                    },
             ) {
+                // (4) filled play/pause pill → active style; (5) transparent skip chips →
+                // inactive style so bevel/outline still ring the circle.
+                MediaStyledSurface(
+                    shape = shape,
+                    active = filled,
+                    color = buttonBackground,
+                    modifier = Modifier.matchParentSize(),
+                )
                 if (animatedIconRes != null) {
                     val painter =
                         rememberAnimatedVectorPainter(
@@ -1511,6 +1550,35 @@ private fun MediaAction(
         MediaActionModel.None -> Unit
         MediaActionModel.ReserveSpace ->
             Spacer(Modifier.size(width = buttonWidth, height = buttonHeight))
+    }
+}
+
+/** Shared QS tile style chrome for media control surfaces (empty card, chips, play/pause). */
+@Composable
+private fun MediaStyledSurface(
+    shape: Shape,
+    active: Boolean,
+    color: Color,
+    modifier: Modifier = Modifier,
+    content: @Composable BoxScope.() -> Unit = {},
+) {
+    val styleRenderer = rememberQsTileStyleRenderer()
+    Box(modifier = modifier, contentAlignment = Alignment.Center) {
+        QSTileStyleWrapper(
+            renderer = styleRenderer,
+            shape = shape,
+            state = if (active) STATE_ACTIVE else STATE_INACTIVE,
+            materialColor = color,
+            isSmallTile = true,
+            modifier = Modifier.matchParentSize(),
+        ) {
+            if (color.alpha > 0.01f) {
+                Box(Modifier.fillMaxSize().background(color, shape))
+            } else {
+                Box(Modifier.fillMaxSize())
+            }
+        }
+        content()
     }
 }
 
