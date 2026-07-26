@@ -669,7 +669,7 @@ fun BrightnessSlider(
             },
         )
 
-        if (hasAutoBrightness && showAutoBrightness) {
+        if (hasAutoBrightness && showAutoBrightness && showAutoBrightnessButton) {
             Spacer(modifier = Modifier.width(10.dp))
 
             val targetAutoBgColor =

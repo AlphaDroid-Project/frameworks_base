@@ -120,7 +120,6 @@ import com.android.mechanics.GestureContext
 import com.android.systemui.Dumpable
 import com.android.systemui.Flags
 import com.android.systemui.Flags.notificationShadeBlur
-import com.android.systemui.alpha.style.common.AlphaColorScheme
 import com.android.systemui.alpha.style.common.LocalAlphaColorScheme
 import com.android.systemui.alpha.style.common.defaultAlphaColorScheme
 import com.android.systemui.alpha.style.qs.LocalQSFragmentComposeViewModel
@@ -352,14 +351,14 @@ constructor(
                                         }
                                     }
                                 }
-                                .graphicsLayer { alpha = viewModel.viewAlpha }
-                                .thenIf(!Flags.notificationShadeBlur()) {
-                                    Modifier.offset {
-                                        IntOffset(
-                                            x = 0,
-                                            y = viewModel.viewTranslationY.fastRoundToInt(),
-                                        )
-                                    }
+                            }
+                            .graphicsLayer { alpha = viewModel.viewAlpha }
+                            .thenIf(!Flags.notificationShadeBlur()) {
+                                Modifier.offset {
+                                    IntOffset(
+                                        x = 0,
+                                        y = viewModel.viewTranslationY.fastRoundToInt(),
+                                    )
                                 }
                             }
                             // Disable touches in the whole composable while the mirror is
