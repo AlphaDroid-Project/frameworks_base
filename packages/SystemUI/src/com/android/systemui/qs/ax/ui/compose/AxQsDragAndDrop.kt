@@ -132,8 +132,12 @@ internal class AxQsEditListState<T>(initialItems: List<AxQsGridItem<T>>) {
     }
 
     fun start(id: String, anchor: Offset) {
-        check(!dragInProgress)
-        check(indexOf(id) >= 0)
+        // A drag whose platform transfer aborts never reaches onDrop/onEnded, so recover from a
+        // stale session rather than killing SystemUI on the next long press.
+        if (dragInProgress) cancel()
+        // The item can be absent if the grid was repacked under us — fitAxQsGridItems drops
+        // whatever no longer fits. Nothing to drag; leave the state clean.
+        if (indexOf(id) < 0) return
         dragSnapshot = _items.toList()
         capturePositions()
         val bounds = itemBounds[id]?.second
@@ -354,6 +358,12 @@ internal fun <T> Modifier.axQsDragSource(
                     )
                 },
                 onDragEnd = state::cancel,
+                // Without this, a transfer that fails ("Unable to transfer touch focus" — the
+                // finger is already up by the time startDragAndDrop runs) cancels the gesture
+                // instead of ending it, no DRAG_ENDED is broadcast, the drop target's onEnded
+                // never fires, and draggedId stays set forever. AxQsResizeHandle already wires
+                // its cancel path; this one was missed.
+                onDragCancel = state::cancel,
             )
         }
     )
