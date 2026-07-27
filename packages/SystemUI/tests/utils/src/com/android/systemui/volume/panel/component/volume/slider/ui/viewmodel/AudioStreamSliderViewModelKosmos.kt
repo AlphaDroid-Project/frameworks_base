@@ -18,6 +18,7 @@ package com.android.systemui.volume.panel.component.volume.slider.ui.viewmodel
 
 import android.content.applicationContext
 import com.android.internal.logging.uiEventLogger
+import com.android.systemui.alpha.style.volume.VolumeSliderStyleManager
 import com.android.systemui.haptics.slider.sliderHapticsViewModelFactory
 import com.android.systemui.kosmos.Kosmos
 import com.android.systemui.kosmos.backgroundCoroutineContext
@@ -26,6 +27,7 @@ import com.android.systemui.volume.domain.interactor.audioSharingInteractor
 import com.android.systemui.volume.domain.interactor.audioVolumeInteractor
 import com.android.systemui.volume.shared.volumePanelLogger
 import kotlinx.coroutines.CoroutineScope
+import org.mockito.kotlin.mock
 
 val Kosmos.audioStreamSliderViewModelFactory by
     Kosmos.Fixture {
@@ -46,6 +48,7 @@ val Kosmos.audioStreamSliderViewModelFactory by
                     uiEventLogger,
                     volumePanelLogger,
                     sliderHapticsViewModelFactory,
+                    mock<VolumeSliderStyleManager>(),
                 )
             }
         }

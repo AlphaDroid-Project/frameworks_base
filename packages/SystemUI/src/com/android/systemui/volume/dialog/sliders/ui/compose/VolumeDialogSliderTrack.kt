@@ -74,6 +74,11 @@ fun SliderTrack(
     isVertical: Boolean = false,
     styleRenderer: BrightnessSliderStyleRenderer? = null,
     shapeMode: Int = VOLUME_SLIDER_SHAPE_DEFAULT,
+    /**
+     * Optional override for the visual thumb extent along the track (icon layout only).
+     * Segment fill math always uses the logical AOSP thumb. When null, volume-dialog defaults apply.
+     */
+    visualThumbAlongTrack: Dp? = null,
     activeTrackStartIcon: (@Composable BoxScope.(iconsState: SliderIconsState) -> Unit)? = null,
     activeTrackEndIcon: (@Composable BoxScope.(iconsState: SliderIconsState) -> Unit)? = null,
     inactiveTrackStartIcon: (@Composable BoxScope.(iconsState: SliderIconsState) -> Unit)? = null,
@@ -96,14 +101,11 @@ fun SliderTrack(
     }
     val useStyledVisualThumb = styleRenderer != null || shapeMode != VOLUME_SLIDER_SHAPE_DEFAULT
 
-    val effectiveThumbAlongTrack = if (useStyledVisualThumb) {
-        VolumeDialogSliderDimensions.StyledVisualThumbSize
-    } else {
-        if (isVertical) {
-            VolumeDialogSliderDimensions.VerticalLogicalThumbSize.height
-        } else {
-            VolumeDialogSliderDimensions.HorizontalLogicalThumbSize.width
-        }
+    val effectiveThumbAlongTrack = when {
+        visualThumbAlongTrack != null -> visualThumbAlongTrack
+        useStyledVisualThumb -> VolumeDialogSliderDimensions.StyledVisualThumbSize
+        isVertical -> VolumeDialogSliderDimensions.VerticalLogicalThumbSize.height
+        else -> VolumeDialogSliderDimensions.HorizontalLogicalThumbSize.width
     }
 
     val measurePolicy = remember(
@@ -147,6 +149,9 @@ fun SliderTrack(
                 thumbGapDp = if (styleRenderer == null) thumbTrackGapSize else 0.dp,
                 logicalThumbWidthDp = logicalThumbSize.width,
                 logicalThumbHeightDp = logicalThumbSize.height,
+                // Leave visualThumbAlongTrackDp at 0 so segment math uses the logical AOSP
+                // thumb (4dp). Passing the larger visual thumb here opens a huge gap between
+                // active/inactive segments and breaks the continuous track look.
                 materialColors = VolumeMaterialColors(
                     activeSegment = colors.activeTrackColor,
                     inactiveSegment = colors.inactiveTrackColor,

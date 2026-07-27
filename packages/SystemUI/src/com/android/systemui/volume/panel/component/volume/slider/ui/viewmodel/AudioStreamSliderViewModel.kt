@@ -28,6 +28,7 @@ import com.android.settingslib.volume.shared.model.AudioStream
 import com.android.settingslib.volume.shared.model.AudioStreamModel
 import com.android.settingslib.volume.shared.model.RingerMode
 import com.android.systemui.Flags
+import com.android.systemui.alpha.style.volume.VolumeSliderStyleManager
 import com.android.systemui.common.shared.model.Icon
 import com.android.systemui.dagger.qualifiers.UiBackground
 import com.android.systemui.haptics.slider.SliderHapticFeedbackFilter
@@ -72,7 +73,11 @@ constructor(
     private val uiEventLogger: UiEventLogger,
     private val volumePanelLogger: VolumePanelLogger,
     private val hapticsViewModelFactory: SliderHapticsViewModel.Factory,
+    private val volumeSliderStyleManager: VolumeSliderStyleManager,
 ) : SliderViewModel {
+
+    /** Style manager for Ax QS / panel volume slider UI Styles. */
+    val styleManager: VolumeSliderStyleManager = volumeSliderStyleManager
 
     private val volumeChanges = MutableStateFlow<Int?>(null)
     private val audioStream = audioStreamWrapper.audioStream

@@ -22,6 +22,7 @@ import android.view.MotionEvent
 import android.view.View
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.Orientation
@@ -33,8 +34,10 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.requiredHeight
+import androidx.compose.foundation.layout.requiredSize
 import androidx.compose.foundation.layout.requiredWidth
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
@@ -63,12 +66,18 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.graphics.drawscope.DrawScope
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.input.pointer.pointerInteropFilter
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.painterResource
@@ -83,6 +92,7 @@ import androidx.compose.ui.semantics.setProgress
 import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.semantics.text
 import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.LayoutDirection
@@ -94,6 +104,11 @@ import com.android.compose.PlatformSliderDefaults
 import com.android.compose.gesture.gesturesDisabled
 import com.android.compose.modifiers.sliderPercentage
 import com.android.compose.ui.graphics.drawInOverlay
+import com.android.systemui.alpha.style.brightness.BrightnessSliderStyleManager
+import com.android.systemui.alpha.style.brightness.renderers.BrightnessSliderStyleRenderer
+import com.android.systemui.alpha.style.common.LocalAlphaColorScheme
+import com.android.systemui.alpha.style.common.defaultAlphaColorScheme
+import com.android.systemui.alpha.style.volume.VolumeSliderStyleManager
 import com.android.systemui.brightness.shared.model.GammaBrightness
 import com.android.systemui.brightness.ui.viewmodel.BrightnessSliderViewModel
 import com.android.systemui.brightness.ui.viewmodel.Drag
@@ -244,19 +259,30 @@ private fun AxQsSlider(
     vertical: Boolean,
     verticalStyle: AxQsVerticalSliderStyle,
     trackBackgroundColor: Color = Color.Transparent,
+    styleRenderer: BrightnessSliderStyleRenderer? = null,
     icon: @Composable (Modifier) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val inactiveTrackColor = AxTileDefaults.backgroundColor()
+    val scheme = LocalAlphaColorScheme.current
+    val density = LocalDensity.current
+    val isStyled = styleRenderer != null
+    val inactiveTrackColor = if (isStyled) scheme.neutral else AxTileDefaults.backgroundColor()
+    val activeTrackColor = if (isStyled) scheme.accent else MaterialTheme.colorScheme.primary
+    val schemeThumb = if (isStyled) scheme.thumb else MaterialTheme.colorScheme.primary
+    val thumbColor =
+        styleRenderer?.getThumbColor(schemeThumb, scheme.accent) ?: schemeThumb
+    val onActive = if (isStyled) scheme.onAccent else MaterialTheme.colorScheme.onPrimary
+    val onInactive = if (isStyled) scheme.onNeutral else MaterialTheme.colorScheme.onSurface
     val sliderScale = if (vertical) sliderHeight / AxSliderTrackHeight else 1f
     val iconSize = if (vertical) AxSliderIconSize * sliderScale else HorizontalSliderIconSize
     if (vertical && verticalStyle == AxQsVerticalSliderStyle.PLATFORM) {
+        // Platform vertical is a continuous pill; leave stock for now (M3 expressive is styled).
         val platformTrackColor =
             if (trackBackgroundColor == Color.Transparent) {
                 inactiveTrackColor
             } else {
                 trackBackgroundColor
-        }
+            }
         val framePadding = PlatformSliderFramePadding * sliderScale
         val frameHeight = CommonTileDefaults.TileHeight * sliderScale
         val platformSliderHeight = (frameHeight - framePadding * 2).coerceAtLeast(0.dp)
@@ -279,17 +305,14 @@ private fun AxQsSlider(
                 colors =
                     PlatformSliderColors(
                         trackColor = platformTrackColor,
-                        indicatorColor = MaterialTheme.colorScheme.primary,
-                        iconColor = MaterialTheme.colorScheme.onPrimary,
-                        labelColorOnIndicator = MaterialTheme.colorScheme.onPrimary,
-                        labelColorOnTrack = MaterialTheme.colorScheme.onSurface,
+                        indicatorColor = activeTrackColor,
+                        iconColor = onActive,
+                        labelColorOnIndicator = onActive,
+                        labelColorOnTrack = onInactive,
                         disabledTrackColor = platformTrackColor.copy(alpha = 0.38f),
-                        disabledIndicatorColor =
-                            MaterialTheme.colorScheme.primary.copy(alpha = 0.38f),
-                        disabledIconColor =
-                            MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f),
-                        disabledLabelColor =
-                            MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f),
+                        disabledIndicatorColor = activeTrackColor.copy(alpha = 0.38f),
+                        disabledIconColor = onInactive.copy(alpha = 0.38f),
+                        disabledLabelColor = onInactive.copy(alpha = 0.38f),
                     ),
                 sliderHeight = platformSliderHeight,
                 showEndDot = false,
@@ -303,30 +326,29 @@ private fun AxQsSlider(
     }
     val colors =
         SliderDefaults.colors(
-            thumbColor = MaterialTheme.colorScheme.primary,
-            activeTrackColor = MaterialTheme.colorScheme.primary,
-            activeTickColor = MaterialTheme.colorScheme.onPrimary,
+            thumbColor = thumbColor,
+            activeTrackColor = activeTrackColor,
+            activeTickColor = onActive,
             inactiveTrackColor = inactiveTrackColor,
-            inactiveTickColor = MaterialTheme.colorScheme.onSurface,
-            disabledThumbColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f),
-            disabledActiveTrackColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.38f),
-            disabledActiveTickColor = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.38f),
+            inactiveTickColor = onInactive,
+            disabledThumbColor = onInactive.copy(alpha = 0.38f),
+            disabledActiveTrackColor = activeTrackColor.copy(alpha = 0.38f),
+            disabledActiveTickColor = onActive.copy(alpha = 0.38f),
             disabledInactiveTrackColor = inactiveTrackColor.copy(alpha = 0.38f),
-            disabledInactiveTickColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f),
+            disabledInactiveTickColor = onInactive.copy(alpha = 0.38f),
         )
-    val thumbSize =
-        if (vertical) {
-            DpSize(
-                width = AxSliderThumbWidth * sliderScale,
-                height = CommonTileDefaults.TileHeight * sliderScale,
-            )
-        } else {
-            DpSize(width = AxSliderThumbWidth, height = HorizontalSliderThumbHeight)
-        }
+    val logicalThumbWidth = AxSliderThumbWidth * sliderScale
+    val logicalThumbHeight =
+        if (vertical) CommonTileDefaults.TileHeight * sliderScale else HorizontalSliderThumbHeight
+    val thumbSize = DpSize(width = logicalThumbWidth, height = logicalThumbHeight)
+    // Match volume-dialog: visual thumb is slightly taller than track thickness.
+    val visualThumbSize = sliderHeight + 4.dp * sliderScale
     val trackCornerSize =
         if (vertical) sliderHeight / VERTICAL_SLIDER_CORNER_DIVISOR
         else HorizontalSliderCornerRadius
     val trackShape = if (vertical) VerticalSliderShape else HorizontalSliderShape
+    val trackInsideCorner = if (isStyled) 0.dp else AxSliderTrackInsideCornerRadius
+    val thumbGap = if (isStyled) 0.dp else AxSliderThumbTrackGap
     Slider(
         value = value,
         onValueChange = onValueChange,
@@ -337,12 +359,24 @@ private fun AxQsSlider(
         colors = colors,
         modifier = modifier,
         thumb = {
-            SliderDefaults.Thumb(
-                interactionSource = interactionSource,
-                enabled = enabled,
-                colors = colors,
-                thumbSize = thumbSize,
-            )
+            if (isStyled) {
+                AxQsStyledSliderThumb(
+                    value = value,
+                    valueRange = valueRange,
+                    logicalThumbSize = thumbSize,
+                    visualThumbSize = visualThumbSize,
+                    thumbColor = thumbColor,
+                    styleRenderer = styleRenderer,
+                    density = density,
+                )
+            } else {
+                SliderDefaults.Thumb(
+                    interactionSource = interactionSource,
+                    enabled = enabled,
+                    colors = colors,
+                    thumbSize = thumbSize,
+                )
+            }
         },
         track = { sliderState ->
             SliderTrack(
@@ -350,9 +384,13 @@ private fun AxQsSlider(
                 isEnabled = enabled,
                 colors = colors,
                 trackCornerSize = trackCornerSize,
-                trackInsideCornerSize = AxSliderTrackInsideCornerRadius,
-                thumbTrackGapSize = AxSliderThumbTrackGap,
+                trackInsideCornerSize = trackInsideCorner,
+                thumbTrackGapSize = thumbGap,
                 trackSize = sliderHeight,
+                styleRenderer = styleRenderer,
+                // Vertical Ax sliders are rotated horizontal; track layout is always horizontal.
+                isVertical = false,
+                visualThumbAlongTrack = if (isStyled) visualThumbSize else null,
                 modifier = Modifier.background(trackBackgroundColor, trackShape),
                 activeTrackEndIcon = { iconsState ->
                     AxQsSliderIcon(
@@ -383,6 +421,158 @@ private fun AxQsSlider(
             )
         },
     )
+}
+
+/**
+ * Styled thumb for Ax QS sliders (same approach as brightness / volume-dialog: larger visual thumb
+ * with edge-compensating offset + style overlay + inset bevel).
+ *
+ * Vertical sliders are drawn as horizontal tracks rotated -90°, so offset is always along X.
+ */
+@Composable
+private fun AxQsStyledSliderThumb(
+    value: Float,
+    valueRange: ClosedFloatingPointRange<Float>,
+    logicalThumbSize: DpSize,
+    visualThumbSize: Dp,
+    thumbColor: Color,
+    styleRenderer: BrightnessSliderStyleRenderer?,
+    density: Density,
+) {
+    val span = (valueRange.endInclusive - valueRange.start).takeIf { it != 0f } ?: 1f
+    val fraction = ((value - valueRange.start) / span).coerceIn(0f, 1f)
+    val visualHalf = visualThumbSize / 2
+    val logicalHalf = logicalThumbSize.width / 2
+    val maxOffset = visualHalf - logicalHalf
+    val edgeThreshold = 0.08f
+    val centerOffset: Dp =
+        when {
+            fraction < edgeThreshold -> {
+                val t = 1f - (fraction / edgeThreshold)
+                maxOffset * t
+            }
+            fraction > (1f - edgeThreshold) -> {
+                val t = (fraction - (1f - edgeThreshold)) / edgeThreshold
+                -maxOffset * t
+            }
+            else -> 0.dp
+        }
+    val thumbShape = RoundedCornerShape(percent = 50)
+    val cornerRadiusPx = with(density) { (visualThumbSize / 2).toPx() }
+
+    Box(
+        contentAlignment = Alignment.Center,
+        modifier = Modifier.size(logicalThumbSize),
+    ) {
+        Box(
+            modifier =
+                Modifier.offset(x = centerOffset)
+                    .requiredSize(visualThumbSize)
+                    .clip(thumbShape),
+        ) {
+            Canvas(modifier = Modifier.fillMaxSize()) {
+                val bounds = Rect(0f, 0f, size.width, size.height)
+                drawRect(color = thumbColor)
+                if (styleRenderer != null && !styleRenderer.skipThumbOverlay()) {
+                    with(styleRenderer) {
+                        renderThumbOverlay(
+                            thumbBounds = bounds,
+                            shape = thumbShape,
+                            cornerRadius = cornerRadiusPx,
+                            thumbColor = thumbColor,
+                            density = density,
+                        )
+                    }
+                }
+                drawAxQsThumbInset(bounds, cornerRadiusPx, density)
+            }
+        }
+    }
+}
+
+private fun DrawScope.drawAxQsThumbInset(
+    bounds: Rect,
+    cornerRadius: Float,
+    density: Density,
+) {
+    val bevelWidth = with(density) { 1.5.dp.toPx() }
+    val halfStroke = bevelWidth / 2f
+    val strokeRect = bounds.deflate(halfStroke)
+    val strokeRadius = (cornerRadius - halfStroke).coerceAtLeast(0f)
+
+    drawRoundRect(
+        brush =
+            Brush.linearGradient(
+                colors = listOf(Color.White.copy(alpha = 0.35f), Color.Transparent),
+                start = bounds.topLeft,
+                end = bounds.bottomRight,
+            ),
+        topLeft = strokeRect.topLeft,
+        size = strokeRect.size,
+        cornerRadius = CornerRadius(strokeRadius),
+        style = Stroke(bevelWidth),
+    )
+    drawRoundRect(
+        brush =
+            Brush.linearGradient(
+                colors = listOf(Color.Transparent, Color.Black.copy(alpha = 0.25f)),
+                start = bounds.topLeft,
+                end = bounds.bottomRight,
+            ),
+        topLeft = strokeRect.topLeft,
+        size = strokeRect.size,
+        cornerRadius = CornerRadius(strokeRadius),
+        style = Stroke(bevelWidth),
+    )
+}
+
+@Composable
+private fun rememberAxQsBrightnessSliderStyleRenderer(
+    styleManager: BrightnessSliderStyleManager,
+): BrightnessSliderStyleRenderer? {
+    val styleState by styleManager.styleState.collectAsStateWithLifecycle()
+    val defaultScheme = defaultAlphaColorScheme()
+    return remember(
+        styleState.styleId,
+        styleState.settings,
+        styleState.themeVersion,
+        styleState.isNightMode,
+        defaultScheme.accent,
+        defaultScheme.neutral,
+    ) {
+        styleManager.getRenderer(defaultScheme.accent, defaultScheme.neutral)
+    }
+}
+
+@Composable
+private fun rememberAxQsVolumeSliderStyleRenderer(
+    styleManager: VolumeSliderStyleManager,
+): BrightnessSliderStyleRenderer? {
+    val styleState by styleManager.styleState.collectAsStateWithLifecycle()
+    val defaultScheme = defaultAlphaColorScheme()
+    return remember(
+        styleState.styleId,
+        styleState.settings,
+        styleState.themeVersion,
+        styleState.isNightMode,
+        defaultScheme.accent,
+        defaultScheme.neutral,
+    ) {
+        styleManager.getRenderer(defaultScheme.accent, defaultScheme.neutral)
+    }
+}
+
+@Composable
+private fun AxQsSliderStyleScope(
+    styleRenderer: BrightnessSliderStyleRenderer?,
+    content: @Composable () -> Unit,
+) {
+    val defaultScheme = defaultAlphaColorScheme()
+    val themedScheme =
+        remember(styleRenderer, defaultScheme) {
+            styleRenderer?.produceColorScheme(defaultScheme) ?: defaultScheme
+        }
+    CompositionLocalProvider(LocalAlphaColorScheme provides themedScheme, content = content)
 }
 
 @Composable
@@ -575,51 +765,60 @@ private fun AxBrightnessSlider(
         }
     }
 
-    AxQsSlider(
-        value = animatedValue,
-        onValueChange = { newValue ->
-            if (interactive && enabled && !overriddenByApp) {
-                hapticsViewModel.onValueChange(newValue)
-                value = newValue.toInt()
-                if (!dragging) {
-                    dragging = true
-                    viewModel.setIsDragging(true)
-                    onDraggingChanged(true)
+    val styleRenderer = rememberAxQsBrightnessSliderStyleRenderer(viewModel.styleManager)
+    AxQsSliderStyleScope(styleRenderer) {
+        AxQsSlider(
+            value = animatedValue,
+            onValueChange = { newValue ->
+                if (interactive && enabled && !overriddenByApp) {
+                    hapticsViewModel.onValueChange(newValue)
+                    value = newValue.toInt()
+                    if (!dragging) {
+                        dragging = true
+                        viewModel.setIsDragging(true)
+                        onDraggingChanged(true)
+                    }
+                    coroutineScope.launch {
+                        viewModel.onDrag(Drag.Dragging(GammaBrightness(value)))
+                    }
                 }
-                coroutineScope.launch { viewModel.onDrag(Drag.Dragging(GammaBrightness(value))) }
-            }
-        },
-        onValueChangeFinished = {
-            if (interactive && enabled && !overriddenByApp) {
-                hapticsViewModel.onValueChangeEnded()
-                coroutineScope.launch { viewModel.onDrag(Drag.Stopped(GammaBrightness(value))) }
-            }
-            if (dragging) {
-                dragging = false
-                viewModel.setIsDragging(false)
-                onDraggingChanged(false)
-            }
-        },
-        valueRange = valueRange,
-        enabled = enabled,
-        interactionSource = interactionSource,
-        sliderHeight = sliderHeight,
-        vertical = vertical,
-        verticalStyle = verticalStyle,
-        trackBackgroundColor = if (mirrorInOverlay) mirrorBackgroundColor else Color.Transparent,
-        icon = { iconModifier ->
-            Icon(
-                painter = painterResource(iconRes),
-                contentDescription = null,
-                modifier = iconModifier,
-            )
-        },
-        modifier =
-            modifier
-                .fillMaxWidth()
-                .sysuiResTag("ax_brightness_slider")
-                .then(inputModifier),
-    )
+            },
+            onValueChangeFinished = {
+                if (interactive && enabled && !overriddenByApp) {
+                    hapticsViewModel.onValueChangeEnded()
+                    coroutineScope.launch {
+                        viewModel.onDrag(Drag.Stopped(GammaBrightness(value)))
+                    }
+                }
+                if (dragging) {
+                    dragging = false
+                    viewModel.setIsDragging(false)
+                    onDraggingChanged(false)
+                }
+            },
+            valueRange = valueRange,
+            enabled = enabled,
+            interactionSource = interactionSource,
+            sliderHeight = sliderHeight,
+            vertical = vertical,
+            verticalStyle = verticalStyle,
+            trackBackgroundColor =
+                if (mirrorInOverlay) mirrorBackgroundColor else Color.Transparent,
+            styleRenderer = styleRenderer,
+            icon = { iconModifier ->
+                Icon(
+                    painter = painterResource(iconRes),
+                    contentDescription = null,
+                    modifier = iconModifier,
+                )
+            },
+            modifier =
+                modifier
+                    .fillMaxWidth()
+                    .sysuiResTag("ax_brightness_slider")
+                    .then(inputModifier),
+        )
+    }
 }
 
 @Composable
@@ -686,65 +885,71 @@ private fun AxVolumeSliderContent(
             factory = if (interactive) viewModel.getSliderHapticsViewModelFactory() else null,
         )
 
-    AxQsSlider(
-        value = value,
-        valueRange = state.valueRange,
-        onValueChange = { newValue ->
-            hapticsViewModel?.addVelocityDataPoint(newValue)
-            if (interactive) viewModel.onValueChanged(state, newValue)
-        },
-        onValueChangeFinished = {
-            hapticsViewModel?.onValueChangeEnded()
-            if (interactive) viewModel.onValueChangeFinished()
-        },
-        enabled = state.isEnabled,
-        interactionSource = interactionSource,
-        sliderHeight = sliderHeight,
-        vertical = vertical,
-        verticalStyle = verticalStyle,
-        icon = { iconModifier ->
-            val icon = state.icon
-            if (icon != null) {
-                SystemUiIcon(icon = icon.unshared(), modifier = iconModifier)
-            } else {
-                Icon(
-                    painter = painterResource(R.drawable.ic_music_note),
-                    contentDescription = null,
-                    modifier = iconModifier,
-                )
-            }
-        },
-        modifier =
-            modifier.sysuiResTag("ax_volume_slider").clearAndSetSemantics {
-                if (state.isEnabled) {
-                    contentDescription = state.a11yContentDescription
-                    state.a11yStateDescription?.let { stateDescription = it }
-                    progressBarRangeInfo = ProgressBarRangeInfo(state.value, state.valueRange)
-                    if (interactive) {
-                        setProgress { targetValue ->
-                            val direction =
-                                when {
-                                    targetValue > value -> 1
-                                    targetValue < value -> -1
-                                    else -> 0
-                                }
-                            viewModel.onValueChanged(
-                                state,
-                                (value + direction * state.step).coerceIn(
-                                    state.valueRange.start,
-                                    state.valueRange.endInclusive,
-                                ),
-                            )
-                            true
-                        }
-                    }
+    val styleRenderer = rememberAxQsVolumeSliderStyleRenderer(viewModel.styleManager)
+    AxQsSliderStyleScope(styleRenderer) {
+        AxQsSlider(
+            value = value,
+            valueRange = state.valueRange,
+            onValueChange = { newValue ->
+                hapticsViewModel?.addVelocityDataPoint(newValue)
+                if (interactive) viewModel.onValueChanged(state, newValue)
+            },
+            onValueChangeFinished = {
+                hapticsViewModel?.onValueChangeEnded()
+                if (interactive) viewModel.onValueChangeFinished()
+            },
+            enabled = state.isEnabled,
+            interactionSource = interactionSource,
+            sliderHeight = sliderHeight,
+            vertical = vertical,
+            verticalStyle = verticalStyle,
+            styleRenderer = styleRenderer,
+            icon = { iconModifier ->
+                val icon = state.icon
+                if (icon != null) {
+                    SystemUiIcon(icon = icon.unshared(), modifier = iconModifier)
                 } else {
-                    disabled()
-                    contentDescription =
-                        state.disabledMessage?.let { "${state.label}, $it" } ?: state.label
+                    Icon(
+                        painter = painterResource(R.drawable.ic_music_note),
+                        contentDescription = null,
+                        modifier = iconModifier,
+                    )
                 }
             },
-    )
+            modifier =
+                modifier.sysuiResTag("ax_volume_slider").clearAndSetSemantics {
+                    if (state.isEnabled) {
+                        contentDescription = state.a11yContentDescription
+                        state.a11yStateDescription?.let { stateDescription = it }
+                        progressBarRangeInfo =
+                            ProgressBarRangeInfo(state.value, state.valueRange)
+                        if (interactive) {
+                            setProgress { targetValue ->
+                                val direction =
+                                    when {
+                                        targetValue > value -> 1
+                                        targetValue < value -> -1
+                                        else -> 0
+                                    }
+                                viewModel.onValueChanged(
+                                    state,
+                                    (value + direction * state.step).coerceIn(
+                                        state.valueRange.start,
+                                        state.valueRange.endInclusive,
+                                    ),
+                                )
+                                true
+                            }
+                        }
+                    } else {
+                        disabled()
+                        contentDescription =
+                            state.disabledMessage?.let { "${state.label}, $it" }
+                                ?: state.label
+                    }
+                },
+        )
+    }
 }
 
 @Composable
