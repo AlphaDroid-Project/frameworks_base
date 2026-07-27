@@ -20,7 +20,7 @@ import androidx.compose.ui.unit.dp
  * so brightness, volume, and ax QS (any scale) stay balanced.
  *
  * Reference stock (40dp track): along 4dp, cross 52dp → factors 0.1 and 1.3.
- * Styled multiplies the along factor by 4 → 0.4 (16dp on a 40dp track).
+ * Styled multiplies the along factor by 2 → 0.2 (8dp on a 40dp track).
  *
  * See `uistyles.md` (workspace) for the design log.
  */
@@ -34,9 +34,9 @@ object StyledSliderThumbTokens {
 
     /**
      * Along-track visual size as a fraction of track thickness.
-     * Stock: 4/40 = 0.1; styled: 4× stock → **0.4** (16dp on a 40dp track).
+     * Stock: 4/40 = 0.1; styled: 2× stock → **0.2** (8dp on a 40dp track).
      */
-    const val AlongTrackFactor: Float = 0.4f
+    const val AlongTrackFactor: Float = 0.2f
 
     /**
      * Cross-track visual size as a fraction of track thickness.
@@ -48,7 +48,7 @@ object StyledSliderThumbTokens {
      * Fixed along-track size on the reference track (documentation / fallbacks).
      * Prefer [alongTrack] with the real track thickness.
      */
-    val AlongTrack: Dp = ReferenceTrackThickness * AlongTrackFactor // 16.dp
+    val AlongTrack: Dp = ReferenceTrackThickness * AlongTrackFactor // 8.dp
 
     /**
      * Fixed overhang on the reference track (documentation).

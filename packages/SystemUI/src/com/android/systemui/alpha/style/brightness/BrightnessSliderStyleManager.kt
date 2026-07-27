@@ -104,9 +104,12 @@ class BrightnessSliderStyleManager @Inject constructor(
                 userSettings = settings
             )
 
-            // Lumen is outline-driven on tiles; brightness dialog stays stock until a
-            // dedicated slider lumen renderer exists.
-            "lumen" -> null
+            "lumen" -> BSLumenStyleRenderer(
+                accentColor = accentColor,
+                neutralColor = neutralColor,
+                isDarkTheme = isDark,
+                userSettings = settings
+            )
 
             else -> null
         }

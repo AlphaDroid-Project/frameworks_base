@@ -12,6 +12,7 @@ import com.android.systemui.alpha.style.UiStyleState
 import com.android.systemui.alpha.style.brightness.renderers.BSAerogelStyleRenderer
 import com.android.systemui.alpha.style.brightness.renderers.BSBevelStyleRenderer
 import com.android.systemui.alpha.style.brightness.renderers.BSGradientStyleRenderer
+import com.android.systemui.alpha.style.brightness.renderers.BSLumenStyleRenderer
 import com.android.systemui.alpha.style.brightness.renderers.BSMetallicStyleRenderer
 import com.android.systemui.alpha.style.brightness.renderers.BSNeonStyleRenderer
 import com.android.systemui.alpha.style.brightness.renderers.BSOutlineStyleRenderer
@@ -95,6 +96,13 @@ class VolumeSliderStyleManager @Inject constructor(
             )
 
             "metallic" -> BSMetallicStyleRenderer(
+                accentColor = accentColor,
+                neutralColor = neutralColor,
+                isDarkTheme = isDark,
+                userSettings = settings,
+            )
+
+            "lumen" -> BSLumenStyleRenderer(
                 accentColor = accentColor,
                 neutralColor = neutralColor,
                 isDarkTheme = isDark,
