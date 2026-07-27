@@ -33,6 +33,13 @@ object StyledSliderThumbTokens {
     val AlongTrack: Dp = 16.dp
 
     /**
+     * Extra size **beyond** the track on the cross-track axis so the pill overhangs the
+     * track segments (stock is 52dp thumb on a ~40dp track → +12dp total).
+     * Split equally above and below (or left/right when vertical).
+     */
+    val CrossTrackOverhang: Dp = 12.dp
+
+    /**
      * Fill alpha for the neutral glass body. Style-parameter opacity still tunes track
      * colours via [produceColorScheme]; the thumb base is intentionally fixed glass so
      * it stays readable and accent-free.
@@ -43,16 +50,30 @@ object StyledSliderThumbTokens {
     /** Pill shape (full stadium ends). */
     val PillShape: Shape = RoundedCornerShape(percent = 50)
 
-    /**
-     * Horizontal layout: width = along track, height = track thickness.
-     * Ax QS vertical sliders are drawn as rotated horizontal tracks, so they use this too.
-     */
-    fun pillSizeHorizontal(trackThickness: Dp): DpSize =
-        DpSize(width = AlongTrack, height = trackThickness)
+    /** Cross-track visual extent = track thickness + overhang (pill sticks out past segments). */
+    fun crossTrack(trackThickness: Dp, scale: Float = 1f): Dp =
+        trackThickness + CrossTrackOverhang * scale
 
-    /** True vertical layout (volume dialog): width = track thickness, height = along track. */
-    fun pillSizeVertical(trackThickness: Dp): DpSize =
-        DpSize(width = trackThickness, height = AlongTrack)
+    /**
+     * Horizontal layout: width = along track, height = track + overhang.
+     * Ax QS vertical sliders are drawn as rotated horizontal tracks, so they use this too.
+     *
+     * @param scale multiplies along-track and overhang (ax vertical track scaling).
+     */
+    fun pillSizeHorizontal(trackThickness: Dp, scale: Float = 1f): DpSize =
+        DpSize(
+            width = AlongTrack * scale,
+            height = crossTrack(trackThickness, scale),
+        )
+
+    /**
+     * True vertical layout (volume dialog): width = track + overhang, height = along track.
+     */
+    fun pillSizeVertical(trackThickness: Dp, scale: Float = 1f): DpSize =
+        DpSize(
+            width = crossTrack(trackThickness, scale),
+            height = AlongTrack * scale,
+        )
 
     /**
      * Neutral frosted fill — white glass, no accent. Darker themes use a lighter frost so

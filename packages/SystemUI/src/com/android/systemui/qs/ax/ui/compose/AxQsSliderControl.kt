@@ -348,15 +348,14 @@ private fun AxQsSlider(
     val logicalThumbHeight =
         if (vertical) CommonTileDefaults.TileHeight * sliderScale else HorizontalSliderThumbHeight
     val thumbSize = DpSize(width = logicalThumbWidth, height = logicalThumbHeight)
-    // Glass pill: 16dp along track × full track thickness (horizontal layout; vertical is rotated).
-    val visualAlongTrack =
-        if (isStyled) StyledSliderThumbTokens.AlongTrack * sliderScale else logicalThumbWidth
+    // Glass pill: 16dp along track × track+overhang (protrudes past segments like stock).
     val visualPillSize =
         if (isStyled) {
-            DpSize(width = visualAlongTrack, height = sliderHeight)
+            StyledSliderThumbTokens.pillSizeHorizontal(sliderHeight, sliderScale)
         } else {
             thumbSize
         }
+    val visualAlongTrack = visualPillSize.width
     val trackCornerSize =
         if (vertical) sliderHeight / VERTICAL_SLIDER_CORNER_DIVISOR
         else HorizontalSliderCornerRadius
