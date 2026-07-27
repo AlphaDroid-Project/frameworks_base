@@ -104,9 +104,18 @@ object StyledSliderThumbTokens {
     /**
      * Along-track offset for the **visual** pill center relative to the logical thumb center.
      *
-     * Opaque thumbs sat on the value (split). Glass thumbs sit entirely on the active
-     * (accent) segment: bias by half the visual along-track size into the active side,
-     * plus edge compensation so the larger pill does not clip at 0%/100%.
+     * Ideal (mid-range): park the pill fully on the active side of the value split so the
+     * inactive-facing edge of the visual pill sits on the logical center
+     * (`offset = ±visualHalf`).
+     *
+     * Edges: the old centered-thumb compensation (`±maxEdge` added on top of the bias) was
+     * wrong for active-side parking — at min it pushed the pill off-track, at max it pulled
+     * the pill back from the end. Instead we **lerp the ideal bias toward a track-safe
+     * offset** only on the side that would overflow:
+     *
+     * - Active toward start (LTR horizontal): at f→0, lerp toward `+(visualHalf−logicalHalf)`
+     *   so the pill's outer edge sits on the track start; at mid/max use ideal `−visualHalf`.
+     * - Active toward end (vertical reverse): mirror — clamp only as f→1.
      *
      * @param fraction value in 0..1
      * @param visualAlongTrack visual pill extent along the track
@@ -124,24 +133,34 @@ object StyledSliderThumbTokens {
         val f = fraction.coerceIn(0f, 1f)
         val visualHalf = visualAlongTrack / 2
         val logicalHalf = logicalAlongTrack / 2
-        val maxEdge = (visualHalf - logicalHalf).coerceAtLeast(0.dp)
-        val edgeThreshold = 0.08f
+        // Offset that keeps the visual pill flush with the track edge when the logical
+        // thumb is already at its AOSP min/max rest position (~logicalHalf from the edge).
+        val trackSafeEdge = (visualHalf - logicalHalf).coerceAtLeast(0.dp)
+        val ideal = if (activeTowardStart) -visualHalf else visualHalf
+        // Slightly wider blend than before so the min clamp eases in earlier.
+        val edgeThreshold = 0.12f
 
-        val edge =
-            when {
-                f < edgeThreshold -> {
-                    val t = 1f - (f / edgeThreshold)
-                    maxEdge * t
-                }
-                f > (1f - edgeThreshold) -> {
-                    val t = (f - (1f - edgeThreshold)) / edgeThreshold
-                    -maxEdge * t
-                }
-                else -> 0.dp
+        return if (activeTowardStart) {
+            // Only the start overflows with a negative ideal bias.
+            if (f < edgeThreshold && trackSafeEdge > 0.dp) {
+                val t = f / edgeThreshold // 0 at min → 1 once clear of the edge zone
+                lerpDp(trackSafeEdge, ideal, t)
+            } else {
+                ideal
             }
+        } else {
+            // Only the end overflows with a positive ideal bias.
+            if (f > (1f - edgeThreshold) && trackSafeEdge > 0.dp) {
+                val t = (1f - f) / edgeThreshold // 0 at max → 1 once clear of the edge zone
+                lerpDp(-trackSafeEdge, ideal, t)
+            } else {
+                ideal
+            }
+        }
+    }
 
-        // Fully on accent: outer edge of the pill ≈ value split; body in active.
-        val activeBias = if (activeTowardStart) -visualHalf else visualHalf
-        return edge + activeBias
+    private fun lerpDp(from: Dp, to: Dp, t: Float): Dp {
+        val x = t.coerceIn(0f, 1f)
+        return from + (to - from) * x
     }
 }
