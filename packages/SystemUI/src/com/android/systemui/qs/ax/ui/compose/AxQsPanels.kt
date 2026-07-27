@@ -16,6 +16,7 @@
 
 package com.android.systemui.qs.ax.ui.compose
 
+import android.service.quicksettings.Tile.STATE_INACTIVE
 import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clipScrollableContainer
@@ -68,6 +69,8 @@ import androidx.compose.ui.unit.dp
 import com.android.compose.animation.Expandable
 import com.android.compose.animation.scene.ContentScope
 import com.android.compose.gesture.gesturesDisabled
+import com.android.systemui.alpha.style.qs.QSTileStyleWrapper
+import com.android.systemui.alpha.style.qs.rememberQsTileStyleRenderer
 import com.android.systemui.animation.Expandable as SystemUiExpandable
 import com.android.systemui.common.ui.compose.Icon as SystemUiIcon
 import com.android.systemui.common.ui.compose.PagerDots
@@ -447,22 +450,17 @@ private fun AxEditButton(
                     else Modifier.gesturesDisabled().clearAndSetSemantics {}
                 )
     ) {
-        Expandable(
-            color = AxTileDefaults.backgroundColor(),
-            shape = CircleShape,
+        AxQsHeaderCircleButton(
             onClick = { editModeButtonViewModel.onButtonClick() },
             modifier =
                 Modifier.sysuiResTag("qs_edit_mode_button").minimumInteractiveComponentSize(),
-            useModifierBasedImplementation = true,
         ) {
-            Box(modifier = Modifier.size(36.dp), contentAlignment = Alignment.Center) {
-                Icon(
-                    imageVector = Icons.Default.Edit,
-                    contentDescription = stringResource(R.string.accessibility_quick_settings_edit),
-                    tint = MaterialTheme.colorScheme.onSurface,
-                    modifier = Modifier.size(18.dp),
-                )
-            }
+            Icon(
+                imageVector = Icons.Default.Edit,
+                contentDescription = stringResource(R.string.accessibility_quick_settings_edit),
+                tint = MaterialTheme.colorScheme.onSurface,
+                modifier = Modifier.size(18.dp),
+            )
         }
     }
 }
@@ -475,23 +473,18 @@ private fun AxFooterOverflowMenu(viewModel: ToolbarViewModel) {
     val menuColor =
         AxTileDefaults.backgroundColor().compositeOver(MaterialTheme.colorScheme.surface)
     Box {
-        Expandable(
-            color = AxTileDefaults.backgroundColor(),
-            shape = CircleShape,
+        AxQsHeaderCircleButton(
             onClick = {
                 expandable = it
                 expanded = true
             },
             modifier = Modifier.minimumInteractiveComponentSize(),
-            useModifierBasedImplementation = true,
         ) {
-            Box(modifier = Modifier.size(36.dp), contentAlignment = Alignment.Center) {
-                Icon(
-                    imageVector = Icons.Default.MoreVert,
-                    contentDescription = stringResource(R.string.qs_edit_menu_content_description),
-                    tint = MaterialTheme.colorScheme.onSurface,
-                )
-            }
+            Icon(
+                imageVector = Icons.Default.MoreVert,
+                contentDescription = stringResource(R.string.qs_edit_menu_content_description),
+                tint = MaterialTheme.colorScheme.onSurface,
+            )
         }
         DropdownMenu(
             expanded = expanded,
@@ -576,21 +569,54 @@ private fun FooterIconButton(
     modifier: Modifier = Modifier,
 ) {
     if (model == null) return
-    Expandable(
-        color = containerColor,
-        shape = CircleShape,
+    AxQsHeaderCircleButton(
         onClick = model.onClick,
+        containerColor = containerColor,
+        modifier = modifier,
+    ) {
+        SystemUiIcon(
+            icon = model.icon,
+            tint = MaterialTheme.colorScheme.onSurface,
+            modifier = Modifier.size(20.dp),
+        )
+    }
+}
+
+/**
+ * Top-bar circular action (edit / settings / overflow). Keeps [Expandable] morph for launches, but
+ * paints inactive UI Styles chrome like the control-zone icon buttons.
+ */
+@Composable
+private fun AxQsHeaderCircleButton(
+    onClick: (SystemUiExpandable) -> Unit,
+    modifier: Modifier = Modifier,
+    containerColor: Color = AxTileDefaults.backgroundColor(),
+    content: @Composable () -> Unit,
+) {
+    val styleRenderer = rememberQsTileStyleRenderer()
+    // Transparent Expandable fill so the style wrapper is the sole chrome (same empty-media trick).
+    Expandable(
+        color = Color.Transparent,
+        shape = CircleShape,
+        onClick = onClick,
         modifier = modifier,
         useModifierBasedImplementation = true,
     ) {
-        Box(modifier = Modifier.size(36.dp), contentAlignment = Alignment.Center) {
-            SystemUiIcon(
-                icon = model.icon,
-                tint = MaterialTheme.colorScheme.onSurface,
-                modifier = Modifier.size(20.dp),
-            )
+        Box(modifier = Modifier.size(AxQsHeaderButtonSize), contentAlignment = Alignment.Center) {
+            QSTileStyleWrapper(
+                renderer = styleRenderer,
+                shape = CircleShape,
+                state = STATE_INACTIVE,
+                materialColor = containerColor,
+                isSmallTile = true,
+                modifier = Modifier.matchParentSize(),
+            ) {
+                Box(Modifier.fillMaxSize().background(containerColor, CircleShape))
+            }
+            content()
         }
     }
 }
 
+private val AxQsHeaderButtonSize = 36.dp
 private const val EDIT_BUTTON_ENABLE_THRESHOLD = 0.99f
