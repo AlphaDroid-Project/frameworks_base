@@ -91,6 +91,10 @@ SPDX-License-Identifier: Apache-2.0
             <include layout="@layout/ui_style_item_row"
                 android:id="@+id/row_metallic" />
 
+            <!-- 9: Lumen -->
+            <include layout="@layout/ui_style_item_row"
+                android:id="@+id/row_lumen" />
+
         </LinearLayout>
     </ScrollView>
 

@@ -51,10 +51,11 @@ class UiStyleRepository @Inject constructor(
         const val SLASH = "slash"
         const val AEROGEL = "aerogel"
         const val METALLIC = "metallic"
+        const val LUMEN = "lumen"
 
         val SUPPORTED_STYLE_IDS = listOf(
             SYSTEM_DEFAULT, OUTLINE, NEON, BEVEL, GRADIENT,
-            REFLECTIVE, SLASH, AEROGEL, METALLIC
+            REFLECTIVE, SLASH, AEROGEL, METALLIC, LUMEN
         )
 
         private const val KEY_SELECTED_STYLE = "ui_style"
@@ -67,7 +68,8 @@ class UiStyleRepository @Inject constructor(
             REFLECTIVE to "ui_style_reflective_params",
             METALLIC to "ui_style_metallic_params",
             SLASH to "ui_style_slash_params",
-            AEROGEL to "ui_style_aerogel_params"
+            AEROGEL to "ui_style_aerogel_params",
+            LUMEN to "ui_style_lumen_params"
         )
     }
 

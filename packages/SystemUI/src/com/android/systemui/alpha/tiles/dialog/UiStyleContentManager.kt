@@ -57,7 +57,8 @@ constructor(
         Triple("reflective", R.id.row_reflective, InternalR.string.ui_style_reflective),
         Triple("slash", R.id.row_slash, InternalR.string.ui_style_slash),
         Triple("aerogel", R.id.row_aerogel, InternalR.string.ui_style_aerogel),
-        Triple("metallic", R.id.row_metallic, InternalR.string.ui_style_metallic)
+        Triple("metallic", R.id.row_metallic, InternalR.string.ui_style_metallic),
+        Triple("lumen", R.id.row_lumen, InternalR.string.ui_style_lumen)
     )
 
     fun bind(view: View, scope: CoroutineScope) {

@@ -12,6 +12,7 @@ import com.android.systemui.alpha.style.UiStyleState
 import com.android.systemui.alpha.style.qs.renderers.QSBevelStyleRenderer
 import com.android.systemui.alpha.style.qs.renderers.QSAerogelStyleRenderer
 import com.android.systemui.alpha.style.qs.renderers.QSGradientStyleRenderer
+import com.android.systemui.alpha.style.qs.renderers.QSLumenStyleRenderer
 import com.android.systemui.alpha.style.qs.renderers.QSMetallicStyleRenderer
 import com.android.systemui.alpha.style.qs.renderers.QSNeonStyleRenderer
 import com.android.systemui.alpha.style.qs.renderers.QSOutlineStyleRenderer
@@ -113,6 +114,13 @@ class QSTileStyleManager @Inject constructor(
                 userSettings = settings
             )
 
+            "lumen" -> QSLumenStyleRenderer(
+                accentColor = accentColor,
+                neutralColor = neutralColor,
+                isDarkTheme = isDark,
+                userSettings = settings
+            )
+
             else -> null
         }
     }
@@ -132,6 +140,7 @@ class QSTileStyleManager @Inject constructor(
             "slash" -> "Slash"
             "aerogel" -> "Aerogel"
             "metallic" -> "Metallic"
+            "lumen" -> "Lumen"
             else -> "Unknown"
         }
     }

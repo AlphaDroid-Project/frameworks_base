@@ -38,6 +38,7 @@
     <java-symbol type="string" name="ui_style_slash" />
     <java-symbol type="string" name="ui_style_aerogel" />
     <java-symbol type="string" name="ui_style_metallic" />
+    <java-symbol type="string" name="ui_style_lumen" />
 
     <!-- UI Style Descriptions -->
     <java-symbol type="string" name="ui_style_system_default_description" />
@@ -49,6 +50,7 @@
     <java-symbol type="string" name="ui_style_slash_description" />
     <java-symbol type="string" name="ui_style_aerogel_description" />
     <java-symbol type="string" name="ui_style_metallic_description" />
+    <java-symbol type="string" name="ui_style_lumen_description" />
 
     <java-symbol type="string" name="ui_style_param_saturation" />
     <java-symbol type="string" name="ui_style_param_lightness" />

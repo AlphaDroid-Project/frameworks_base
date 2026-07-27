@@ -148,6 +148,7 @@ constructor(
             "slash" -> mContext.getString(InternalR.string.ui_style_slash)
             "aerogel" -> mContext.getString(InternalR.string.ui_style_aerogel)
             "metallic" -> mContext.getString(InternalR.string.ui_style_metallic)
+            "lumen" -> mContext.getString(InternalR.string.ui_style_lumen)
             else -> id.replaceFirstChar { it.uppercase() }
         }
     }

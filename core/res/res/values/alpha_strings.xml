@@ -43,6 +43,7 @@
     <string name="ui_style_slash">Slash</string>
     <string name="ui_style_aerogel">Aerogel</string>
     <string name="ui_style_metallic">Metallic</string>
+    <string name="ui_style_lumen">Lumen</string>
 
     <!-- Style descriptions -->
     <string name="ui_style_system_default_description">Clean Material You design with dynamic colors</string>
@@ -54,6 +55,7 @@
     <string name="ui_style_slash_description">Darker subtle depth with a thin diagonal cut line</string>
     <string name="ui_style_aerogel_description">Translucent surface with a soft overhead light effect</string>
     <string name="ui_style_metallic_description">Polished metal with diagonal shine</string>
+    <string name="ui_style_lumen_description">Soft outer halo and thin rim light along tile edges</string>
 
     <!-- Tuning Dialog Parameters -->
     <string name="ui_style_param_saturation">Vibrancy (Saturation)</string>
