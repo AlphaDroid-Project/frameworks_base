@@ -18,10 +18,13 @@ import com.android.systemui.qs.composefragment.viewmodel.QSFragmentComposeViewMo
 /**
  * CompositionLocal for accessing QSFragmentComposeViewModel from any composable.
  * This avoids having to pass qsTileStyleManager through every composable's parameters.
+ *
+ * Default is null: media (and other) surfaces can host outside [QSFragmentCompose]
+ * (e.g. lockscreen). Callers that need the VM must handle null; [rememberQsTileStyleRenderer]
+ * degrades to unstyled when absent.
  */
-val LocalQSFragmentComposeViewModel = compositionLocalOf<QSFragmentComposeViewModel> {
-    error("QSFragmentComposeViewModel not provided")
-}
+val LocalQSFragmentComposeViewModel =
+    compositionLocalOf<QSFragmentComposeViewModel?> { null }
 
 /**
  * Low-level function that creates a QS tile style renderer from an explicit style manager.
@@ -60,13 +63,11 @@ fun rememberQSTileStyleRenderer(
  * High-level convenience function that creates a QS tile style renderer.
  * Gets the style manager from CompositionLocal automatically.
  *
- * @return QSTileStyleRenderer or null if style is "none" or "system_default"
+ * @return QSTileStyleRenderer or null if style is "none"/"system_default", or if
+ *   [LocalQSFragmentComposeViewModel] is not provided (non-QS hosts such as lockscreen media)
  */
 @Composable
 fun rememberQsTileStyleRenderer(): QSTileStyleRenderer? {
-    // Get the ViewModel from CompositionLocal
-    val viewModel = LocalQSFragmentComposeViewModel.current
-
-    // Delegate to the low-level function with explicit manager
+    val viewModel = LocalQSFragmentComposeViewModel.current ?: return null
     return rememberQSTileStyleRenderer(viewModel.qsTileStyleManager)
 }
