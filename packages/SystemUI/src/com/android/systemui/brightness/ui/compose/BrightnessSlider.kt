@@ -97,6 +97,7 @@ import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.input.pointer.pointerInteropFilter
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.dimensionResource
@@ -418,6 +419,7 @@ fun BrightnessSlider(
             getCornerRadiusForShape(shapeMode, visualThumbAlongTrackPx)
         }
     val isDark = isSystemInDarkTheme()
+    val layoutDirection = LocalLayoutDirection.current
     val thumbColor =
         if (isStyled) {
             StyledSliderThumbTokens.glassFill(isDark)
@@ -477,24 +479,15 @@ fun BrightnessSlider(
                     if (isStyled) {
                         val fraction = (animatedValue - floatValueRange.start) /
                             (floatValueRange.endInclusive - floatValueRange.start)
-
-                        val visualHalf = visualThumbAlongTrack / 2
-                        val logicalHalf = logicalThumbWidth / 2
-                        val maxOffset = visualHalf - logicalHalf
-
-                        val edgeThreshold = 0.08f
-
-                        val centerOffset: Dp = when {
-                            fraction < edgeThreshold -> {
-                                val t = 1f - (fraction / edgeThreshold)
-                                maxOffset * t
-                            }
-                            fraction > (1f - edgeThreshold) -> {
-                                val t = (fraction - (1f - edgeThreshold)) / edgeThreshold
-                                -maxOffset * t
-                            }
-                            else -> 0.dp
-                        }
+                        val activeTowardStart =
+                            layoutDirection == LayoutDirection.Ltr
+                        val centerOffset =
+                            StyledSliderThumbTokens.visualCenterOffsetAlongTrack(
+                                fraction = fraction,
+                                visualAlongTrack = visualThumbAlongTrack,
+                                logicalAlongTrack = logicalThumbWidth,
+                                activeTowardStart = activeTowardStart,
+                            )
 
                         Box(
                             modifier = Modifier

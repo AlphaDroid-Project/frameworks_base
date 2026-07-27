@@ -276,6 +276,8 @@ private fun VolumeDialogSlider(
                         StyledSliderThumbTokens.cornerRadiusPx(visualPillSize, density)
 
                     val fraction = sliderState.coercedValueAsFraction
+                    // Horizontal: Material active toward start (LTR). Vertical reverse dialog:
+                    // inactive on top / active below → bias into +Y (activeTowardStart = false).
                     val (offsetX, offsetY) = calculateVolumeThumbOffset(
                         fraction = fraction,
                         isVertical = isVolumeDialogVertical,
@@ -377,34 +379,28 @@ private fun calculateVolumeThumbOffset(
     visualAlongTrack: Dp,
     logicalThumbSize: DpSize,
 ): Pair<Dp, Dp> {
-    val visualHalf = visualAlongTrack / 2
-    val logicalHalf =
+    val logicalAlong =
         if (isVertical) {
-            logicalThumbSize.height / 2
+            logicalThumbSize.height
         } else {
-            logicalThumbSize.width / 2
+            logicalThumbSize.width
         }
-
-    val maxOffset = visualHalf - logicalHalf
-    val edgeThreshold = 0.08f
-
-    val offset =
-        when {
-            fraction < edgeThreshold -> {
-                val t = 1f - (fraction / edgeThreshold)
-                maxOffset * t
-            }
-            fraction > (1f - edgeThreshold) -> {
-                val t = (fraction - (1f - edgeThreshold)) / edgeThreshold
-                -maxOffset * t
-            }
-            else -> 0.dp
-        }
+    // Vertical reverse volume track: active fills below the split → positive Y bias.
+    // Horizontal LTR: active toward start → negative X (handled inside helper).
+    val activeTowardStart = !isVertical
+    val alongOffset =
+        StyledSliderThumbTokens.visualCenterOffsetAlongTrack(
+            fraction = fraction,
+            visualAlongTrack = visualAlongTrack,
+            logicalAlongTrack = logicalAlong,
+            activeTowardStart = activeTowardStart,
+        )
 
     return if (isVertical) {
-        0.dp to -offset
+        // Helper uses activeTowardStart=false → +alongOffset into active (down).
+        0.dp to alongOffset
     } else {
-        offset to 0.dp
+        alongOffset to 0.dp
     }
 }
 

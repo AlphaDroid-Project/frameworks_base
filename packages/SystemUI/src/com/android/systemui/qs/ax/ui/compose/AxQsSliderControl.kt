@@ -439,8 +439,8 @@ private fun AxQsSlider(
 /**
  * UI Styles glass-pill thumb (see [StyledSliderThumbTokens] / uistyles.md round 1).
  *
- * Neutral frosted fill + style bevel overlay; 16dp along track × track thickness.
- * Vertical ax sliders are rotated horizontal, so offset is always along X.
+ * Neutral frost + bevel; track-relative size. Drawn fully on the active (accent) side of
+ * the value split (not centered). Vertical ax sliders are rotated horizontal → offset on X.
  */
 @Composable
 private fun AxQsStyledSliderThumb(
@@ -454,22 +454,16 @@ private fun AxQsStyledSliderThumb(
 ) {
     val span = (valueRange.endInclusive - valueRange.start).takeIf { it != 0f } ?: 1f
     val fraction = ((value - valueRange.start) / span).coerceIn(0f, 1f)
-    val visualHalf = visualPillSize.width / 2
-    val logicalHalf = logicalThumbSize.width / 2
-    val maxOffset = visualHalf - logicalHalf
-    val edgeThreshold = 0.08f
-    val centerOffset: Dp =
-        when {
-            fraction < edgeThreshold -> {
-                val t = 1f - (fraction / edgeThreshold)
-                maxOffset * t
-            }
-            fraction > (1f - edgeThreshold) -> {
-                val t = (fraction - (1f - edgeThreshold)) / edgeThreshold
-                -maxOffset * t
-            }
-            else -> 0.dp
-        }
+    val layoutDirection = LocalLayoutDirection.current
+    // Material LTR: active toward start (−X). RTL flips.
+    val activeTowardStart = layoutDirection == LayoutDirection.Ltr
+    val centerOffset =
+        StyledSliderThumbTokens.visualCenterOffsetAlongTrack(
+            fraction = fraction,
+            visualAlongTrack = visualPillSize.width,
+            logicalAlongTrack = logicalThumbSize.width,
+            activeTowardStart = activeTowardStart,
+        )
     val thumbShape = StyledSliderThumbTokens.PillShape
     val cornerRadiusPx = StyledSliderThumbTokens.cornerRadiusPx(visualPillSize, density)
 

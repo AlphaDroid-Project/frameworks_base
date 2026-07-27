@@ -100,4 +100,48 @@ object StyledSliderThumbTokens {
         val minSide = minOf(pillSize.width, pillSize.height)
         return with(density) { (minSide / 2).toPx() }
     }
+
+    /**
+     * Along-track offset for the **visual** pill center relative to the logical thumb center.
+     *
+     * Opaque thumbs sat on the value (split). Glass thumbs sit entirely on the active
+     * (accent) segment: bias by half the visual along-track size into the active side,
+     * plus edge compensation so the larger pill does not clip at 0%/100%.
+     *
+     * @param fraction value in 0..1
+     * @param visualAlongTrack visual pill extent along the track
+     * @param logicalAlongTrack AOSP logical thumb extent along the track (usually 4dp)
+     * @param activeTowardStart true when active fill grows toward the track start
+     *   (Material horizontal LTR: true → negative X). False when active grows toward the
+     *   end (e.g. volume dialog vertical with active below the thumb → positive Y).
+     */
+    fun visualCenterOffsetAlongTrack(
+        fraction: Float,
+        visualAlongTrack: Dp,
+        logicalAlongTrack: Dp,
+        activeTowardStart: Boolean = true,
+    ): Dp {
+        val f = fraction.coerceIn(0f, 1f)
+        val visualHalf = visualAlongTrack / 2
+        val logicalHalf = logicalAlongTrack / 2
+        val maxEdge = (visualHalf - logicalHalf).coerceAtLeast(0.dp)
+        val edgeThreshold = 0.08f
+
+        val edge =
+            when {
+                f < edgeThreshold -> {
+                    val t = 1f - (f / edgeThreshold)
+                    maxEdge * t
+                }
+                f > (1f - edgeThreshold) -> {
+                    val t = (f - (1f - edgeThreshold)) / edgeThreshold
+                    -maxEdge * t
+                }
+                else -> 0.dp
+            }
+
+        // Fully on accent: outer edge of the pill ≈ value split; body in active.
+        val activeBias = if (activeTowardStart) -visualHalf else visualHalf
+        return edge + activeBias
+    }
 }
