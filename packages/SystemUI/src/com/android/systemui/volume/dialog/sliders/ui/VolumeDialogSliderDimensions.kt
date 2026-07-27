@@ -16,7 +16,16 @@ import androidx.compose.ui.unit.dp
 
 internal object VolumeDialogSliderDimensions {
     val TrackThickness: Dp = 40.dp
-    val StyledVisualThumbSize: Dp = TrackThickness + 4.dp
+
+    /**
+     * Styled visual thumb extent **along** the track (UI Styles glass pill).
+     * Cross-track extent is [TrackThickness]. Legacy square size was TrackThickness + 4.
+     */
+    val StyledVisualThumbAlongTrack: Dp =
+        com.android.systemui.alpha.style.slider.StyledSliderThumbTokens.AlongTrack
+
+    /** @deprecated Prefer [StyledVisualThumbAlongTrack] + track thickness pill. */
+    val StyledVisualThumbSize: Dp = StyledVisualThumbAlongTrack
 
     // Logical AOSP thumb sizes used by slider behavior/math.
     val VerticalLogicalThumbSize: DpSize = DpSize(width = 52.dp, height = 4.dp)

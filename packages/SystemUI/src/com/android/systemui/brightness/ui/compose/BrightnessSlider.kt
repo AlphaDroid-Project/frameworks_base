@@ -117,11 +117,13 @@ import com.android.compose.modifiers.sliderPercentage
 import com.android.compose.modifiers.thenIf
 import com.android.compose.theme.LocalAndroidColorScheme
 import com.android.compose.ui.graphics.drawInOverlay
+import androidx.compose.foundation.isSystemInDarkTheme
 import com.android.systemui.alpha.style.brightness.BrightnessMaterialColors
 import com.android.systemui.alpha.style.brightness.BrightnessSliderStyleWrapper
 import com.android.systemui.alpha.style.brightness.renderers.BrightnessSliderStyleRenderer
 import com.android.systemui.alpha.style.common.LocalAlphaColorScheme
 import com.android.systemui.alpha.style.common.defaultAlphaColorScheme
+import com.android.systemui.alpha.style.slider.StyledSliderThumbTokens
 import com.android.systemui.biometrics.Utils.toBitmap
 import com.android.systemui.brightness.shared.model.GammaBrightness
 import com.android.systemui.brightness.ui.compose.AnimationSpecs.IconAppearSpec
@@ -159,6 +161,7 @@ internal object ThumbDimensions {
         @ReadOnlyComposable
         get() = dimensionResource(id = R.dimen.overlay_qs_layout_brightness_thumb_height)
 
+    /** @deprecated UI Styles glass pill uses [com.android.systemui.alpha.style.slider.StyledSliderThumbTokens]. */
     val StyledSize = 48.dp
 }
 
@@ -391,16 +394,35 @@ fun BrightnessSlider(
     val logicalThumbWidth = ThumbDimensions.AospWidth
     val logicalThumbHeight = ThumbDimensions.AospHeight
     val logicalThumbWidthPx = with(density) { logicalThumbWidth.toPx() }
-    val visualThumbSize =
-        if (isStyled) ThumbDimensions.StyledSize else logicalThumbWidth
-    val visualThumbSizePx = with(density) { visualThumbSize.toPx() }
-    val thumbCornerRadius = getCornerRadiusForShape(shapeMode, visualThumbSizePx)
-    val thumbShape = getShapeForMode(shapeMode, visualThumbSize)
-
+    val sliderHeight = TrackHeight
+    // UI Styles glass pill: 16dp along track × track thickness (not accent square).
+    val visualPillSize =
+        if (isStyled) {
+            StyledSliderThumbTokens.pillSizeHorizontal(sliderHeight)
+        } else {
+            DpSize(logicalThumbWidth, logicalThumbHeight)
+        }
+    val visualThumbAlongTrack =
+        if (isStyled) StyledSliderThumbTokens.AlongTrack else logicalThumbWidth
+    val visualThumbAlongTrackPx = with(density) { visualThumbAlongTrack.toPx() }
+    val thumbShape =
+        if (isStyled) {
+            StyledSliderThumbTokens.PillShape
+        } else {
+            getShapeForMode(shapeMode, visualThumbAlongTrack)
+        }
+    val thumbCornerRadius =
+        if (isStyled) {
+            StyledSliderThumbTokens.cornerRadiusPx(visualPillSize, density)
+        } else {
+            getCornerRadiusForShape(shapeMode, visualThumbAlongTrackPx)
+        }
+    val isDark = isSystemInDarkTheme()
     val thumbColor =
-        remember(styleRenderer, colorScheme) {
-            styleRenderer?.getThumbColor(colorScheme.thumb, colorScheme.accent)
-                ?: colorScheme.thumb
+        if (isStyled) {
+            StyledSliderThumbTokens.glassFill(isDark)
+        } else {
+            colorScheme.thumb
         }
 
     Row(
@@ -456,7 +478,7 @@ fun BrightnessSlider(
                         val fraction = (animatedValue - floatValueRange.start) /
                             (floatValueRange.endInclusive - floatValueRange.start)
 
-                        val visualHalf = ThumbDimensions.StyledSize / 2
+                        val visualHalf = StyledSliderThumbTokens.AlongTrack / 2
                         val logicalHalf = logicalThumbWidth / 2
                         val maxOffset = visualHalf - logicalHalf
 
@@ -477,7 +499,7 @@ fun BrightnessSlider(
                         Box(
                             modifier = Modifier
                                 .offset(x = centerOffset)
-                                .requiredSize(visualThumbSize)
+                                .requiredSize(visualPillSize)
                                 .clip(thumbShape)
                         ) {
                             Canvas(modifier = Modifier.fillMaxSize()) {
@@ -537,7 +559,6 @@ fun BrightnessSlider(
                     }
                 }
 
-                val sliderHeight = TrackHeight
                 val effectiveThumbGap = if (isStyled) 0.dp else ThumbTrackGapSize
                 val trackInsideCornerDp: Dp = innerCornerDp
                 val trackCornerPx = with(density) { trackCornerDp.toPx() }
@@ -629,7 +650,7 @@ fun BrightnessSlider(
                         val fraction = sliderState.coercedValueAsFraction
 
                         val visualThumbWidthPx =
-                            if (isStyled) visualThumbSizePx
+                            if (isStyled) visualThumbAlongTrackPx
                             else logicalThumbWidthPx
                         val visualThumbHalf = visualThumbWidthPx / 2f
 

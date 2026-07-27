@@ -104,10 +104,12 @@ import com.android.compose.PlatformSliderDefaults
 import com.android.compose.gesture.gesturesDisabled
 import com.android.compose.modifiers.sliderPercentage
 import com.android.compose.ui.graphics.drawInOverlay
+import androidx.compose.foundation.isSystemInDarkTheme
 import com.android.systemui.alpha.style.brightness.BrightnessSliderStyleManager
 import com.android.systemui.alpha.style.brightness.renderers.BrightnessSliderStyleRenderer
 import com.android.systemui.alpha.style.common.LocalAlphaColorScheme
 import com.android.systemui.alpha.style.common.defaultAlphaColorScheme
+import com.android.systemui.alpha.style.slider.StyledSliderThumbTokens
 import com.android.systemui.alpha.style.volume.VolumeSliderStyleManager
 import com.android.systemui.brightness.shared.model.GammaBrightness
 import com.android.systemui.brightness.ui.viewmodel.BrightnessSliderViewModel
@@ -266,11 +268,16 @@ private fun AxQsSlider(
     val scheme = LocalAlphaColorScheme.current
     val density = LocalDensity.current
     val isStyled = styleRenderer != null
+    val isDark = isSystemInDarkTheme()
     val inactiveTrackColor = if (isStyled) scheme.neutral else AxTileDefaults.backgroundColor()
     val activeTrackColor = if (isStyled) scheme.accent else MaterialTheme.colorScheme.primary
-    val schemeThumb = if (isStyled) scheme.thumb else MaterialTheme.colorScheme.primary
+    // Styled: neutral glass pill (no accent). Unstyled: Material primary.
     val thumbColor =
-        styleRenderer?.getThumbColor(schemeThumb, scheme.accent) ?: schemeThumb
+        if (isStyled) {
+            StyledSliderThumbTokens.glassFill(isDark)
+        } else {
+            MaterialTheme.colorScheme.primary
+        }
     val onActive = if (isStyled) scheme.onAccent else MaterialTheme.colorScheme.onPrimary
     val onInactive = if (isStyled) scheme.onNeutral else MaterialTheme.colorScheme.onSurface
     val sliderScale = if (vertical) sliderHeight / AxSliderTrackHeight else 1f
@@ -341,8 +348,15 @@ private fun AxQsSlider(
     val logicalThumbHeight =
         if (vertical) CommonTileDefaults.TileHeight * sliderScale else HorizontalSliderThumbHeight
     val thumbSize = DpSize(width = logicalThumbWidth, height = logicalThumbHeight)
-    // Match volume-dialog: visual thumb is slightly taller than track thickness.
-    val visualThumbSize = sliderHeight + 4.dp * sliderScale
+    // Glass pill: 16dp along track × full track thickness (horizontal layout; vertical is rotated).
+    val visualAlongTrack =
+        if (isStyled) StyledSliderThumbTokens.AlongTrack * sliderScale else logicalThumbWidth
+    val visualPillSize =
+        if (isStyled) {
+            DpSize(width = visualAlongTrack, height = sliderHeight)
+        } else {
+            thumbSize
+        }
     val trackCornerSize =
         if (vertical) sliderHeight / VERTICAL_SLIDER_CORNER_DIVISOR
         else HorizontalSliderCornerRadius
@@ -364,7 +378,7 @@ private fun AxQsSlider(
                     value = value,
                     valueRange = valueRange,
                     logicalThumbSize = thumbSize,
-                    visualThumbSize = visualThumbSize,
+                    visualPillSize = visualPillSize,
                     thumbColor = thumbColor,
                     styleRenderer = styleRenderer,
                     density = density,
@@ -390,7 +404,7 @@ private fun AxQsSlider(
                 styleRenderer = styleRenderer,
                 // Vertical Ax sliders are rotated horizontal; track layout is always horizontal.
                 isVertical = false,
-                visualThumbAlongTrack = if (isStyled) visualThumbSize else null,
+                visualThumbAlongTrack = if (isStyled) visualAlongTrack else null,
                 modifier = Modifier.background(trackBackgroundColor, trackShape),
                 activeTrackEndIcon = { iconsState ->
                     AxQsSliderIcon(
@@ -424,24 +438,24 @@ private fun AxQsSlider(
 }
 
 /**
- * Styled thumb for Ax QS sliders (same approach as brightness / volume-dialog: larger visual thumb
- * with edge-compensating offset + style overlay + inset bevel).
+ * UI Styles glass-pill thumb (see [StyledSliderThumbTokens] / uistyles.md round 1).
  *
- * Vertical sliders are drawn as horizontal tracks rotated -90°, so offset is always along X.
+ * Neutral frosted fill + style bevel overlay; 16dp along track × track thickness.
+ * Vertical ax sliders are rotated horizontal, so offset is always along X.
  */
 @Composable
 private fun AxQsStyledSliderThumb(
     value: Float,
     valueRange: ClosedFloatingPointRange<Float>,
     logicalThumbSize: DpSize,
-    visualThumbSize: Dp,
+    visualPillSize: DpSize,
     thumbColor: Color,
     styleRenderer: BrightnessSliderStyleRenderer?,
     density: Density,
 ) {
     val span = (valueRange.endInclusive - valueRange.start).takeIf { it != 0f } ?: 1f
     val fraction = ((value - valueRange.start) / span).coerceIn(0f, 1f)
-    val visualHalf = visualThumbSize / 2
+    val visualHalf = visualPillSize.width / 2
     val logicalHalf = logicalThumbSize.width / 2
     val maxOffset = visualHalf - logicalHalf
     val edgeThreshold = 0.08f
@@ -457,8 +471,8 @@ private fun AxQsStyledSliderThumb(
             }
             else -> 0.dp
         }
-    val thumbShape = RoundedCornerShape(percent = 50)
-    val cornerRadiusPx = with(density) { (visualThumbSize / 2).toPx() }
+    val thumbShape = StyledSliderThumbTokens.PillShape
+    val cornerRadiusPx = StyledSliderThumbTokens.cornerRadiusPx(visualPillSize, density)
 
     Box(
         contentAlignment = Alignment.Center,
@@ -467,7 +481,7 @@ private fun AxQsStyledSliderThumb(
         Box(
             modifier =
                 Modifier.offset(x = centerOffset)
-                    .requiredSize(visualThumbSize)
+                    .requiredSize(visualPillSize)
                     .clip(thumbShape),
         ) {
             Canvas(modifier = Modifier.fillMaxSize()) {

@@ -59,6 +59,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.android.compose.theme.PlatformTheme
 import com.android.systemui.alpha.style.common.LocalAlphaColorScheme
 import com.android.systemui.alpha.style.common.defaultAlphaColorScheme
+import com.android.systemui.alpha.style.slider.StyledSliderThumbTokens
 import com.android.systemui.alpha.style.volume.VolumeSliderStyleManager
 import com.android.systemui.common.ui.compose.Icon
 import com.android.systemui.haptics.slider.SliderHapticFeedbackFilter
@@ -69,8 +70,6 @@ import com.android.systemui.volume.dialog.sliders.dagger.VolumeDialogSliderScope
 import com.android.systemui.volume.dialog.sliders.ui.compose.SliderTrack
 import com.android.systemui.volume.dialog.sliders.ui.viewmodel.VolumeDialogOverscrollViewModel
 import com.android.systemui.volume.dialog.sliders.ui.viewmodel.VolumeDialogSliderViewModel
-import com.android.systemui.volume.dialog.ui.utils.getVolumeThumbOrButtonCornerRadiusForMode
-import com.android.systemui.volume.dialog.ui.utils.getVolumeThumbOrButtonShapeForMode
 import com.android.systemui.volume.dialog.ui.utils.rememberVolumeSliderShapeMode
 import com.android.systemui.volume.dialog.ui.utils.useCustomVolumeThumb
 import com.android.systemui.volume.haptics.ui.VolumeHapticsConfigsProvider
@@ -261,36 +260,25 @@ private fun VolumeDialogSlider(
                         thumbSize = logicalThumbSize,
                     )
                 } else {
-                    val visualThumbSize = VolumeDialogSliderDimensions.StyledVisualThumbSize
-                    val thumbColor = styleRenderer?.getThumbColor(
-                        themedScheme.thumb,
-                        themedScheme.accent,
-                    ) ?: themedScheme.thumb
-
-                    val defaultThumbShape = remember(visualThumbSize) {
-                        RoundedCornerShape(visualThumbSize * 0.25f)
-                    }
-                    val defaultCornerRadius = with(density) {
-                        (visualThumbSize * 0.25f).toPx()
-                    }
-                    val thumbShape = getVolumeThumbOrButtonShapeForMode(
-                        shapeMode = shapeMode,
-                        sizeDp = visualThumbSize,
-                        defaultShape = defaultThumbShape,
-                    )
-                    val thumbCornerRadius = with(density) {
-                        getVolumeThumbOrButtonCornerRadiusForMode(
-                            shapeMode = shapeMode,
-                            sizePx = visualThumbSize.toPx(),
-                            defaultCornerRadius = defaultCornerRadius,
-                        )
-                    }
+                    // UI Styles glass pill: 16dp along track × track thickness, neutral frost.
+                    val trackThickness = VolumeDialogSliderDimensions.TrackThickness
+                    val visualPillSize =
+                        if (isVolumeDialogVertical) {
+                            StyledSliderThumbTokens.pillSizeVertical(trackThickness)
+                        } else {
+                            StyledSliderThumbTokens.pillSizeHorizontal(trackThickness)
+                        }
+                    val thumbColor =
+                        StyledSliderThumbTokens.glassFill(isDarkTheme = styleState.isNightMode)
+                    val thumbShape = StyledSliderThumbTokens.PillShape
+                    val thumbCornerRadius =
+                        StyledSliderThumbTokens.cornerRadiusPx(visualPillSize, density)
 
                     val fraction = sliderState.coercedValueAsFraction
                     val (offsetX, offsetY) = calculateVolumeThumbOffset(
                         fraction = fraction,
                         isVertical = isVolumeDialogVertical,
-                        visualThumbSize = visualThumbSize,
+                        visualAlongTrack = StyledSliderThumbTokens.AlongTrack,
                         logicalThumbSize = logicalThumbSize,
                     )
 
@@ -301,7 +289,7 @@ private fun VolumeDialogSlider(
                         Box(
                             modifier = Modifier
                                 .offset(x = offsetX, y = offsetY)
-                                .requiredSize(visualThumbSize)
+                                .requiredSize(visualPillSize)
                                 .clip(thumbShape),
                         ) {
                             Canvas(modifier = Modifier.fillMaxSize()) {
@@ -385,30 +373,32 @@ private fun DrawScope.drawThumbInset(
 private fun calculateVolumeThumbOffset(
     fraction: Float,
     isVertical: Boolean,
-    visualThumbSize: Dp,
+    visualAlongTrack: Dp,
     logicalThumbSize: DpSize,
 ): Pair<Dp, Dp> {
-    val visualHalf = visualThumbSize / 2
-    val logicalHalf = if (isVertical) {
-        logicalThumbSize.height / 2
-    } else {
-        logicalThumbSize.width / 2
-    }
+    val visualHalf = visualAlongTrack / 2
+    val logicalHalf =
+        if (isVertical) {
+            logicalThumbSize.height / 2
+        } else {
+            logicalThumbSize.width / 2
+        }
 
     val maxOffset = visualHalf - logicalHalf
     val edgeThreshold = 0.08f
 
-    val offset = when {
-        fraction < edgeThreshold -> {
-            val t = 1f - (fraction / edgeThreshold)
-            maxOffset * t
+    val offset =
+        when {
+            fraction < edgeThreshold -> {
+                val t = 1f - (fraction / edgeThreshold)
+                maxOffset * t
+            }
+            fraction > (1f - edgeThreshold) -> {
+                val t = (fraction - (1f - edgeThreshold)) / edgeThreshold
+                -maxOffset * t
+            }
+            else -> 0.dp
         }
-        fraction > (1f - edgeThreshold) -> {
-            val t = (fraction - (1f - edgeThreshold)) / edgeThreshold
-            -maxOffset * t
-        }
-        else -> 0.dp
-    }
 
     return if (isVertical) {
         0.dp to -offset
