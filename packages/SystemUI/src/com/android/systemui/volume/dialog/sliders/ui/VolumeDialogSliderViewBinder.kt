@@ -260,7 +260,7 @@ private fun VolumeDialogSlider(
                         thumbSize = logicalThumbSize,
                     )
                 } else {
-                    // UI Styles glass pill: 16dp along track × track thickness, neutral frost.
+                    // UI Styles glass pill: track-relative 0.4 along / 1.3 cross, neutral frost.
                     val trackThickness = VolumeDialogSliderDimensions.TrackThickness
                     val visualPillSize =
                         if (isVolumeDialogVertical) {
@@ -268,6 +268,7 @@ private fun VolumeDialogSlider(
                         } else {
                             StyledSliderThumbTokens.pillSizeHorizontal(trackThickness)
                         }
+                    val visualAlongTrack = StyledSliderThumbTokens.alongTrack(trackThickness)
                     val thumbColor =
                         StyledSliderThumbTokens.glassFill(isDarkTheme = styleState.isNightMode)
                     val thumbShape = StyledSliderThumbTokens.PillShape
@@ -278,7 +279,7 @@ private fun VolumeDialogSlider(
                     val (offsetX, offsetY) = calculateVolumeThumbOffset(
                         fraction = fraction,
                         isVertical = isVolumeDialogVertical,
-                        visualAlongTrack = StyledSliderThumbTokens.AlongTrack,
+                        visualAlongTrack = visualAlongTrack,
                         logicalThumbSize = logicalThumbSize,
                     )
 

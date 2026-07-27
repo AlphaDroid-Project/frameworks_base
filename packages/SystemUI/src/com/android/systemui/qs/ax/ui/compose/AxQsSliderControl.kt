@@ -348,10 +348,10 @@ private fun AxQsSlider(
     val logicalThumbHeight =
         if (vertical) CommonTileDefaults.TileHeight * sliderScale else HorizontalSliderThumbHeight
     val thumbSize = DpSize(width = logicalThumbWidth, height = logicalThumbHeight)
-    // Glass pill: 16dp along track × track+overhang (protrudes past segments like stock).
+    // Glass pill: track-relative (0.4 × along, 1.3 × cross) so all slider sizes stay balanced.
     val visualPillSize =
         if (isStyled) {
-            StyledSliderThumbTokens.pillSizeHorizontal(sliderHeight, sliderScale)
+            StyledSliderThumbTokens.pillSizeHorizontal(sliderHeight)
         } else {
             thumbSize
         }

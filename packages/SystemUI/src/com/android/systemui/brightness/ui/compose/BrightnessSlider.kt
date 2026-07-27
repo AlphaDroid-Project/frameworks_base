@@ -403,7 +403,7 @@ fun BrightnessSlider(
             DpSize(logicalThumbWidth, logicalThumbHeight)
         }
     val visualThumbAlongTrack =
-        if (isStyled) StyledSliderThumbTokens.AlongTrack else logicalThumbWidth
+        if (isStyled) visualPillSize.width else logicalThumbWidth
     val visualThumbAlongTrackPx = with(density) { visualThumbAlongTrack.toPx() }
     val thumbShape =
         if (isStyled) {
@@ -478,7 +478,7 @@ fun BrightnessSlider(
                         val fraction = (animatedValue - floatValueRange.start) /
                             (floatValueRange.endInclusive - floatValueRange.start)
 
-                        val visualHalf = StyledSliderThumbTokens.AlongTrack / 2
+                        val visualHalf = visualThumbAlongTrack / 2
                         val logicalHalf = logicalThumbWidth / 2
                         val maxOffset = visualHalf - logicalHalf
 
