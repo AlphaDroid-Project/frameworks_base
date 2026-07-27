@@ -50,7 +50,6 @@ import androidx.compose.foundation.indication
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -1038,19 +1037,16 @@ private fun MediaOutputChip(
                         session?.let { viewModel.openOutput(it.outputDevice, expandable) }
                     },
         ) {
-            // (6) Output chip — active small-tile style on a pill/circle.
-            Box(contentAlignment = Alignment.Center) {
-                MediaStyledSurface(
-                    shape = CircleShape,
-                    active = true,
-                    color = colors.primary,
-                    modifier = Modifier.matchParentSize(),
-                )
-                Row(
-                    horizontalArrangement = Arrangement.Center,
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier =
-                        Modifier.indication(interactionSource, ripple()).then(
+            // Session (and empty placeholder) chrome uses media/Material colors only —
+            // UI Styles apply solely to the empty card body.
+            Row(
+                horizontalArrangement = Arrangement.Center,
+                verticalAlignment = Alignment.CenterVertically,
+                modifier =
+                    Modifier.clip(CircleShape)
+                        .background(colors.primary)
+                        .indication(interactionSource, ripple())
+                        .then(
                             if (showLabel) {
                                 Modifier.padding(
                                     horizontal = if (compact) 6.dp else 8.dp,
@@ -1060,31 +1056,30 @@ private fun MediaOutputChip(
                                 Modifier.size(chipHeight)
                             }
                         ),
-                ) {
-                    if (session != null) {
-                        Icon(
-                            icon = session.outputDevice.icon,
-                            tint = colors.onPrimary,
-                            modifier = Modifier.size(iconSize),
-                        )
-                    } else {
-                        MaterialIcon(
-                            painter = painterResource(R.drawable.ic_music_note),
-                            contentDescription = null,
-                            tint = colors.onPrimary,
-                            modifier = Modifier.size(iconSize),
-                        )
-                    }
-                    if (showLabel) {
-                        Text(
-                            text = label ?: outputDescription,
-                            color = colors.onPrimary,
-                            style = MaterialTheme.typography.labelMedium,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
-                            modifier = Modifier.padding(start = 4.dp),
-                        )
-                    }
+            ) {
+                if (session != null) {
+                    Icon(
+                        icon = session.outputDevice.icon,
+                        tint = colors.onPrimary,
+                        modifier = Modifier.size(iconSize),
+                    )
+                } else {
+                    MaterialIcon(
+                        painter = painterResource(R.drawable.ic_music_note),
+                        contentDescription = null,
+                        tint = colors.onPrimary,
+                        modifier = Modifier.size(iconSize),
+                    )
+                }
+                if (showLabel) {
+                    Text(
+                        text = label ?: outputDescription,
+                        color = colors.onPrimary,
+                        style = MaterialTheme.typography.labelMedium,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.padding(start = 4.dp),
+                    )
                 }
             }
         }
@@ -1409,22 +1404,17 @@ private fun PlaceholderMediaAction(
         )
     val buttonBackground by
         animateColorAsState(targetValue = background, label = "AxMediaPlaceholderBackground")
-    // Filled play/pause (4) uses active style; bare skip chips (5) use inactive outline chrome.
-    val filled = buttonBackground.alpha > 0.01f
     Box(
         contentAlignment = Alignment.Center,
         modifier =
-            Modifier.size(width = buttonWidth, height = buttonHeight).semantics {
-                contentDescription = description
-                disabled()
-            },
+            Modifier.size(width = buttonWidth, height = buttonHeight)
+                .clip(shape)
+                .background(buttonBackground)
+                .semantics {
+                    contentDescription = description
+                    disabled()
+                },
     ) {
-        MediaStyledSurface(
-            shape = shape,
-            active = filled,
-            color = buttonBackground,
-            modifier = Modifier.matchParentSize(),
-        )
         if (imageVector != null) {
             MaterialIcon(
                 imageVector = imageVector,
@@ -1491,26 +1481,18 @@ private fun MediaAction(
         )
     val buttonBackground by
         animateColorAsState(targetValue = background, label = "AxMediaActionBackground")
-    val filled = buttonBackground.alpha > 0.01f
     when (action) {
         is MediaActionModel.Action -> {
             Box(
                 contentAlignment = Alignment.Center,
                 modifier =
-                    Modifier.size(width = buttonWidth, height = buttonHeight).clickable(
-                        enabled = interactive && action.onClick != null
-                    ) {
-                        viewModel.runAction(action)
-                    },
+                    Modifier.size(width = buttonWidth, height = buttonHeight)
+                        .clip(shape)
+                        .background(buttonBackground)
+                        .clickable(enabled = interactive && action.onClick != null) {
+                            viewModel.runAction(action)
+                        },
             ) {
-                // (4) filled play/pause pill → active style; (5) transparent skip chips →
-                // inactive style so bevel/outline still ring the circle.
-                MediaStyledSurface(
-                    shape = shape,
-                    active = filled,
-                    color = buttonBackground,
-                    modifier = Modifier.matchParentSize(),
-                )
                 if (animatedIconRes != null) {
                     val painter =
                         rememberAnimatedVectorPainter(
@@ -1553,14 +1535,13 @@ private fun MediaAction(
     }
 }
 
-/** Shared QS tile style chrome for media control surfaces (empty card, chips, play/pause). */
+/** Empty-card-only UI Styles chrome. Session media owns its own palette/chrome. */
 @Composable
 private fun MediaStyledSurface(
     shape: Shape,
     active: Boolean,
     color: Color,
     modifier: Modifier = Modifier,
-    content: @Composable BoxScope.() -> Unit = {},
 ) {
     val styleRenderer = rememberQsTileStyleRenderer()
     Box(modifier = modifier, contentAlignment = Alignment.Center) {
@@ -1578,7 +1559,6 @@ private fun MediaStyledSurface(
                 Box(Modifier.fillMaxSize())
             }
         }
-        content()
     }
 }
 
