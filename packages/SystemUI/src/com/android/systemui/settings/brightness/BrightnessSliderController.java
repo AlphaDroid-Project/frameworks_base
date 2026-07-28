@@ -35,6 +35,9 @@ import com.android.systemui.classifier.Classifier;
 import com.android.systemui.haptics.slider.HapticSlider;
 import com.android.systemui.haptics.slider.HapticSliderPlugin;
 import com.android.systemui.haptics.slider.HapticSliderViewBinder;
+import com.android.systemui.haptics.slider.SeekableSliderTrackerConfig;
+import com.android.systemui.haptics.slider.SliderHapticFeedbackConfig;
+import com.android.systemui.haptics.slider.SliderHapticFeedbackFilter;
 import com.android.systemui.plugins.ActivityStarter;
 import com.android.systemui.plugins.FalsingManager;
 import com.android.systemui.res.R;
@@ -310,6 +313,49 @@ public class BrightnessSliderController extends ViewController<BrightnessSliderV
      */
 
     public static class BrightnessSliderControllerFactory implements Factory {
+
+        /**
+         * Match the volume slider's drag texture.
+         *
+         * Upstream leaves this slider on SliderHapticFeedbackConfig's defaults while
+         * VolumeDialogImpl.VolumeRow declares its own, so the two sliders in the same shade
+         * felt different: the default deltaProgressForDragThreshold is 0.015 against volume's
+         * 0.05, i.e. brightness fired drag ticks 3.3x as often.
+         *
+         * Stock ColorOS drives both of its sliders identically (measured 2026-07-28: same
+         * waveform, 8.3 vs 9.0 ticks/s), so matching them is also the stock behaviour.
+         *
+         * Copied from VolumeRow verbatim except velocityAxis, which must track the widget's
+         * own axis of movement - this slider is horizontal, the volume dialog's is vertical.
+         * Using AXIS_Y here would make the velocity term read zero and silently drop the
+         * velocity-based scaling.
+         */
+        private static final SliderHapticFeedbackConfig sSliderHapticFeedbackConfig =
+                new SliderHapticFeedbackConfig(
+                /* velocityInterpolatorFactor= */ 1f,
+                /* progressInterpolatorFactor= */ 1f,
+                /* progressBasedDragMinScale= */ 0.10f,
+                /* progressBasedDragMaxScale= */ 0.85f,
+                /* additionalVelocityMaxBump= */ 0.25f,
+                /* deltaMillisForDragInterval= */ 0f,
+                /* deltaProgressForDragThreshold= */ 0.05f,
+                /* numberOfLowTicks= */ 4,
+                /* maxVelocityToScale= */ 200,
+                /* velocityAxis= */ MotionEvent.AXIS_X,
+                /* upperBookendScale= */ 1f,
+                /* lowerBookendScale= */ 0.05f,
+                /* exponent= */ 0.80f,
+                /* sliderStepSize = */ 0f,
+                /* filter =*/ new SliderHapticFeedbackFilter());
+
+        private static final SeekableSliderTrackerConfig sSliderTrackerConfig =
+                new SeekableSliderTrackerConfig(
+                        /* waitTimeMillis= */ 100,
+                        /* jumpThreshold= */ 0.02f,
+                        /* lowerBookendThreshold= */ 0.01f,
+                        /* upperBookendThreshold= */ 0.99f
+                );
+
         private final FalsingManager mFalsingManager;
         private final UiEventLogger mUiEventLogger;
         private final VibratorHelper mVibratorHelper;
@@ -356,7 +402,9 @@ public class BrightnessSliderController extends ViewController<BrightnessSliderV
                     mVibratorHelper,
                     mMSDLPlayer,
                     mSystemClock,
-                    new HapticSlider.SeekBar(root.requireViewById(R.id.slider)));
+                    new HapticSlider.SeekBar(root.requireViewById(R.id.slider)),
+                    sSliderHapticFeedbackConfig,
+                    sSliderTrackerConfig);
             HapticSliderViewBinder.bind(viewRoot, plugin);
             return new BrightnessSliderController(root, mFalsingManager, mUiEventLogger, plugin,
                     mActivityStarter, mBrightnessWarningToast);
