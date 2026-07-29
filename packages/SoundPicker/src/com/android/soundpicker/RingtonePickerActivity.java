@@ -25,6 +25,7 @@ import android.content.res.Resources.NotFoundException;
 import android.database.Cursor;
 import android.database.CursorWrapper;
 import android.media.AudioAttributes;
+import android.media.AudioManager;
 import android.media.Ringtone;
 import android.media.RingtoneManager;
 import android.net.Uri;
@@ -566,12 +567,19 @@ public final class RingtonePickerActivity extends AlertActivity implements
         }
 
         if (ringtone != null) {
+            AudioAttributes.Builder attributes =
+                    new AudioAttributes.Builder(ringtone.getAudioAttributes());
             if (mAttributesFlags != 0) {
-                ringtone.setAudioAttributes(
-                        new AudioAttributes.Builder(ringtone.getAudioAttributes())
-                                .setFlags(mAttributesFlags)
-                                .build());
+                attributes.setFlags(mAttributesFlags);
             }
+            // AudioAttributes mute haptic channels by default, so a sound that carries an
+            // authored haptic track previews silently to the vibrator even though the ringer
+            // unmutes it during a real call. Unmute here so the preview matches playback; the
+            // vibrator service still applies the user's vibration settings on top.
+            if (AudioManager.isHapticPlaybackSupported()) {
+                attributes.setHapticChannelsMuted(false);
+            }
+            ringtone.setAudioAttributes(attributes.build());
             ringtone.play();
         }
     }
