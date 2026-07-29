@@ -170,25 +170,6 @@ internal object AutoButtonDimensions {
     val Size = 45.dp
 }
 
-internal fun getCornerRadiusForShape(shapeMode: Int, size: Float): Float {
-    return when (shapeMode) {
-        3 -> 0f
-        2 -> size * 0.25f
-        else -> size / 2f
-    }
-}
-
-@Composable
-internal fun getShapeForMode(shapeMode: Int, sizeDp: Dp): Shape {
-    return remember(shapeMode, sizeDp) {
-        when (shapeMode) {
-            3 -> RoundedCornerShape(0.dp)
-            2 -> RoundedCornerShape(sizeDp * 0.25f)
-            else -> CircleShape
-        }
-    }
-}
-
 private fun DrawScope.drawActiveTrackSegment(
     left: Float,
     right: Float,
@@ -272,21 +253,10 @@ fun BrightnessSlider(
 
     var hapticsEnabled by remember { mutableStateOf(readEnableHaptics(cr)) }
 
-    val shapeMode = rememberSliderShapeMode()
-    val trackCornerDp: Dp = when (shapeMode) {
-        1 -> 24.dp
-        2 -> 12.dp
-        3 -> 0.dp
-        else -> SliderTrackRoundedCorner
-    }
-    val bgCornerDp: Dp = when (shapeMode) {
-        1 -> 50.dp
-        2 -> 24.dp
-        3 -> 0.dp
-        else -> SliderBackgroundRoundedCorner
-    }
-    val autoIconShape = getShapeForMode(shapeMode, AutoButtonDimensions.Size)
-    val sliderShape = remember(shapeMode, bgCornerDp) { shape ?: RoundedCornerShape(bgCornerDp) }
+    val trackCornerDp: Dp = SliderTrackRoundedCorner
+    val bgCornerDp: Dp = SliderBackgroundRoundedCorner
+    val autoIconShape = CircleShape
+    val sliderShape = remember(bgCornerDp) { shape ?: RoundedCornerShape(bgCornerDp) }
 
     var value by remember(gammaValue) { mutableIntStateOf(gammaValue) }
     val animatedValue by
@@ -410,13 +380,13 @@ fun BrightnessSlider(
         if (isStyled) {
             StyledSliderThumbTokens.PillShape
         } else {
-            getShapeForMode(shapeMode, visualThumbAlongTrack)
+            CircleShape
         }
     val thumbCornerRadius =
         if (isStyled) {
             StyledSliderThumbTokens.cornerRadiusPx(visualPillSize, density)
         } else {
-            getCornerRadiusForShape(shapeMode, visualThumbAlongTrackPx)
+            visualThumbAlongTrackPx / 2f
         }
     val isDark = isSystemInDarkTheme()
     val layoutDirection = LocalLayoutDirection.current
@@ -808,46 +778,6 @@ private fun DrawScope.drawThumbInset(
     )
 }
 
-@Composable
-fun rememberSliderShapeMode(): Int {
-    val context = LocalContext.current
-    val contentResolver = context.contentResolver
-
-    fun readShapeMode(): Int {
-        return try {
-            Settings.System.getIntForUser(
-                contentResolver, Settings.System.QS_BRIGHTNESS_SLIDER_SHAPE, 0,
-                UserHandle.USER_CURRENT
-            )
-        } catch (_: Throwable) {
-            0
-        }
-    }
-
-    var shapeMode by remember { mutableIntStateOf(readShapeMode()) }
-
-    DisposableEffect(contentResolver) {
-        val observer = object : ContentObserver(null) {
-            override fun onChange(selfChange: Boolean) {
-                context.mainExecutor.execute {
-                    shapeMode = readShapeMode()
-                }
-            }
-        }
-
-        contentResolver.registerContentObserver(
-            Settings.System.getUriFor(Settings.System.QS_BRIGHTNESS_SLIDER_SHAPE),
-            false, observer, UserHandle.USER_ALL
-        )
-
-        onDispose {
-            contentResolver.unregisterContentObserver(observer)
-        }
-    }
-
-    return shapeMode
-}
-
 private fun Modifier.sliderBackground(color: Color, corner: Dp) = drawWithCache {
     val offsetAround = SliderBackgroundFrameSize.toSize()
     val newSize = Size(size.width + 2 * offsetAround.width, size.height + 2 * offsetAround.height)
@@ -903,21 +833,10 @@ fun BrightnessSliderContainer(
 
     var dragging by remember { mutableStateOf(false) }
 
-    val shapeMode = rememberSliderShapeMode()
-    val trackCornerDp: Dp = when (shapeMode) {
-        1 -> 24.dp
-        2 -> 12.dp
-        3 -> 0.dp
-        else -> SliderTrackRoundedCorner
-    }
-    val bgCornerDp: Dp = when (shapeMode) {
-        1 -> 50.dp
-        2 -> 24.dp
-        3 -> 0.dp
-        else -> SliderBackgroundRoundedCorner
-    }
+    val trackCornerDp: Dp = SliderTrackRoundedCorner
+    val bgCornerDp: Dp = SliderBackgroundRoundedCorner
 
-    val sliderShape = remember(shapeMode, bgCornerDp) { shape ?: RoundedCornerShape(bgCornerDp) }
+    val sliderShape = remember(bgCornerDp) { shape ?: RoundedCornerShape(bgCornerDp) }
 
     val styleState by viewModel.styleManager.styleState.collectAsStateWithLifecycle()
     val originalAccent = MaterialTheme.colorScheme.primary

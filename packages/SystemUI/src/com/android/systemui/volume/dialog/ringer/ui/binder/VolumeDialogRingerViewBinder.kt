@@ -77,9 +77,6 @@ import com.android.systemui.volume.dialog.ringer.ui.viewmodel.RingerViewModelSta
 import com.android.systemui.volume.dialog.ringer.ui.viewmodel.VolumeDialogRingerDrawerViewModel
 import com.android.systemui.volume.dialog.sliders.ui.VolumeDialogSliderDimensions
 import com.android.systemui.volume.dialog.ui.binder.ViewBinder
-import com.android.systemui.volume.dialog.ui.utils.getVolumeThumbOrButtonShapeForMode
-import com.android.systemui.volume.dialog.ui.utils.rememberVolumeSliderShapeMode
-import com.android.systemui.volume.dialog.ui.utils.VOLUME_SLIDER_SHAPE_DEFAULT
 import com.android.systemui.volume.dialog.ui.utils.suspendAnimate
 import com.android.systemui.volume.dialog.ui.viewmodel.VolumeDialogViewModel
 import java.util.WeakHashMap
@@ -606,14 +603,8 @@ private fun VolumeDialogRingerButton(
         }
 
     val visualButtonSize = VolumeDialogSliderDimensions.TrackThickness
-    val shapeMode = rememberVolumeSliderShapeMode()
     val cornerRadiusDp = with(LocalDensity.current) { uiModel.cornerRadius.toDp() }
-    val defaultShape = remember(cornerRadiusDp) { RoundedCornerShape(cornerRadiusDp) }
-    val shape = getVolumeThumbOrButtonShapeForMode(
-        shapeMode = shapeMode,
-        sizeDp = visualButtonSize,
-        defaultShape = defaultShape,
-    )
+    val shape = remember(cornerRadiusDp) { RoundedCornerShape(cornerRadiusDp) }
 
     CompositionLocalProvider(LocalAlphaColorScheme provides themedScheme) {
         Box(

@@ -94,10 +94,6 @@ import com.android.systemui.haptics.slider.compose.ui.SliderHapticsViewModel
 import com.android.systemui.lifecycle.rememberViewModel
 import com.android.systemui.res.R
 import com.android.systemui.volume.dialog.sliders.ui.compose.SliderTrack
-import com.android.systemui.volume.dialog.ui.utils.getVolumeThumbOrButtonCornerRadiusForMode
-import com.android.systemui.volume.dialog.ui.utils.getVolumeThumbOrButtonShapeForMode
-import com.android.systemui.volume.dialog.ui.utils.rememberVolumeSliderShapeMode
-import com.android.systemui.volume.dialog.ui.utils.useCustomVolumeThumb
 import com.android.systemui.volume.haptics.ui.VolumeHapticsConfigsProvider
 import com.android.systemui.volume.panel.component.volume.slider.ui.viewmodel.SliderState
 import com.android.systemui.volume.ui.compose.slider.AccessibilityParams
@@ -140,7 +136,6 @@ fun VolumeSlider(
 
     val scheme = LocalAlphaColorScheme.current
     val density = LocalDensity.current
-    val shapeMode = rememberVolumeSliderShapeMode()
 
     Column(modifier = modifier.animateContentSize()) {
         if (showLabel) {
@@ -197,7 +192,6 @@ fun VolumeSlider(
                             trackSize = dimensions.trackHeight,
                             isVertical = false,
                             styleRenderer = styleRenderer,
-                            shapeMode = shapeMode,
                             activeTrackEndIcon =
                                 state.icon?.let { icon ->
                                     { iconsState ->
@@ -242,13 +236,7 @@ fun VolumeSlider(
                     },
                     thumb = { sliderState, interactionSource ->
                         val logicalThumbSize = DpSize(dimensions.thumbWidth, dimensions.thumbHeight)
-                        val shouldUseCustomThumb =
-                            useCustomVolumeThumb(
-                                shapeMode = shapeMode,
-                                hasStyleRenderer = styleRenderer != null,
-                            )
-
-                        if (!shouldUseCustomThumb) {
+                        if (styleRenderer == null) {
                             SliderDefaults.Thumb(
                                 sliderState = sliderState,
                                 interactionSource = interactionSource,
@@ -264,26 +252,12 @@ fun VolumeSlider(
                                     scheme.accent,
                                 ) ?: scheme.thumb
 
-                            val defaultThumbShape =
+                            val thumbShape =
                                 remember(visualThumbSize) {
                                     RoundedCornerShape(visualThumbSize * 0.25f)
                                 }
-                            val defaultCornerRadius =
-                                with(density) { (visualThumbSize * 0.25f).toPx() }
-                            val thumbShape =
-                                getVolumeThumbOrButtonShapeForMode(
-                                    shapeMode = shapeMode,
-                                    sizeDp = visualThumbSize,
-                                    defaultShape = defaultThumbShape,
-                                )
                             val thumbCornerRadius =
-                                with(density) {
-                                    getVolumeThumbOrButtonCornerRadiusForMode(
-                                        shapeMode = shapeMode,
-                                        sizePx = visualThumbSize.toPx(),
-                                        defaultCornerRadius = defaultCornerRadius,
-                                    )
-                                }
+                                with(density) { (visualThumbSize * 0.25f).toPx() }
 
                             val offsetX =
                                 calculateHorizontalThumbOffset(

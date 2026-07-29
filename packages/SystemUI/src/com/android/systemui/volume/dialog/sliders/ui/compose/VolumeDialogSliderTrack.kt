@@ -54,9 +54,6 @@ import com.android.systemui.alpha.style.brightness.renderers.BrightnessSliderSty
 import com.android.systemui.alpha.style.volume.VolumeMaterialColors
 import com.android.systemui.alpha.style.volume.VolumeSliderStyleWrapper
 import com.android.systemui.volume.dialog.sliders.ui.VolumeDialogSliderDimensions
-import com.android.systemui.volume.dialog.ui.utils.VOLUME_SLIDER_SHAPE_DEFAULT
-import com.android.systemui.volume.dialog.ui.utils.getVolumeTrackCornerDpForMode
-import com.android.systemui.volume.dialog.ui.utils.getVolumeTrackInsideCornerDpForMode
 import kotlin.math.min
 
 @Composable
@@ -73,7 +70,6 @@ fun SliderTrack(
     trackSize: Dp = VolumeDialogSliderDimensions.TrackThickness,
     isVertical: Boolean = false,
     styleRenderer: BrightnessSliderStyleRenderer? = null,
-    shapeMode: Int = VOLUME_SLIDER_SHAPE_DEFAULT,
     /**
      * Optional override for the visual thumb extent along the track (icon layout only).
      * Segment fill math always uses the logical AOSP thumb. When null, volume-dialog defaults apply.
@@ -86,20 +82,7 @@ fun SliderTrack(
 ) {
     val isRtl = LocalLayoutDirection.current == LayoutDirection.Rtl
 
-    val effectiveTrackCornerSize = remember(shapeMode, trackSize, trackCornerSize) {
-        getVolumeTrackCornerDpForMode(
-            shapeMode = shapeMode,
-            trackSize = trackSize,
-            defaultCorner = trackCornerSize,
-        )
-    }
-    val effectiveTrackInsideCornerSize = remember(shapeMode, trackInsideCornerSize) {
-        getVolumeTrackInsideCornerDpForMode(
-            shapeMode = shapeMode,
-            defaultInsideCorner = trackInsideCornerSize,
-        )
-    }
-    val useStyledVisualThumb = styleRenderer != null || shapeMode != VOLUME_SLIDER_SHAPE_DEFAULT
+    val useStyledVisualThumb = styleRenderer != null
 
     val effectiveThumbAlongTrack = when {
         visualThumbAlongTrack != null -> visualThumbAlongTrack
@@ -135,14 +118,14 @@ fun SliderTrack(
 
             VolumeSliderStyleWrapper(
                 renderer = styleRenderer,
-                shape = RoundedCornerShape(effectiveTrackCornerSize),
+                shape = RoundedCornerShape(trackCornerSize),
                 segmentMode = true,
                 isVertical = isVertical,
                 isActive = false,
                 activeFraction = sliderState.coercedValueAsFraction,
-                trackCornerDp = effectiveTrackCornerSize,
+                trackCornerDp = trackCornerSize,
                 trackInsideCornerDp = if (styleRenderer == null) {
-                    effectiveTrackInsideCornerSize
+                    trackInsideCornerSize
                 } else {
                     0.dp
                 },
@@ -173,8 +156,8 @@ fun SliderTrack(
                         sliderState = sliderState,
                         colors = colors,
                         enabled = isEnabled,
-                        trackCornerSize = effectiveTrackCornerSize,
-                        trackInsideCornerSize = effectiveTrackInsideCornerSize,
+                        trackCornerSize = trackCornerSize,
+                        trackInsideCornerSize = trackInsideCornerSize,
                         drawStopIndicator = null,
                         thumbTrackGapSize = thumbTrackGapSize,
                         drawTick = { _, _ -> },
@@ -182,7 +165,7 @@ fun SliderTrack(
                     )
                 } else {
                     Canvas(modifier = Modifier.fillMaxSize()) {
-                        val cornerPx = effectiveTrackCornerSize.toPx()
+                        val cornerPx = trackCornerSize.toPx()
                         val innerCornerPx = 0f
 
                         if (isVertical) {

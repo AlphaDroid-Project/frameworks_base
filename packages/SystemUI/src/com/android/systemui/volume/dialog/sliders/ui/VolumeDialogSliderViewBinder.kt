@@ -70,8 +70,6 @@ import com.android.systemui.volume.dialog.sliders.dagger.VolumeDialogSliderScope
 import com.android.systemui.volume.dialog.sliders.ui.compose.SliderTrack
 import com.android.systemui.volume.dialog.sliders.ui.viewmodel.VolumeDialogOverscrollViewModel
 import com.android.systemui.volume.dialog.sliders.ui.viewmodel.VolumeDialogSliderViewModel
-import com.android.systemui.volume.dialog.ui.utils.rememberVolumeSliderShapeMode
-import com.android.systemui.volume.dialog.ui.utils.useCustomVolumeThumb
 import com.android.systemui.volume.haptics.ui.VolumeHapticsConfigsProvider
 import com.android.systemui.volume.ui.compose.slider.AccessibilityParams
 import com.android.systemui.volume.ui.compose.slider.Haptics
@@ -159,7 +157,6 @@ private fun VolumeDialogSlider(
         val interactionSource = remember { MutableInteractionSource() }
         val isHapticsEnabled = rememberVolumeHapticsEnabled()
         val density = LocalDensity.current
-        val shapeMode = rememberVolumeSliderShapeMode()
 
         LaunchedEffect(interactionSource) {
             interactionSource.interactions.collect {
@@ -215,7 +212,6 @@ private fun VolumeDialogSlider(
                     isEnabled = !sliderStateModel.isDisabled,
                     isVertical = isVolumeDialogVertical,
                     styleRenderer = styleRenderer,
-                    shapeMode = shapeMode,
                     activeTrackEndIcon = { iconsState ->
                         SliderIcon(
                             icon = {
@@ -250,12 +246,7 @@ private fun VolumeDialogSlider(
                     VolumeDialogSliderDimensions.HorizontalLogicalThumbSize
                 }
 
-                val shouldUseCustomThumb = useCustomVolumeThumb(
-                    shapeMode = shapeMode,
-                    hasStyleRenderer = styleRenderer != null,
-                )
-
-                if (!shouldUseCustomThumb) {
+                if (styleRenderer == null) {
                     SliderDefaults.Thumb(
                         sliderState = sliderState,
                         interactionSource = interactions,
