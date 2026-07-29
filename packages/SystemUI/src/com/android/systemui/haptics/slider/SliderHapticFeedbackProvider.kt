@@ -80,6 +80,40 @@ class SliderHapticFeedbackProvider(
         ) ?: false
     }
 
+    /**
+     * Token used for the drag texture of a continuous slider, or `null` to stay silent.
+     *
+     * [MSDLToken.DRAG_INDICATOR_CONTINUOUS] is composed of
+     * [VibrationEffect.Composition.PRIMITIVE_LOW_TICK]. Where a token's primitives are unavailable
+     * MSDL substitutes a fixed fallback waveform and drops the dynamic scale, so the texture stops
+     * responding to progress and velocity altogether. Degrade to
+     * [MSDLToken.DRAG_INDICATOR_DISCRETE], a single [VibrationEffect.Composition.PRIMITIVE_TICK]
+     * that still scales, and if that primitive is missing too play nothing: a drag texture that
+     * cannot follow the drag is worse than none.
+     */
+    private val continuousDragTextureToken: MSDLToken? by lazy {
+        when {
+            vibratorHelper.areAllPrimitivesSupported(
+                VibrationEffect.Composition.PRIMITIVE_LOW_TICK
+            ) -> MSDLToken.DRAG_INDICATOR_CONTINUOUS
+            vibratorHelper.areAllPrimitivesSupported(
+                VibrationEffect.Composition.PRIMITIVE_TICK
+            ) -> MSDLToken.DRAG_INDICATOR_DISCRETE
+            else -> null
+        }
+    }
+
+    /**
+     * Token used for the drag texture of a discrete slider, or `null` to stay silent when
+     * [VibrationEffect.Composition.PRIMITIVE_TICK] is unavailable. See
+     * [continuousDragTextureToken].
+     */
+    private val discreteDragTextureToken: MSDLToken? by lazy {
+        MSDLToken.DRAG_INDICATOR_DISCRETE.takeIf {
+            vibratorHelper.areAllPrimitivesSupported(VibrationEffect.Composition.PRIMITIVE_TICK)
+        }
+    }
+
     private val composedTick by lazy {
         VibrationEffect.startComposition()
             .addPrimitive(VibrationEffect.Composition.PRIMITIVE_TICK)
@@ -178,9 +212,10 @@ class SliderHapticFeedbackProvider(
 
     private fun performDiscreteSliderDragVibration(scale: Float) {
         if (Flags.msdlFeedback()) {
+            val token = discreteDragTextureToken ?: return
             val properties =
                 InteractionProperties.DynamicVibrationScale(scale, VIBRATION_ATTRIBUTES_PIPELINING)
-            msdlPlayer.playToken(MSDLToken.DRAG_INDICATOR_DISCRETE, properties)
+            msdlPlayer.playToken(token, properties)
         } else {
             if (areAllPrimitivesSupported) {
                 vibratorHelper.vibrate(composedTick, VIBRATION_ATTRIBUTES_PIPELINING)
@@ -192,9 +227,10 @@ class SliderHapticFeedbackProvider(
 
     private fun performContinuousSliderDragVibration(scale: Float) {
         if (Flags.msdlFeedback()) {
+            val token = continuousDragTextureToken ?: return
             val properties =
                 InteractionProperties.DynamicVibrationScale(scale, VIBRATION_ATTRIBUTES_PIPELINING)
-            msdlPlayer.playToken(MSDLToken.DRAG_INDICATOR_CONTINUOUS, properties)
+            msdlPlayer.playToken(token, properties)
         } else {
             if (areAllPrimitivesSupported) {
                 val composition = VibrationEffect.startComposition()
