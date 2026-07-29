@@ -191,7 +191,11 @@ private fun VolumeDialogSlider(
             haptics = if (isHapticsEnabled) {
                 Haptics.Enabled(
                     hapticsViewModelFactory = hapticsViewModelFactory,
-                    hapticConfigs = VolumeHapticsConfigsProvider.continuousConfigs(
+                    // Stream volume is quantized (see stepDistance below), so use the discrete
+                    // configs to land one tick per volume step.
+                    hapticConfigs = VolumeHapticsConfigsProvider.discreteConfigs(
+                        1f / (sliderStateModel.valueRange.endInclusive -
+                            sliderStateModel.valueRange.start),
                         SliderHapticFeedbackFilter(),
                     ),
                     orientation = if (isVolumeDialogVertical) {

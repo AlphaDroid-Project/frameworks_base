@@ -334,9 +334,12 @@ fun VolumeSlider(
                         hapticsViewModelFactory?.let {
                             Haptics.Enabled(
                                 hapticsViewModelFactory = it,
+                                // Stream volume is quantized, so use the discrete configs to
+                                // land one tick per volume step.
                                 hapticConfigs =
-                                    VolumeHapticsConfigsProvider.continuousConfigs(
-                                        state.hapticFilter
+                                    VolumeHapticsConfigsProvider.discreteConfigs(
+                                        state.valueRange.stepSize(),
+                                        state.hapticFilter,
                                     ),
                                 orientation = Orientation.Horizontal,
                             )
