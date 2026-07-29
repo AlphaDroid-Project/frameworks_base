@@ -523,6 +523,15 @@ public final class NotificationAttentionHelper {
                     }
                     if (DEBUG) Slog.v(TAG, "Interrupting!");
                     boolean isInsistentUpdate = isInsistentUpdate(record);
+                    // Sound with an authored haptic track will drive the motor via
+                    // ExternalVibration once NotificationPlayer unmutes haptic channels.
+                    // Skip the separate channel vibration pattern in that case (same idea
+                    // as Telecom SKIP_VIBRATION when using audio-coupled haptics) so we
+                    // do not double-hit the LRA with a generic Step waveform.
+                    final boolean audioCoupledHaptics = hasValidSound
+                            && !vibrateOnly
+                            && AudioManager.isHapticPlaybackSupported()
+                            && AudioManager.hasHapticChannels(mContext, soundUri);
                     if (hasValidSound && !vibrateOnly) {
                         if (isInsistentUpdate) {
                             // don't reset insistent sound, it's jarring
@@ -546,6 +555,13 @@ public final class NotificationAttentionHelper {
                     if (!isInCall() && hasValidVibrate && !ringerModeSilent) {
                         if (isInsistentUpdate) {
                             buzz = true;
+                        } else if (audioCoupledHaptics && beep) {
+                            // Motor handled by the notification sound's haptic channel.
+                            buzz = true;
+                            if (DEBUG) {
+                                Slog.v(TAG, "Skipping pattern vibration for "
+                                        + key + ": audio-coupled haptics");
+                            }
                         } else {
                             buzz = playVibration(record, vibration, hasValidSound && !vibrateOnly);
                             if (buzz) {

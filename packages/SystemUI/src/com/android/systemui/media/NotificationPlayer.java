@@ -99,6 +99,21 @@ public class NotificationPlayer implements OnCompletionListener, OnErrorListener
                                 .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
                                 .build();
                     }
+                    // AudioAttributes mute haptic channels by default. Authored dual-channel
+                    // notification sounds (ANDROID_HAPTIC=1) then play as audio-only, while
+                    // SoundPicker previews unmute and feel correct. Unmute when the URI
+                    // actually carries a haptic track so delivery matches preview / ringer.
+                    if (AudioManager.isHapticPlaybackSupported()
+                            && mCmd.attributes.areHapticChannelsMuted()
+                            && mCmd.uri != null
+                            && AudioManager.hasHapticChannels(mCmd.context, mCmd.uri)) {
+                        mCmd.attributes = new AudioAttributes.Builder(mCmd.attributes)
+                                .setHapticChannelsMuted(false)
+                                .build();
+                        if (DEBUG) {
+                            Log.d(mTag, "Unmuting haptic channels for " + mCmd.uri);
+                        }
+                    }
                     player.setAudioAttributes(mCmd.attributes);
                     player.setDataSource(mCmd.context, mCmd.uri);
                     player.setLooping(mCmd.looping);
