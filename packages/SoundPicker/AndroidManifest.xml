@@ -10,6 +10,11 @@
     <uses-permission android:name="android.permission.WRITE_SETTINGS" />
 
     <uses-permission android:name="android.permission.INTERACT_ACROSS_USERS" />
+    <!-- Required for audio-coupled haptic previews. VibratorManagerService
+         rejects ExternalVibration without VIBRATE (IGNORED_MISSING_PERMISSION),
+         so dual-channel ringtones preview as audio-only despite the picker
+         already unmuting haptic channels (setHapticChannelsMuted(false)). -->
+    <uses-permission android:name="android.permission.VIBRATE" />
 
     <application
         android:allowBackup="false"
