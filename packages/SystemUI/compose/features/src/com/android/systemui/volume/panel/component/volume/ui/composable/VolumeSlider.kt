@@ -40,7 +40,7 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.requiredSize
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon as MaterialIcon
@@ -66,6 +66,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.CustomAccessibilityAction
@@ -80,12 +81,14 @@ import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpSize
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import com.android.compose.PlatformSlider
 import com.android.compose.PlatformSliderColors
 import com.android.systemui.Flags
 import com.android.systemui.alpha.style.brightness.renderers.BrightnessSliderStyleRenderer
 import com.android.systemui.alpha.style.common.LocalAlphaColorScheme
+import com.android.systemui.alpha.style.slider.StyledSliderThumbTokens
 import com.android.systemui.common.shared.model.Icon as IconModel
 import com.android.systemui.common.ui.compose.Icon
 import com.android.systemui.compose.modifiers.sysuiResTag
@@ -136,6 +139,8 @@ fun VolumeSlider(
 
     val scheme = LocalAlphaColorScheme.current
     val density = LocalDensity.current
+    val isDark = isSystemInDarkTheme()
+    val layoutDirection = LocalLayoutDirection.current
 
     Column(modifier = modifier.animateContentSize()) {
         if (showLabel) {
@@ -245,25 +250,21 @@ fun VolumeSlider(
                                 thumbSize = logicalThumbSize,
                             )
                         } else {
-                            val visualThumbSize = dimensions.trackHeight + 4.dp
-                            val thumbColor =
-                                styleRenderer?.getThumbColor(
-                                    scheme.thumb,
-                                    scheme.accent,
-                                ) ?: scheme.thumb
-
-                            val thumbShape =
-                                remember(visualThumbSize) {
-                                    RoundedCornerShape(visualThumbSize * 0.25f)
-                                }
+                            // Same glass-pill design as Ax QS / volume dialog / brightness.
+                            val visualPillSize =
+                                StyledSliderThumbTokens.pillSizeHorizontal(dimensions.trackHeight)
+                            val visualAlongTrack =
+                                StyledSliderThumbTokens.alongTrack(dimensions.trackHeight)
+                            val thumbColor = StyledSliderThumbTokens.glassFill(isDark)
+                            val thumbShape = StyledSliderThumbTokens.PillShape
                             val thumbCornerRadius =
-                                with(density) { (visualThumbSize * 0.25f).toPx() }
-
+                                StyledSliderThumbTokens.cornerRadiusPx(visualPillSize, density)
                             val offsetX =
-                                calculateHorizontalThumbOffset(
+                                StyledSliderThumbTokens.visualCenterOffsetAlongTrack(
                                     fraction = sliderState.coercedValueAsFraction,
-                                    visualThumbSize = visualThumbSize,
-                                    logicalThumbWidth = logicalThumbSize.width,
+                                    visualAlongTrack = visualAlongTrack,
+                                    logicalAlongTrack = logicalThumbSize.width,
+                                    activeTowardStart = layoutDirection == LayoutDirection.Ltr,
                                 )
 
                             Box(
@@ -273,16 +274,14 @@ fun VolumeSlider(
                                 Box(
                                     modifier =
                                         Modifier.offset(x = offsetX)
-                                            .requiredSize(visualThumbSize)
+                                            .requiredSize(visualPillSize)
                                             .clip(thumbShape),
                                 ) {
                                     Canvas(modifier = Modifier.fillMaxSize()) {
                                         val bounds = Rect(0f, 0f, size.width, size.height)
                                         drawRect(color = thumbColor)
 
-                                        if (styleRenderer != null &&
-                                            !styleRenderer.skipThumbOverlay()
-                                        ) {
+                                        if (!styleRenderer.skipThumbOverlay()) {
                                             with(styleRenderer) {
                                                 renderThumbOverlay(
                                                     thumbBounds = bounds,
@@ -563,29 +562,6 @@ private fun DrawScope.drawThumbInset(
         cornerRadius = CornerRadius(strokeRadius),
         style = Stroke(bevelWidth),
     )
-}
-
-private fun calculateHorizontalThumbOffset(
-    fraction: Float,
-    visualThumbSize: Dp,
-    logicalThumbWidth: Dp,
-): Dp {
-    val visualHalf = visualThumbSize / 2
-    val logicalHalf = logicalThumbWidth / 2
-    val maxOffset = visualHalf - logicalHalf
-    val edgeThreshold = 0.08f
-
-    return when {
-        fraction < edgeThreshold -> {
-            val t = 1f - (fraction / edgeThreshold)
-            maxOffset * t
-        }
-        fraction > (1f - edgeThreshold) -> {
-            val t = (fraction - (1f - edgeThreshold)) / edgeThreshold
-            -maxOffset * t
-        }
-        else -> 0.dp
-    }
 }
 
 @VisibleForTesting
