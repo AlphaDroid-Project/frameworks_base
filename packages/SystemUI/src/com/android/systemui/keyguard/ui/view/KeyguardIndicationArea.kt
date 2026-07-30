@@ -76,7 +76,7 @@ class KeyguardIndicationArea(context: Context, private val attrs: AttributeSet?)
             setEllipsize(TextUtils.TruncateAt.END)
             setAlpha(0.8f)
             setMinHeight(R.dimen.keyguard_indication_text_min_height.dp())
-            setMaxLines(2)
+            setMaxLines(3)
             setVisibility(View.GONE)
 
             val padding = R.dimen.keyguard_indication_text_padding.dp()
