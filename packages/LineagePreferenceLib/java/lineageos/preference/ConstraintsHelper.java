@@ -68,12 +68,16 @@ public class ConstraintsHelper {
         mAttrs = attrs;
         mPref = pref;
 
-        TypedArray a = context.getResources().obtainAttributes(attrs,
-                R.styleable.lineage_SelfRemovingPreference);
-        mSummaryMinLines = a.getInteger(lineage_SelfRemovingPreference_minSummaryLines, -1);
-        String replacesKey = a.getString(lineage_SelfRemovingPreference_replacesKey);
-        if (replacesKey != null) {
-            mReplacesKey = replacesKey.split("\\|");
+        // attrs is null for preferences built in code rather than inflated from XML (see the
+        // Context-only constructors), and obtainAttributes() throws on a null AttributeSet.
+        if (attrs != null) {
+            TypedArray a = context.getResources().obtainAttributes(attrs,
+                    R.styleable.lineage_SelfRemovingPreference);
+            mSummaryMinLines = a.getInteger(lineage_SelfRemovingPreference_minSummaryLines, -1);
+            String replacesKey = a.getString(lineage_SelfRemovingPreference_replacesKey);
+            if (replacesKey != null) {
+                mReplacesKey = replacesKey.split("\\|");
+            }
         }
         setAvailable(checkConstraints());
 
