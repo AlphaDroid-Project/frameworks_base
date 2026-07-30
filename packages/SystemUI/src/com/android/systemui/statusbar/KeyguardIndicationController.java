@@ -262,6 +262,7 @@ public class KeyguardIndicationController {
 
     private IBatteryPropertiesRegistrar mBatteryPropertiesRegistrar;
     private boolean mAlternateFastchargeInfoUpdate;
+    private boolean mFastchargeInfoPolling;
 
     private KeyguardUpdateMonitorCallback mUpdateMonitorCallback;
 
@@ -1025,6 +1026,7 @@ public class KeyguardIndicationController {
     public void setVisible(boolean visible) {
         mVisible = visible;
         mIndicationArea.setVisibility(visible ? VISIBLE : GONE);
+        updateFastchargeInfoPolling();
         if (visible) {
             // If this is called after an error message was already shown, we should not clear it.
             // Otherwise the error message won't be shown
@@ -1556,6 +1558,28 @@ public class KeyguardIndicationController {
         }
     };
 
+    /**
+     * The 1 Hz {@link #mUpdateInfo} poll exists so the charging wattage reads live while the
+     * user is looking at it. Every tick fans an ACTION_BATTERY_CHANGED broadcast out to each
+     * registered receiver, so only run it while the indication is on screen and the device is
+     * awake -- a whole screen-off charge session would otherwise cost thousands of needless
+     * broadcasts. While dozing the text still refreshes on the charger's own battery updates.
+     */
+    private void updateFastchargeInfoPolling() {
+        final boolean shouldPoll = mAlternateFastchargeInfoUpdate
+                && mBatteryPropertiesRegistrar != null
+                && mPowerPluggedIn && mVisible && !mDozing;
+        if (shouldPoll == mFastchargeInfoPolling) {
+            return;
+        }
+        mFastchargeInfoPolling = shouldPoll;
+        if (shouldPoll) {
+            mUpdateInfo.run();
+        } else if (mHandler != null) {
+            mHandler.removeCallbacks(mUpdateInfo);
+        }
+    }
+
     protected class BaseKeyguardCallback extends KeyguardUpdateMonitorCallback {
         @Override
         public void onTimeChanged() {
@@ -1610,13 +1634,7 @@ public class KeyguardIndicationController {
                     mChargingTimeRemaining = -1;
                 }
             }
-            if (mAlternateFastchargeInfoUpdate && (wasPluggedIn != mPowerPluggedIn)) {
-                if (mPowerPluggedIn) {
-                    mUpdateInfo.run();
-                } else {
-                    mHandler.removeCallbacks(mUpdateInfo);
-                }
-            }
+            updateFastchargeInfoPolling();
 
             mKeyguardLogger.logRefreshBatteryInfo(isChargingOrFull, mPowerPluggedIn, mBatteryLevel,
                     mBatteryDefender);
@@ -2013,6 +2031,7 @@ public class KeyguardIndicationController {
                 hideBiometricMessage();
                 hideFaceUnlockRecognizingMessage();
             }
+            updateFastchargeInfoPolling();
             updateDeviceEntryIndication(false);
         }
     };
