@@ -796,7 +796,9 @@ public final class LineageHardwareManager {
                         mAIDLMap.get(FEATURE_TOUCHSCREEN_GESTURES));
                 return AIDLHelper.fromAIDLGestures(touchscreenGesture.getSupportedGestures());
             }
+            Log.w(TAG, "getTouchscreenGestures: FEATURE_TOUCHSCREEN_GESTURES not supported via AIDL");
         } catch (Exception e) {
+            Log.e(TAG, "getTouchscreenGestures failed", e);
         }
         return null;
     }
@@ -813,7 +815,14 @@ public final class LineageHardwareManager {
                 touchscreenGesture.setGestureEnabled(AIDLHelper.toAIDLGesture(gesture), state);
                 return true;
             }
+            Log.w(TAG, "setTouchscreenGestureEnabled: FEATURE_TOUCHSCREEN_GESTURES not supported"
+                    + " via AIDL (gesture=" + (gesture != null ? gesture.name : "null")
+                    + " state=" + state + ")");
         } catch (Exception e) {
+            Log.e(TAG, "setTouchscreenGestureEnabled failed (gesture="
+                    + (gesture != null ? gesture.name : "null")
+                    + " keycode=" + (gesture != null ? gesture.keycode : -1)
+                    + " state=" + state + ")", e);
         }
         return false;
     }
