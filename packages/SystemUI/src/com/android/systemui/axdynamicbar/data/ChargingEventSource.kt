@@ -61,6 +61,17 @@ class ChargingEventSource @Inject constructor(
     private val _chargingEvent = MutableStateFlow<IslandEvent.Charging?>(null)
     val chargingEvent: StateFlow<IslandEvent.Charging?> = _chargingEvent.asStateFlow()
 
+    /**
+     * True only while the charger is actually pushing current into the battery.
+     *
+     * Distinct from [BatteryInteractor.isCharging], which is really "plugged in and not an
+     * incompatible charger" — it stays true when the charger is attached but charging is
+     * disabled (bypass charging, battery defender, thermal cut-off). Unlike [chargingEvent]
+     * this is not cleared by a user dismissal, so it stays a truthful hardware signal.
+     */
+    private val _isActuallyCharging = MutableStateFlow(false)
+    val isActuallyCharging: StateFlow<Boolean> = _isActuallyCharging.asStateFlow()
+
     /** Callback fired when charging starts (mirrors SystemIslandManager.onChargingStarted). */
     var onChargingStarted: ((IslandEvent.Charging) -> Unit)? = null
 
@@ -144,8 +155,17 @@ class ChargingEventSource @Inject constructor(
                     else -> context.getString(R.string.ax_dynamic_bar_charging)
                 }
 
-                HardwareStats(power, current, voltage, tempStr, chargeType)
-            }.onStart { emit(HardwareStats(null, null, null, null, null)) }
+                // The health HAL's own verdict on whether the battery is taking charge.
+                // BatteryInteractor.isCharging is really "plugged in", which stays true while
+                // bypass charging holds the charge FET open — the chip would then latch on a
+                // charging session that never progresses (frozen level, frozen ETA). This is
+                // the same discriminator KeyguardIndicationController gates the lock screen
+                // battery indication on, so both surfaces agree.
+                val isChargingOrFull =
+                    bs.status == BatteryManager.BATTERY_STATUS_CHARGING || bs.isCharged()
+
+                HardwareStats(power, current, voltage, tempStr, chargeType, isChargingOrFull)
+            }.onStart { emit(HardwareStats(null, null, null, null, null, false)) }
 
             combine(
                 batteryInteractor.isCharging,
@@ -153,11 +173,14 @@ class ChargingEventSource @Inject constructor(
                 batteryInteractor.powerSave,
                 batteryInteractor.batteryTimeRemainingEstimate,
                 batteryStatsFlow,
-            ) { isCharging, level, isPowerSave, timeEst, stats ->
-                ChargingSnapshot(isCharging, level, isPowerSave, timeEst, stats)
+            ) { pluggedIn, level, isPowerSave, timeEst, stats ->
+                // Keep the interactor's incompatible-charger veto, add the HAL charging verdict.
+                ChargingSnapshot(
+                    pluggedIn && stats.isChargingOrFull, level, isPowerSave, timeEst, stats)
             }
             .distinctUntilChanged()
             .collect { snap ->
+                _isActuallyCharging.value = snap.isCharging
                 val wasChargingBefore = wasCharging
                 wasCharging = snap.isCharging
 
@@ -263,6 +286,7 @@ class ChargingEventSource @Inject constructor(
         estimateRetryJob?.cancel()
         estimateRetryJob = null
         _chargingEvent.value = null
+        _isActuallyCharging.value = false
     }
 
     fun clearCharging() {
@@ -278,6 +302,8 @@ class ChargingEventSource @Inject constructor(
         val voltage: String?,
         val temp: String?,
         val chargeType: String?,
+        /** Health HAL says the battery is taking charge — see the mapper for why this matters. */
+        val isChargingOrFull: Boolean,
     )
 
     private data class ChargingSnapshot(

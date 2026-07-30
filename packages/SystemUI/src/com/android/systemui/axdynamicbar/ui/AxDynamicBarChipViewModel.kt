@@ -1,6 +1,7 @@
 package com.android.systemui.axdynamicbar.ui
 
 import com.android.systemui.animation.Expandable
+import com.android.systemui.axdynamicbar.data.ChargingEventSource
 import com.android.systemui.axdynamicbar.domain.AxDynamicBarInteractor
 import com.android.systemui.axdynamicbar.model.IslandEvent
 import com.android.systemui.statusbar.chips.ui.model.OngoingActivityChipModel
@@ -60,6 +61,7 @@ constructor(
     val keyguardExpansion: AxDynamicBarKeyguardExpansion,
     val statusBarExpansion: AxDynamicBarStatusBarExpansion,
     private val keyguardIndicationController: KeyguardIndicationController,
+    chargingEventSource: ChargingEventSource,
 ) {
     val isLowUdfps: StateFlow<Boolean> =
         udfpsOverlayInteractor.udfpsOverlayParams
@@ -116,10 +118,13 @@ constructor(
         interactor.cutoutRectPx
             .stateIn(applicationScope, SharingStarted.Eagerly, null)
 
+    // isActuallyCharging, not batteryInteractor.isCharging: the latter is "plugged in", which
+    // stays true under bypass charging and would leave this chip showing a charging session
+    // that never advances. This mirrors what the stock lock screen indication does.
     val keyguardBatteryInfo: StateFlow<KeyguardBatteryInfo> =
         combine(
             batteryInteractor.level,
-            batteryInteractor.isCharging,
+            chargingEventSource.isActuallyCharging,
             batteryInteractor.powerSave,
             batteryInteractor.batteryTimeRemainingEstimate,
         ) { level, charging, powerSave, timeRemaining ->
