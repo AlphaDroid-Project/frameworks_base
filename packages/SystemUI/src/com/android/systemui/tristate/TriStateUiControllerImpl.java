@@ -27,11 +27,14 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.pm.ApplicationInfo;
+import android.content.pm.PackageManager;
 import android.content.res.ColorStateList;
 import android.content.res.Resources;
 import android.content.res.TypedArray;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
+import android.graphics.drawable.Drawable;
 import android.hardware.display.DisplayManagerGlobal;
 import android.media.AudioManager;
 import android.os.Bundle;
@@ -100,9 +103,11 @@ public class TriStateUiControllerImpl implements TriStateUiController,
     private static final int MODE_ROTATION_0 = 641;
     private static final int MODE_ROTATION_90 = 642;
     private static final int MODE_ROTATION_270 = 643;
+    private static final int MODE_APP_LAUNCH = 650;
 
     private static final String EXTRA_SLIDER_POSITION = "position";
     private static final String EXTRA_SLIDER_POSITION_VALUE = "position_value";
+    private static final String EXTRA_SLIDER_PACKAGE = "package";
 
     private static final int TRI_STATE_UI_POSITION_LEFT = 0;
     private static final int TRI_STATE_UI_POSITION_RIGHT = 1;
@@ -173,7 +178,9 @@ public class TriStateUiControllerImpl implements TriStateUiController,
     private boolean mShowing = false;
     private int mBackgroundColor = 0;
     private ImageView mTriStateIcon;
+    private ColorStateList mTriStateIconTint;
     private TextView mTriStateText;
+    private String mPositionPackage;
     private int mTriStateMode = -1;
     private int mPosition = -1;
     private int mPositionValue = -1;
@@ -200,6 +207,7 @@ public class TriStateUiControllerImpl implements TriStateUiController,
                 Bundle extras = intent.getExtras();
                 mPosition = extras.getInt(EXTRA_SLIDER_POSITION);
                 mPositionValue = extras.getInt(EXTRA_SLIDER_POSITION_VALUE);
+                mPositionPackage = extras.getString(EXTRA_SLIDER_PACKAGE);
                 mHandler.sendEmptyMessage(MSG_DIALOG_DISMISS);
                 mHandler.sendEmptyMessage(MSG_STATE_CHANGE);
                 mSliderPositionChanged = true;
@@ -357,6 +365,7 @@ public class TriStateUiControllerImpl implements TriStateUiController,
         mDialog.setContentView(R.layout.tri_state_dialog);
         mDialogView = (ViewGroup) mDialog.findViewById(R.id.tri_state_layout);
         mTriStateIcon = (ImageView) mDialog.findViewById(R.id.tri_state_icon);
+        mTriStateIconTint = mTriStateIcon != null ? mTriStateIcon.getImageTintList() : null;
         mTriStateText = (TextView) mDialog.findViewById(R.id.tri_state_text);
     }
 
@@ -569,7 +578,38 @@ public class TriStateUiControllerImpl implements TriStateUiController,
                         break;
                 }
                 if (mTriStateMode != -1) {
+                    if (mTriStateMode == MODE_APP_LAUNCH) {
+                        // App-launch slider mode: show the launched app's own
+                        // icon (untinted) and label instead of a fixed resource
+                        Drawable appIcon = null;
+                        CharSequence appLabel = null;
+                        if (mPositionPackage != null) {
+                            PackageManager pm = mContext.getPackageManager();
+                            try {
+                                ApplicationInfo ai =
+                                        pm.getApplicationInfo(mPositionPackage, 0);
+                                appIcon = ai.loadIcon(pm);
+                                appLabel = ai.loadLabel(pm);
+                            } catch (PackageManager.NameNotFoundException ignored) {
+                            }
+                        }
+                        if (mTriStateIcon != null) {
+                            if (appIcon != null) {
+                                mTriStateIcon.setImageTintList(null);
+                                mTriStateIcon.setImageDrawable(appIcon);
+                            } else {
+                                mTriStateIcon.setImageTintList(mTriStateIconTint);
+                                mTriStateIcon.setImageResource(
+                                        com.android.internal.R.drawable.sym_def_app_icon);
+                            }
+                        }
+                        if (mTriStateText != null) {
+                            mTriStateText.setText(appLabel != null ? appLabel
+                                    : res.getString(R.string.tristate_app_launch));
+                        }
+                    } else {
                     if (mTriStateIcon != null && iconId != 0) {
+                        mTriStateIcon.setImageTintList(mTriStateIconTint);
                         mTriStateIcon.setImageResource(iconId);
                     }
                     if (mTriStateText != null && textId != 0) {
@@ -581,6 +621,7 @@ public class TriStateUiControllerImpl implements TriStateUiController,
                             inputText = sb.toString();
                         }
                         mTriStateText.setText(inputText);
+                    }
                     }
                     if (mDialogView != null && bg != 0) {
                         mDialogView.setBackgroundDrawable(res.getDrawable(bg));
@@ -627,7 +668,11 @@ public class TriStateUiControllerImpl implements TriStateUiController,
 
     private void handleStateChanged() {
         mHandler.removeMessages(MSG_STATE_CHANGE);
-        if (mIntentActionSupported && mPositionValue != mTriStateMode) {
+        // App-launch mode reports the same value (MODE_APP_LAUNCH) for every
+        // position, so force a layout refresh to pick up the new position
+        // and package
+        if (mIntentActionSupported && (mPositionValue != mTriStateMode
+                || mPositionValue == MODE_APP_LAUNCH)) {
             mTriStateMode = mPositionValue;
             updateTriStateLayout();
             if (mListener != null) {
