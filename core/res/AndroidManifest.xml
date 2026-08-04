@@ -9500,6 +9500,18 @@
     <permission android:name="lineageos.permission.MANAGE_REMOTE_PREFERENCES"
         android:protectionLevel="signature|privileged" />
 
+    <!-- Allows changing app lock state: locking and unlocking apps, hiding
+         packages and enumerating what is locked or hidden.
+         @hide -->
+    <permission android:name="com.android.axion.permission.MANAGE_APP_LOCK"
+        android:protectionLevel="signature" />
+
+    <!-- Allows observing app lock state and asking for an unlock prompt,
+         without being able to grant an unlock.
+         @hide -->
+    <permission android:name="com.android.axion.permission.USE_APP_LOCK"
+        android:protectionLevel="signature" />
+
     <!-- Attribution for Geofencing service. -->
     <attribution android:tag="GeofencingService" android:label="@string/geofencing_service"/>
     <!-- Attribution for Country Detector. -->

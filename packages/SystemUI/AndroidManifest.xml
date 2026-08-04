@@ -24,6 +24,9 @@
 
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
 
+    <!-- Used to show app lock state on notifications and to prompt for an unlock -->
+    <uses-permission android:name="com.android.axion.permission.USE_APP_LOCK" />
+
     <!-- Used to read wallpaper -->
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.READ_WALLPAPER_INTERNAL" />

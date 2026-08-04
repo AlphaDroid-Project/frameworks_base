@@ -85,6 +85,9 @@ public class AxSandboxService extends IAxSandboxManager.Stub implements IAxSandb
 
     private static final String ACTION_SYSTEM_UNLOCK = "com.android.axion.sandbox.action.SYSTEM_UNLOCK";
 
+    private static final String MANAGE_APP_LOCK = "com.android.axion.permission.MANAGE_APP_LOCK";
+    private static final String USE_APP_LOCK = "com.android.axion.permission.USE_APP_LOCK";
+
     private static final String SETTING_LOCK_BEHAVIOR = AxSandboxManager.SETTING_LOCK_BEHAVIOR;
     private static final String SETTING_LOCK_TIMEOUT = AxSandboxManager.SETTING_LOCK_TIMEOUT;
 
@@ -191,6 +194,11 @@ public class AxSandboxService extends IAxSandboxManager.Stub implements IAxSandb
             changed = true;
         }
 
+        if (mAppControlController.isPackageHiddenFromLauncher(packageName)) {
+            mAppControlController.setPackageHiddenFromLauncher(packageName, false);
+            changed = true;
+        }
+
         if (mAppControlController.isPackageSandboxed(packageName)) {
             mAppControlController.setPackageSandboxed(packageName, false);
             changed = true;
@@ -265,18 +273,31 @@ public class AxSandboxService extends IAxSandboxManager.Stub implements IAxSandb
 
     @Override
     public int getAppLockState(String packageName) {
+        enforceUseAppLock("getAppLockState");
         return computeAppLockState(packageName, UserHandle.getUserId(Binder.getCallingUid()))
                 .ordinal();
     }
 
     @Override
     public int getAppLockStateForUser(String packageName, int userId) {
+        enforceUseAppLock("getAppLockStateForUser");
         return computeAppLockState(packageName, userId).ordinal();
     }
 
     public boolean hasAppLock(String packageName) {
-        return computeAppLockState(packageName, UserHandle.getUserId(Binder.getCallingUid()))
-                .hasAppLock();
+        enforceUseAppLock("hasAppLock");
+        return hasAppLockInternal(packageName,
+                UserHandle.getUserId(Binder.getCallingUid()));
+    }
+
+    /** In-process variant for system_server callers under a foreign binder identity. */
+    public boolean hasAppLockInternal(String packageName) {
+        return hasAppLockInternal(packageName,
+                UserHandle.getUserId(Binder.getCallingUid()));
+    }
+
+    public boolean hasAppLockInternal(String packageName, int userId) {
+        return computeAppLockState(packageName, userId).hasAppLock();
     }
 
     private AppLockState computeAppLockState(String packageName, int userId) {
@@ -308,12 +329,14 @@ public class AxSandboxService extends IAxSandboxManager.Stub implements IAxSandb
 
     @Override
     public void addLockedApp(String packageName) {
+        enforceManageAppLock("addLockedApp");
         mAppControlController.addLockedApp(packageName);
         notifyAppLockStateChanged(packageName, true);
     }
 
     @Override
     public void removeLockedApp(String packageName) {
+        enforceManageAppLock("removeLockedApp");
         mAppControlController.removeLockedApp(packageName);
         int uid = getPackageUid(packageName);
         if (uid >= 0) {
@@ -325,33 +348,49 @@ public class AxSandboxService extends IAxSandboxManager.Stub implements IAxSandb
 
     @Override
     public void setPackageHidden(String packageName, boolean hidden) {
+        enforceManageAppLock("setPackageHidden");
         mAppControlController.setPackageHidden(packageName, hidden);
         broadcastPackageChanged(packageName);
     }
 
     @Override
     public void setPackageHiddenFromLauncher(String packageName, boolean hidden) {
+        enforceManageAppLock("setPackageHiddenFromLauncher");
         mAppControlController.setPackageHiddenFromLauncher(packageName, hidden);
         broadcastPackageChanged(packageName);
     }
 
     @Override
     public List<String> getLockedPackages() {
+        enforceManageAppLock("getLockedPackages");
         return mAppControlController.getLockedPackages();
     }
 
     @Override
     public List<String> getHiddenPackages() {
+        enforceManageAppLock("getHiddenPackages");
+        return getHiddenPackagesInternal();
+    }
+
+    /** In-process variant for system_server callers that may run under a foreign identity. */
+    public List<String> getHiddenPackagesInternal() {
         return mAppControlController.getHiddenPackages();
     }
 
     @Override
     public List<String> getHiddenFromLauncherPackages() {
+        enforceManageAppLock("getHiddenFromLauncherPackages");
+        return getHiddenFromLauncherPackagesInternal();
+    }
+
+    /** In-process variant for system_server callers that may run under a foreign identity. */
+    public List<String> getHiddenFromLauncherPackagesInternal() {
         return mAppControlController.getHiddenFromLauncherPackages();
     }
 
     @Override
     public List<String> getLockablePackages() {
+        enforceManageAppLock("getLockablePackages");
         return mAppControlController.getLockablePackages();
     }
 
@@ -362,6 +401,7 @@ public class AxSandboxService extends IAxSandboxManager.Stub implements IAxSandb
 
     @Override
     public void unlockApp(String packageName, int userId) {
+        enforceManageAppLock("unlockApp");
         if (TextUtils.isEmpty(packageName)) return;
         markSessionUnlocked(packageName, userId);
 
@@ -372,6 +412,7 @@ public class AxSandboxService extends IAxSandboxManager.Stub implements IAxSandb
 
     @Override
     public void promptUnlock(String packageName, int userId) {
+        enforceUseAppLock("promptUnlock");
         if (TextUtils.isEmpty(packageName)) return;
 
         Intent intent = new Intent(getConfirmIntent());
@@ -395,46 +436,65 @@ public class AxSandboxService extends IAxSandboxManager.Stub implements IAxSandb
 
     @Override
     public void registerAppLockStateListener(IAppLockStateListener listener) {
+        enforceUseAppLock("registerAppLockStateListener");
         mAppLockStateListeners.register(listener);
     }
 
     @Override
     public void unregisterAppLockStateListener(IAppLockStateListener listener) {
+        enforceUseAppLock("unregisterAppLockStateListener");
         mAppLockStateListeners.unregister(listener);
     }
 
     @Override
     public void registerAppSessionListener(IAppSessionListener listener) {
+        enforceUseAppLock("registerAppSessionListener");
         mAppSessionListeners.register(listener);
     }
 
     @Override
     public void unregisterAppSessionListener(IAppSessionListener listener) {
+        enforceUseAppLock("unregisterAppSessionListener");
         mAppSessionListeners.unregister(listener);
     }
 
     @Override
     public void registerHiddenNotificationListener(IHiddenNotificationListener listener) {
+        enforceManageAppLock("registerHiddenNotificationListener");
         mHiddenNotificationController.registerListener(listener);
     }
 
     @Override
     public void unregisterHiddenNotificationListener(IHiddenNotificationListener listener) {
+        enforceManageAppLock("unregisterHiddenNotificationListener");
         mHiddenNotificationController.unregisterListener(listener);
     }
 
     @Override
     public List<HiddenNotificationInfo> getHiddenNotifications() {
+        enforceManageAppLock("getHiddenNotifications");
         return mHiddenNotificationController.getHiddenNotifications();
     }
 
     @Override
     public void onHiddenNotificationPosted(HiddenNotificationInfo info) {
+        enforceManageAppLock("onHiddenNotificationPosted");
+        onHiddenNotificationPostedInternal(info);
+    }
+
+    /** In-process variant for system_server callers that may run under a foreign identity. */
+    public void onHiddenNotificationPostedInternal(HiddenNotificationInfo info) {
         mHiddenNotificationController.onHiddenNotificationPosted(info);
     }
 
     @Override
     public void onHiddenNotificationRemoved(String key) {
+        enforceManageAppLock("onHiddenNotificationRemoved");
+        onHiddenNotificationRemovedInternal(key);
+    }
+
+    /** In-process variant for system_server callers that may run under a foreign identity. */
+    public void onHiddenNotificationRemovedInternal(String key) {
         mHiddenNotificationController.onHiddenNotificationRemoved(key);
     }
 
@@ -446,23 +506,27 @@ public class AxSandboxService extends IAxSandboxManager.Stub implements IAxSandb
 
     @Override
     public void addSandboxedPackage(String packageName) {
+        enforceManageAppLock("addSandboxedPackage");
         mAppControlController.setPackageSandboxed(packageName, true);
         broadcastPackageChanged(packageName);
     }
 
     @Override
     public void removeSandboxedPackage(String packageName) {
+        enforceManageAppLock("removeSandboxedPackage");
         mAppControlController.setPackageSandboxed(packageName, false);
         broadcastPackageChanged(packageName);
     }
 
     @Override
     public List<String> getSandboxedPackages() {
+        enforceManageAppLock("getSandboxedPackages");
         return mAppControlController.getSandboxedPackages();
     }
 
     @Override
     public void setRestrictedGids(String packageName, int[] gids) {
+        enforceManageAppLock("setRestrictedGids");
         mAppControlController.setRestrictedGids(packageName, gids);
     }
 
@@ -480,6 +544,7 @@ public class AxSandboxService extends IAxSandboxManager.Stub implements IAxSandb
 
     @Override
     public void setSandboxDataIsolationEnabled(String packageName, boolean enabled) {
+        enforceManageAppLock("setSandboxDataIsolationEnabled");
         mAppControlController.setDataIsolationEnabled(packageName, enabled);
     }
 
@@ -491,11 +556,13 @@ public class AxSandboxService extends IAxSandboxManager.Stub implements IAxSandb
 
     @Override
     public void setSpoofSettingEnabled(String packageName, String settingKey, boolean enabled) {
+        enforceManageAppLock("setSpoofSettingEnabled");
         mAppControlController.setSpoofSettingEnabled(packageName, settingKey, enabled);
     }
 
     @Override
     public List<String> getEnabledSpoofSettings(String packageName) {
+        enforceManageAppLock("getEnabledSpoofSettings");
         if (mAppControlController == null) return java.util.Collections.emptyList();
         return mAppControlController.getEnabledSpoofSettings(packageName);
     }
@@ -673,6 +740,30 @@ public class AxSandboxService extends IAxSandboxManager.Stub implements IAxSandb
             }
             return true;
         }
+    }
+
+    /**
+     * Sandbox state is owned by the system: the Sandbox app, SystemUI and Settings all run as
+     * uid SYSTEM. Anything else asking to change it - or to enumerate what is locked or hidden -
+     * is not a caller we serve. Per-package read-only queries stay open for the launcher.
+     */
+    /**
+     * Changing app lock state - granting an unlock, locking or hiding a package, or reading back
+     * what is locked or hidden. Signature level, so in practice the Sandbox app and the system.
+     */
+    private void enforceManageAppLock(String method) {
+        mContext.enforceCallingOrSelfPermission(MANAGE_APP_LOCK,
+                "AxSandboxService." + method);
+    }
+
+    /**
+     * Observing app lock state and asking for a prompt, but never granting an unlock.
+     * Platform-signed callers that need this: SystemUI (notifications/QS) and Launcher3
+     * (recents lock treatment). Both declare USE_APP_LOCK in their manifests.
+     */
+    private void enforceUseAppLock(String method) {
+        mContext.enforceCallingOrSelfPermission(USE_APP_LOCK,
+                "AxSandboxService." + method);
     }
 
     private String resolveAppLabel(String packageName, int userId) {
