@@ -63,6 +63,8 @@ import com.android.server.wm.sandbox.HiddenNotificationController;
 import com.android.server.wm.sandbox.SettingsSpoofController;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -73,15 +75,15 @@ import java.util.concurrent.ConcurrentHashMap;
 public class AxSandboxService extends IAxSandboxManager.Stub implements IAxSandboxService {
     private static final String TAG = "AxSandbox";
 
-    public static final String SANDBOX_PACKAGE = "com.android.applocker";
-    private static final String SANDBOX_ACTIVITY = "com.android.applocker.AuthenticateActivity";
+    public static final String SANDBOX_PACKAGE = "com.android.axion.sandbox";
+    private static final String SANDBOX_ACTIVITY = "com.android.axion.sandbox.AuthenticateActivity";
 
     private static final String EXTRA_LOCKED_UID = AxSandboxManager.EXTRA_LOCKED_UID;
     private static final String EXTRA_LOCKED_PACKAGE = AxSandboxManager.EXTRA_LOCKED_PACKAGE;
     private static final String EXTRA_LOCKED_COMPONENT = AxSandboxManager.EXTRA_LOCKED_COMPONENT;
     private static final String EXTRA_USER_ID = "user_id";
 
-    private static final String ACTION_SYSTEM_UNLOCK = "com.android.applocker.action.SYSTEM_UNLOCK";
+    private static final String ACTION_SYSTEM_UNLOCK = "com.android.axion.sandbox.action.SYSTEM_UNLOCK";
 
     private static final String SETTING_LOCK_BEHAVIOR = AxSandboxManager.SETTING_LOCK_BEHAVIOR;
     private static final String SETTING_LOCK_TIMEOUT = AxSandboxManager.SETTING_LOCK_TIMEOUT;
@@ -94,7 +96,6 @@ public class AxSandboxService extends IAxSandboxManager.Stub implements IAxSandb
     public static final Set<String> BLACKLISTED_PACKAGES = Set.of(
             "android",
             SANDBOX_PACKAGE,
-            "com.android.axion.sandbox",
             "com.android.settings"
     );
 
@@ -881,10 +882,8 @@ public class AxSandboxService extends IAxSandboxManager.Stub implements IAxSandb
 
         if (!WindowConfiguration.isFloating(prevWindowingMode)
                 && WindowConfiguration.isFloating(currMode) && task.isVisible()) {
-            ActivityRecord r = task.topRunningActivityLocked();
-            if (isAppLocked(r)) {
-                markSessionUnlocked(r.packageName, r.mUserId);
-            }
+            // Moving a task into a floating window is not an unlock - a locked app that got
+            // here without authenticating stays locked.
             return;
         }
 
@@ -928,8 +927,9 @@ public class AxSandboxService extends IAxSandboxManager.Stub implements IAxSandb
             return;
         }
         int size = mUnlockedApps.size();
-        lockAllSessionsAndNotify();
-        lockVisibleMultiWindowApps(mAtms.mWindowManager.getDefaultDisplayContentLocked());
+        Set<String> previousSessions = lockAllSessionsAndNotify();
+        restoreVisibleMultiWindowSessions(mAtms.mWindowManager.getDefaultDisplayContentLocked(),
+                previousSessions);
         Slog.d(TAG, "clearUnlockedApp: size=" + size);
     }
 
@@ -944,14 +944,17 @@ public class AxSandboxService extends IAxSandboxManager.Stub implements IAxSandb
                 return;
             }
             boolean wasUnlocked = mUnlockedApps.contains(sessionKey(r));
-            clearUnlockedApp();
+            Set<String> previousSessions = lockAllSessionsAndNotify();
+            restoreVisibleMultiWindowSessions(mAtms.mWindowManager.getDefaultDisplayContentLocked(),
+                    previousSessions);
             if (wasUnlocked) {
                 markSessionUnlocked(r.packageName, r.mUserId);
             } else {
                 markSessionLocked(r.packageName, r.mUserId);
             }
             if (WindowConfiguration.isFloating(r.getWindowingMode())) {
-                lockVisibleFullscreenApps(mAtms.mWindowManager.getDefaultDisplayContentLocked());
+                restoreVisibleFullscreenSessions(
+                        mAtms.mWindowManager.getDefaultDisplayContentLocked(), previousSessions);
             }
         }
     }
@@ -1165,8 +1168,8 @@ public class AxSandboxService extends IAxSandboxManager.Stub implements IAxSandb
         mAppSessionListeners.finishBroadcast();
     }
 
-    private void lockAllSessionsAndNotify() {
-        if (mUnlockedApps.isEmpty()) return;
+    private Set<String> lockAllSessionsAndNotify() {
+        if (mUnlockedApps.isEmpty()) return Collections.emptySet();
         String[] keys = mUnlockedApps.toArray(new String[0]);
         mUnlockedApps.clear();
         mUnlockTimestamps.clear();
@@ -1180,6 +1183,7 @@ public class AxSandboxService extends IAxSandboxManager.Stub implements IAxSandb
                 notifyAppLocked(pkg, userId);
             } catch (NumberFormatException ignored) { }
         }
+        return new HashSet<>(Arrays.asList(keys));
     }
 
     private void scheduleTimeoutLock(String key) {
@@ -1276,7 +1280,13 @@ public class AxSandboxService extends IAxSandboxManager.Stub implements IAxSandb
         }
     }
 
-    private void lockVisibleMultiWindowApps(DisplayContent dc) {
+    /**
+     * An app the user can still see has not been left, so its session survives a
+     * {@link #lockAllSessionsAndNotify()}. Only sessions listed in {@code previousSessions} are
+     * restored - being visible is never on its own a reason to consider an app authenticated.
+     */
+    private void restoreVisibleMultiWindowSessions(DisplayContent dc, Set<String> previousSessions) {
+        if (previousSessions.isEmpty()) return;
         if (dc == null) {
             dc = mAtms.mWindowManager.getDefaultDisplayContentLocked();
         }
@@ -1285,27 +1295,29 @@ public class AxSandboxService extends IAxSandboxManager.Stub implements IAxSandb
                     && (WindowConfiguration.inMultiWindowMode(task.getWindowingMode())
                             || WindowConfiguration.isFloating(task.getWindowingMode()))
                     && task.isVisible()) {
-                ActivityRecord r = task.topRunningActivityLocked();
-                if (isAppLocked(r)) {
-                    markSessionUnlocked(r.packageName, r.mUserId);
-                }
+                restoreSessionIfPrevious(task.topRunningActivityLocked(), previousSessions);
             }
         });
     }
 
-    private void lockVisibleFullscreenApps(DisplayContent dc) {
+    private void restoreVisibleFullscreenSessions(DisplayContent dc, Set<String> previousSessions) {
+        if (previousSessions.isEmpty()) return;
         if (dc == null) {
             dc = mAtms.mWindowManager.getDefaultDisplayContentLocked();
         }
         dc.getDefaultTaskDisplayArea().forAllTasks(task -> {
             if (task.isLeafTask() && task.getWindowingMode() == WindowConfiguration.WINDOWING_MODE_FULLSCREEN
                     && task.isVisible()) {
-                ActivityRecord r = task.topRunningActivityLocked();
-                if (isAppLocked(r)) {
-                    markSessionUnlocked(r.packageName, r.mUserId);
-                }
+                restoreSessionIfPrevious(task.topRunningActivityLocked(), previousSessions);
             }
         });
+    }
+
+    private void restoreSessionIfPrevious(ActivityRecord r, Set<String> previousSessions) {
+        if (r == null || !previousSessions.contains(sessionKey(r))) {
+            return;
+        }
+        markSessionUnlocked(r.packageName, r.mUserId);
     }
 
     private void abortAnimation(ActivityRecord r) {
