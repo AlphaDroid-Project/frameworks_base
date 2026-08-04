@@ -290,12 +290,11 @@ public class AxSandboxService extends IAxSandboxManager.Stub implements IAxSandb
                 UserHandle.getUserId(Binder.getCallingUid()));
     }
 
-    /** In-process variant for system_server callers under a foreign binder identity. */
-    public boolean hasAppLockInternal(String packageName) {
-        return hasAppLockInternal(packageName,
-                UserHandle.getUserId(Binder.getCallingUid()));
-    }
-
+    /**
+     * In-process variant for system_server callers under a foreign binder identity.
+     * Always pass the resolved {@code userId} — do not derive it from
+     * {@link Binder#getCallingUid()}, which is the remote app on these paths.
+     */
     public boolean hasAppLockInternal(String packageName, int userId) {
         return computeAppLockState(packageName, userId).hasAppLock();
     }
@@ -386,6 +385,13 @@ public class AxSandboxService extends IAxSandboxManager.Stub implements IAxSandb
     /** In-process variant for system_server callers that may run under a foreign identity. */
     public List<String> getHiddenFromLauncherPackagesInternal() {
         return mAppControlController.getHiddenFromLauncherPackages();
+    }
+
+    @Override
+    public int getHiddenPackagesCount() {
+        enforceUseAppLock("getHiddenPackagesCount");
+        if (mAppControlController == null) return 0;
+        return mAppControlController.getHiddenPackagesCount();
     }
 
     @Override

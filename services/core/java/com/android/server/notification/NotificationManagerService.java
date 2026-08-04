@@ -8915,7 +8915,7 @@ public class NotificationManagerService extends SystemService {
         fixNotificationWithChannel(notification, channel, notificationUid, pkg);
 
         final NotificationRecord r = new NotificationRecord(getContext(), n, channel);
-        if (AxSandboxService.get().hasAppLockInternal(pkg)) {
+        if (AxSandboxService.get().hasAppLockInternal(pkg, userId)) {
             notification.extras.putBoolean(AxSandboxManager.EXTRA_NOTIFICATION_APP_LOCKED, true);
         } else {
             notification.extras.remove(AxSandboxManager.EXTRA_NOTIFICATION_APP_LOCKED);

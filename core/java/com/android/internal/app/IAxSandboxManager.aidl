@@ -22,6 +22,7 @@ interface IAxSandboxManager {
     List<String> getLockedPackages();
     List<String> getHiddenPackages();
     List<String> getHiddenFromLauncherPackages();
+    int getHiddenPackagesCount();
     List<String> getLockablePackages();
 
     boolean isPackageLockable(String packageName);

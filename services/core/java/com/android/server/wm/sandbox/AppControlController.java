@@ -26,6 +26,7 @@ import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.database.ContentObserver;
 import android.net.Uri;
+import android.os.Binder;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.UserHandle;
@@ -167,6 +168,10 @@ public class AppControlController {
     }
 
     private void saveConfigToSettings() {
+        // Binder may still carry a non-system identity (e.g. Launcher3 Trust UI calling
+        // setPackageHidden). Settings.Secure writes check that the context package ("android")
+        // belongs to the calling uid — that fails without clearing identity.
+        final long token = Binder.clearCallingIdentity();
         try {
             JSONObject config = new JSONObject();
 
@@ -185,6 +190,8 @@ public class AppControlController {
 
         } catch (JSONException e) {
             Slog.e(TAG, "Failed to save sandbox_config JSON", e);
+        } finally {
+            Binder.restoreCallingIdentity(token);
         }
     }
 
@@ -204,6 +211,7 @@ public class AppControlController {
     }
 
     private void broadcastPackageChange(String packageName, int uid) {
+        final long token = Binder.clearCallingIdentity();
         try {
             Intent intent = new Intent(Intent.ACTION_PACKAGE_CHANGED);
             intent.setData(Uri.fromParts("package", packageName, null));
@@ -214,6 +222,8 @@ public class AppControlController {
             mContext.sendBroadcastAsUser(intent, UserHandle.of(UserHandle.getUserId(uid)));
         } catch (Exception e) {
             Slog.w(TAG, "Failed to broadcast package change for " + packageName, e);
+        } finally {
+            Binder.restoreCallingIdentity(token);
         }
     }
 
@@ -377,6 +387,15 @@ public class AppControlController {
     public List<String> getHiddenFromLauncherPackages() {
         synchronized (this) {
             return new ArrayList<>(mLauncherHiddenPackages);
+        }
+    }
+
+    /** Packages filtered out of the launcher, counted without exposing the names. */
+    public int getHiddenPackagesCount() {
+        synchronized (this) {
+            Set<String> union = new HashSet<>(mHiddenPackages);
+            union.addAll(mLauncherHiddenPackages);
+            return union.size();
         }
     }
 

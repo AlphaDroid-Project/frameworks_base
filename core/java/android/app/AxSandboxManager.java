@@ -210,6 +210,20 @@ public class AxSandboxManager {
     }
 
     /**
+     * Number of packages hidden from the app drawer, for callers that need to size a list
+     * without being allowed to read the hidden package names themselves.
+     *
+     * @hide
+     */
+    public int getHiddenPackagesCount() {
+        try {
+            return mService.getHiddenPackagesCount();
+        } catch (RemoteException e) {
+            throw e.rethrowFromSystemServer();
+        }
+    }
+
+    /**
      * @hide
      */
     @NonNull
