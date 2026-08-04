@@ -79,6 +79,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalViewConfiguration
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.Dp
@@ -96,11 +97,17 @@ import android.content.Context
 import android.graphics.drawable.Drawable
 import java.util.Calendar
 
+/** Default keyguard island height for non-media events. */
 private val ChipHeight = 36.dp
 private val ChipShape = ShapeChip
 private val ChipIconSize = ChipHeight - SpaceLg
+/** Album art inside the taller media chip (matches ~48dp affordance row). */
+private val MediaChipIconSize = 32.dp
 private val ActionSize = SpacePanel
 private val ActionIconSize = SizeBadge
+/** Transport hit targets scaled for media's affordance-matched height. */
+private val MediaActionSize = 28.dp
+private val MediaActionIconSize = 16.dp
 private val BatteryIconSize = ChipHeight - SpaceXxl
 private val CountBadgeHeight = ChipHeight / 2
 
@@ -273,7 +280,13 @@ private fun KeyguardChipBody(
 
     val parts = rememberChargingParts(batteryString)
     val isMultiLineCharging = event is IslandEvent.Charging && parts.size >= 2
-    val dynamicHeight = if (isMultiLineCharging) 48.dp else ChipHeight
+    // Match keyguard shortcut diameter for media so the bottom row reads as one band.
+    val mediaChipHeight = dimensionResource(R.dimen.keyguard_affordance_fixed_height)
+    val dynamicHeight = when {
+        event is IslandEvent.Media -> mediaChipHeight
+        isMultiLineCharging -> 48.dp
+        else -> ChipHeight
+    }
 
     Box(contentAlignment = Alignment.Center) {
         Row(
@@ -341,10 +354,10 @@ private fun KeyguardChipBody(
                         }
 
                         Image(
-                            bitmap = art.toScaledBitmap(ChipIconSize),
+                            bitmap = art.toScaledBitmap(MediaChipIconSize),
                             contentDescription = null,
                             modifier = Modifier
-                                .size(ChipIconSize)
+                                .size(MediaChipIconSize)
                                 .clip(CircleShape)
                                 .graphicsLayer { rotationZ = rotation },
                             contentScale = ContentScale.Crop,
@@ -401,17 +414,17 @@ private fun KeyguardChipBody(
                     color = contentColor,
                     bgColor = lerp(accent, contentColor, AlphaSubtle),
                     onClick = { viewModel.skipPrev() },
-                    size = ActionSize,
-                    iconSize = ActionIconSize,
+                    size = MediaActionSize,
+                    iconSize = MediaActionIconSize,
                 )
                 Spacer(Modifier.width(SpaceXxs))
                 Surface(
                     onClick = { viewModel.togglePlayPause() },
-                    modifier = Modifier.size(ActionSize),
+                    modifier = Modifier.size(MediaActionSize),
                     shape = CircleShape,
                     color = lerp(accent, contentColor, AlphaSubtle),
                 ) {
-                    Box(contentAlignment = Alignment.Center, modifier = Modifier.size(ActionSize)) {
+                    Box(contentAlignment = Alignment.Center, modifier = Modifier.size(MediaActionSize)) {
                         Icon(
                             if (event.isPlaying) Icons.Filled.Pause else Icons.Filled.PlayArrow,
                             contentDescription = stringResource(
@@ -419,7 +432,7 @@ private fun KeyguardChipBody(
                                 else R.string.ax_dynamic_bar_play,
                             ),
                             tint = contentColor,
-                            modifier = Modifier.size(ActionIconSize),
+                            modifier = Modifier.size(MediaActionIconSize),
                         )
                     }
                 }
@@ -429,8 +442,8 @@ private fun KeyguardChipBody(
                     color = contentColor,
                     bgColor = lerp(accent, contentColor, AlphaSubtle),
                     onClick = { viewModel.skipNext() },
-                    size = ActionSize,
-                    iconSize = ActionIconSize,
+                    size = MediaActionSize,
+                    iconSize = MediaActionIconSize,
                 )
             } else if (event is IslandEvent.Sports && event.team2Name.isNotEmpty()) {
                 SportsChipTeamBadge(event.team1Name, event.team1Icon, contentColor)
