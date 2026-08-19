@@ -76,6 +76,7 @@ import java.util.concurrent.TimeUnit;
 public class AutomaticBrightnessController {
     private static final String TAG = "AutomaticBrightnessController";
 
+    private static final boolean DEBUG = false;
     private static final boolean DEBUG_PRETEND_LIGHT_SENSOR_ABSENT = false;
 
     public static final int AUTO_BRIGHTNESS_ENABLED = 1;
@@ -806,7 +807,9 @@ public class AutomaticBrightnessController {
             // Do not push into the ring buffer — a hard-0 poisons both the weighted ambient
             // estimate and the darkening-transition timer (every sample below threshold
             // extends the "ready to darken" window).
-            Slog.d(TAG, "drop fusion hard-zero lux=" + lux + " ambient=" + mAmbientLux);
+            if (DEBUG) {
+                Slog.d(TAG, "drop fusion hard-zero lux=" + lux + " ambient=" + mAmbientLux);
+            }
             return;
         }
 
@@ -1017,7 +1020,9 @@ public class AutomaticBrightnessController {
             }
             final float initialLux = calculateAmbientLux(time, mAmbientLightHorizonShort);
             if (isDropFusionHardZeroEnabled() && initialLux <= FUSION_HARD_ZERO_LUX_MAX) {
-                Slog.d(TAG, "updateAmbientLux: skip hard-zero init lux=" + initialLux);
+                if (DEBUG) {
+                    Slog.d(TAG, "updateAmbientLux: skip hard-zero init lux=" + initialLux);
+                }
                 mHandler.sendEmptyMessageAtTime(MSG_UPDATE_AMBIENT_LUX,
                         convertToUptime(time + mNormalLightSensorRate));
                 return;
