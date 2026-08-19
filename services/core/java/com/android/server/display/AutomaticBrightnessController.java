@@ -114,6 +114,12 @@ public class AutomaticBrightnessController {
      * Dropping those samples prevents auto-brightness collapses while residual floors
      * ({@code mMinDarkening}) only block small wobbles.
      *
+     * <p>Also dropped while ambient is not yet valid. Doze→on otherwise seeds
+     * {@code mAmbientLux=0} from the first over-sub sample (hard-zero drop used to
+     * accept anything during warmup), brightness collapses to ~2 nits, subsequent
+     * zeros keep landing (ambient &lt; 2), and the real lux waits out the 2 s
+     * brightening debounce — ~5–6 s to recover. Measured 2026-08-19.
+     *
      * <p>Gated by {@code persist.alpha.drop_fusion_hard_zero} (default true). Not related to
      * the fullscreen video pin/floor path.
      */
@@ -122,8 +128,9 @@ public class AutomaticBrightnessController {
     /** Treat samples at or below this as fusion hard-zeros / over-sub. */
     private static final float FUSION_HARD_ZERO_LUX_MAX = 0.5f;
     /**
-     * Only drop hard-zeros while the established ambient is clearly above residual dark.
-     * Allows real progressive darkening once ambient is already low.
+     * Drop hard-zeros while the established ambient is clearly above residual dark.
+     * Allows real progressive darkening once ambient is already low. Also used as
+     * the "still at the wake-time floor" cut for instant recovery (skip debounce).
      */
     private static final float FUSION_HARD_ZERO_MIN_AMBIENT = 2.0f;
 
@@ -702,7 +709,8 @@ public class AutomaticBrightnessController {
         ipw.println("mRecentLightSamples=" + mRecentLightSamples);
         ipw.println("dropFusionHardZero=" + isDropFusionHardZeroEnabled()
                 + " (lux<=" + FUSION_HARD_ZERO_LUX_MAX
-                + " while ambient>=" + FUSION_HARD_ZERO_MIN_AMBIENT + ")");
+                + " while invalid or ambient>=" + FUSION_HARD_ZERO_MIN_AMBIENT
+                + "; no hard-zero init)");
         ipw.println("mAmbientLightRingBuffer=" + mAmbientLightRingBuffer);
         ipw.println("mScreenAutoBrightness=" + mScreenAutoBrightness);
         ipw.println("mDisplayPolicy=" + DisplayPowerRequest.policyToString(mDisplayPolicy));
@@ -817,12 +825,13 @@ public class AutomaticBrightnessController {
         if (!isDropFusionHardZeroEnabled()) {
             return false;
         }
-        if (!mAmbientLuxValid) {
-            // Still warming up / first estimate — accept whatever the sensor reports.
-            return false;
-        }
         if (lux > FUSION_HARD_ZERO_LUX_MAX) {
             return false;
+        }
+        if (!mAmbientLuxValid) {
+            // Do not seed the first estimate with an over-sub 0. Real residual dark is a
+            // few lux; a single hard-0 on doze→on is CWB over-sub, not the room.
+            return true;
         }
         // Established ambient well above residual dark → a sudden ≤0.5 lux is content over-sub,
         // not the room going black.
@@ -1000,7 +1009,20 @@ public class AutomaticBrightnessController {
                         timeWhenSensorWarmedUp);
                 return;
             }
-            setAmbientLux(calculateAmbientLux(time, mAmbientLightHorizonShort));
+            if (mAmbientLightRingBuffer.size() == 0) {
+                // Only hard-zeros so far — stay invalid until a real sample arrives.
+                mHandler.sendEmptyMessageAtTime(MSG_UPDATE_AMBIENT_LUX,
+                        convertToUptime(time + mNormalLightSensorRate));
+                return;
+            }
+            final float initialLux = calculateAmbientLux(time, mAmbientLightHorizonShort);
+            if (isDropFusionHardZeroEnabled() && initialLux <= FUSION_HARD_ZERO_LUX_MAX) {
+                Slog.d(TAG, "updateAmbientLux: skip hard-zero init lux=" + initialLux);
+                mHandler.sendEmptyMessageAtTime(MSG_UPDATE_AMBIENT_LUX,
+                        convertToUptime(time + mNormalLightSensorRate));
+                return;
+            }
+            setAmbientLux(initialLux);
             mAmbientLuxValid = true;
             if (mLoggingEnabled) {
                 Slog.d(TAG, "updateAmbientLux: Initializing: " +
@@ -1023,7 +1045,15 @@ public class AutomaticBrightnessController {
         mSlowAmbientLux = calculateAmbientLux(time, mAmbientLightHorizonLong);
         mFastAmbientLux = calculateAmbientLux(time, mAmbientLightHorizonShort);
 
-        if ((mSlowAmbientLux >= mAmbientBrighteningThreshold
+        // Wake-time floor: ambient was seeded near 0 (or a residual <2 lux) and a real
+        // sample has already cleared the brightening threshold. Do not wait for the 2 s
+        // debounce or the 10 s slow horizon — that is the 5 s doze→desktop stall.
+        final boolean hardZeroRecovery = isDropFusionHardZeroEnabled()
+                && mAmbientLux < FUSION_HARD_ZERO_MIN_AMBIENT
+                && mFastAmbientLux >= mAmbientBrighteningThreshold;
+
+        if (hardZeroRecovery
+                || (mSlowAmbientLux >= mAmbientBrighteningThreshold
                 && mFastAmbientLux >= mAmbientBrighteningThreshold
                 && nextBrightenTransition <= time)
                 || (mSlowAmbientLux <= mAmbientDarkeningThreshold
@@ -1033,7 +1063,9 @@ public class AutomaticBrightnessController {
             setAmbientLux(mFastAmbientLux);
             if (mLoggingEnabled) {
                 Slog.d(TAG, "updateAmbientLux: "
-                        + ((mFastAmbientLux > mPreThresholdLux) ? "Brightened" : "Darkened") + ": "
+                        + (hardZeroRecovery ? "HardZeroRecovery"
+                        : ((mFastAmbientLux > mPreThresholdLux) ? "Brightened" : "Darkened"))
+                        + ": "
                         + "mAmbientBrighteningThreshold=" + mAmbientBrighteningThreshold + ", "
                         + "mAmbientDarkeningThreshold=" + mAmbientDarkeningThreshold + ", "
                         + "mAmbientLightRingBuffer=" + mAmbientLightRingBuffer + ", "

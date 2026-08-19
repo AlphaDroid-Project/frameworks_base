@@ -1426,4 +1426,43 @@ public class AutomaticBrightnessControllerTest {
         assertEquals(normalizedBrightness,
                 mController.getAutomaticScreenBrightness(/* brightnessEvent= */ null), EPSILON);
     }
+
+    @Test
+    public void testFusionHardZeroDoesNotInitializeAmbient() {
+        ArgumentCaptor<SensorEventListener> listenerCaptor =
+                ArgumentCaptor.forClass(SensorEventListener.class);
+        verify(mSensorManager).registerListener(listenerCaptor.capture(), eq(mLightSensor),
+                eq(INITIAL_LIGHT_SENSOR_RATE * 1000), any(Handler.class));
+        SensorEventListener listener = listenerCaptor.getValue();
+
+        // Doze→on over-sub: a run of exact-0 samples must not become the first ambient.
+        listener.onSensorChanged(createSensorEvent(mLightSensor, 0.0f));
+        listener.onSensorChanged(createSensorEvent(mLightSensor, 0.0f));
+        listener.onSensorChanged(createSensorEvent(mLightSensor, 0.4f));
+        assertEquals(BrightnessMappingStrategy.INVALID_LUX, mController.getAmbientLux(), EPSILON);
+        verify(mBrightnessMappingStrategy, never()).getBrightness(anyFloat(), eq(null), anyInt());
+    }
+
+    @Test
+    public void testFusionHardZeroThenRealLuxInitializesImmediately() {
+        ArgumentCaptor<SensorEventListener> listenerCaptor =
+                ArgumentCaptor.forClass(SensorEventListener.class);
+        verify(mSensorManager).registerListener(listenerCaptor.capture(), eq(mLightSensor),
+                eq(INITIAL_LIGHT_SENSOR_RATE * 1000), any(Handler.class));
+        SensorEventListener listener = listenerCaptor.getValue();
+
+        final float realLux = 46.0f;
+        when(mAmbientBrightnessThresholds.getBrighteningThreshold(realLux)).thenReturn(92.0f);
+        when(mAmbientBrightnessThresholds.getDarkeningThreshold(realLux)).thenReturn(27.0f);
+        when(mBrightnessMappingStrategy.getBrightness(eq(realLux), eq(null), anyInt()))
+                .thenReturn(0.38f);
+
+        listener.onSensorChanged(createSensorEvent(mLightSensor, 0.0f));
+        listener.onSensorChanged(createSensorEvent(mLightSensor, 0.0f));
+        assertEquals(BrightnessMappingStrategy.INVALID_LUX, mController.getAmbientLux(), EPSILON);
+
+        listener.onSensorChanged(createSensorEvent(mLightSensor, realLux));
+        assertEquals(realLux, mController.getAmbientLux(), EPSILON);
+        verify(mBrightnessMappingStrategy).getBrightness(eq(realLux), eq(null), anyInt());
+    }
 }
