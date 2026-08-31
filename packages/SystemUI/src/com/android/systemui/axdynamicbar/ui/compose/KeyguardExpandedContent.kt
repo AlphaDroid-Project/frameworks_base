@@ -38,6 +38,8 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.BasicText
+import androidx.compose.foundation.text.TextAutoSize
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.BarChart
 import androidx.compose.material.icons.filled.Close
@@ -94,6 +96,7 @@ import kotlin.math.roundToInt
 import kotlin.math.sin
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.android.systemui.alpha.theme.AlphaColors
 import com.android.systemui.axdynamicbar.shared.IslandActions
 import com.android.systemui.res.R
@@ -187,14 +190,26 @@ private fun Modifier.launchingClickable(
     }
 }
 
+private val RingStroke = 10.dp
+private val RingHandleRadius = 8.dp
+
+/**
+ * Horizontal room the clock inside a [ProgressRing] has to stay out of.
+ *
+ * The ring band ends [RingHandleRadius] + half a stroke in from the box edge, and the clock is a
+ * line box rather than a point, so it meets the circle where the chord is already narrower than
+ * the diameter. A whole stroke past the band is the flat approximation of that chord.
+ */
+private val RingClockInset = RingHandleRadius + RingStroke
+
 @Composable
 private fun ProgressRing(
     progress: Float,
     color: Color,
     modifier: Modifier = Modifier,
     trackColor: Color = color.copy(alpha = AlphaFaint),
-    strokeWidth: Dp = 10.dp,
-    handleRadius: Dp = 8.dp,
+    strokeWidth: Dp = RingStroke,
+    handleRadius: Dp = RingHandleRadius,
 ) {
     Canvas(modifier = modifier) {
         val stroke = strokeWidth.toPx()
@@ -228,6 +243,32 @@ private fun ProgressRing(
             drawCircle(color = color, radius = handle, center = Offset(cx, cy))
         }
     }
+}
+
+/**
+ * The clock at the centre of a [ProgressRing].
+ *
+ * The ring is a fixed [SizeAlbumLg] but the string is not: a countdown gains an "HH:" the moment it
+ * passes the hour and a stopwatch also carries tenths, so the widest case is nearly twice the
+ * [formatElapsedTime] shape the display size was picked for. Neither is the glyph width fixed —
+ * the display styles are set in the brand typeface, which the font overlays swap, and they are
+ * sized in sp against a ring measured in dp. Shrink to fit instead of assuming any of that.
+ */
+@Composable
+private fun RingClock(text: String, style: TextStyle, modifier: Modifier = Modifier) {
+    BasicText(
+        text = text,
+        modifier = modifier.padding(horizontal = RingClockInset),
+        style = style.copy(textAlign = TextAlign.Center),
+        maxLines = 1,
+        overflow = TextOverflow.Ellipsis,
+        autoSize =
+            TextAutoSize.StepBased(
+                minFontSize = 20.sp,
+                maxFontSize = style.fontSize,
+                stepSize = 0.5.sp,
+            ),
+    )
 }
 
 @Composable
@@ -969,10 +1010,11 @@ private fun KeyguardTimerPanel(
                 color = colors.accent,
                 modifier = Modifier.fillMaxSize(),
             )
-            Text(
+            RingClock(
                 if (event.isPaused) stringResource(R.string.ax_dynamic_bar_paused) else formatCountdownLong(remainingMs),
-                color = AlphaColors.DbKeyguardCard.text,
-                style = MaterialTheme.typography.displayMedium.tabularFigures(),
+                MaterialTheme.typography.displayMedium
+                    .tabularFigures()
+                    .copy(color = AlphaColors.DbKeyguardCard.text),
             )
         }
 
@@ -1040,7 +1082,9 @@ private fun KeyguardStopwatchPanel(
             )
         }
 
-        val clockStyle = MaterialTheme.typography.displayMedium.tabularFigures()
+        val clockStyle = MaterialTheme.typography.displayMedium
+            .tabularFigures()
+            .copy(color = AlphaColors.DbKeyguardCard.text)
         val lapStyle = MaterialTheme.typography.headlineSmall
         // Half of each line box plus a gap: the count clears the clock at any font scale.
         val lapOffset = with(LocalDensity.current) {
@@ -1053,10 +1097,9 @@ private fun KeyguardStopwatchPanel(
                 color = colors.accent,
                 modifier = Modifier.fillMaxSize(),
             )
-            Text(
+            RingClock(
                 if (event.isRunning) formatStopwatch(elapsedMs) else stringResource(R.string.ax_dynamic_bar_paused),
-                color = AlphaColors.DbKeyguardCard.text,
-                style = clockStyle,
+                clockStyle,
             )
             // Overlaid on the ring rather than stacked above the clock, so the clock keeps the
             // centre and cannot be pushed off it when the count appears on the first lap or
