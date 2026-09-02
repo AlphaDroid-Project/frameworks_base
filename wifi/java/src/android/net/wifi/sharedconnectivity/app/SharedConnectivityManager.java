@@ -321,7 +321,9 @@ public class SharedConnectivityManager {
             synchronized (mProxyDataLock) {
                 mProxyMap.put(callback, proxy);
             }
-        } catch (RemoteException e) {
+        } catch (RemoteException | RuntimeException e) {
+            // Reached from onServiceConnected, where the client has no chance to catch a
+            // service that rejects the call, so report it instead of throwing at them.
             Log.e(TAG, "Exception in registerCallback", e);
             callback.onRegisterCallbackFailed(e);
         }
