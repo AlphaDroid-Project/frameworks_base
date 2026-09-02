@@ -261,6 +261,11 @@ public class AxSandboxService extends IAxSandboxManager.Stub implements IAxSandb
         Slog.i(TAG, "AxSandboxService ready");
     }
 
+    /** Window manager and launcher hooks can run before {@link #systemReadyInternal}. */
+    private boolean isReady() {
+        return mAtms != null && mAppControlController != null;
+    }
+
     private Intent getConfirmIntent() {
         if (mConfirmIntent == null) {
             mConfirmIntent = new Intent(ACTION_SYSTEM_UNLOCK);
@@ -373,6 +378,7 @@ public class AxSandboxService extends IAxSandboxManager.Stub implements IAxSandb
 
     /** In-process variant for system_server callers that may run under a foreign identity. */
     public List<String> getHiddenPackagesInternal() {
+        if (!isReady()) return Collections.emptyList();
         return mAppControlController.getHiddenPackages();
     }
 
@@ -384,6 +390,7 @@ public class AxSandboxService extends IAxSandboxManager.Stub implements IAxSandb
 
     /** In-process variant for system_server callers that may run under a foreign identity. */
     public List<String> getHiddenFromLauncherPackagesInternal() {
+        if (!isReady()) return Collections.emptyList();
         return mAppControlController.getHiddenFromLauncherPackages();
     }
 
@@ -654,6 +661,7 @@ public class AxSandboxService extends IAxSandboxManager.Stub implements IAxSandb
 
     @Override
     public boolean checkLockApp(ActivityRecord prev, ActivityRecord next) {
+        if (!isReady()) return false;
         if (next == null || next.finishing || !next.canBeTopRunning()) return false;
 
         clearUnlockedApp(next);
@@ -1019,6 +1027,7 @@ public class AxSandboxService extends IAxSandboxManager.Stub implements IAxSandb
 
     @Override
     public void clearUnlockedApp() {
+        if (!isReady()) return;
         boolean tracksUnlockSession = mLockBehavior == LOCK_BEHAVIOR_ON_LEAVE;
         if (!tracksUnlockSession || mUnlockedApps.size() <= 0) {
             return;
@@ -1032,6 +1041,7 @@ public class AxSandboxService extends IAxSandboxManager.Stub implements IAxSandb
 
     @Override
     public void clearUnlockedApp(ActivityRecord r) {
+        if (!isReady()) return;
         if (r == null || mLockBehavior != LOCK_BEHAVIOR_ON_LEAVE) {
             return;
         }

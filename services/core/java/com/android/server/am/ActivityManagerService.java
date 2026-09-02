@@ -9203,6 +9203,10 @@ public class ActivityManagerService extends IActivityManager.Stub
         mUserController.onSystemUserStarting();
 
         synchronized (this) {
+            // Must precede the first process and activity start: window manager and launcher
+            // hooks call into these services, whose dependencies are only wired up here.
+            AxExtServiceFactory.systemReady();
+
             // Only start up encryption-aware persistent apps; once user is
             // unlocked we'll come back around and start unaware apps
             t.traceBegin("startPersistentApps");
@@ -9291,8 +9295,6 @@ public class ActivityManagerService extends IActivityManager.Stub
             mComponentAliasResolver.onSystemReady(mConstants.mEnableComponentAlias,
                     mConstants.mComponentAliasOverrides);
             t.traceEnd(); // componentAlias
-            
-            AxExtServiceFactory.systemReady();
 
             t.traceEnd(); // PhaseActivityManagerReady
         }
