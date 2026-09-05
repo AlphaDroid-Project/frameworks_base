@@ -341,5 +341,8 @@ public class SecureSettings {
         Settings.Secure.NETWORK_TRAFFIC_UNITS,
         Settings.Secure.NETWORK_TRAFFIC_SHOW_UNITS,
         Settings.Secure.VOLUME_PANEL_ON_LEFT,
+        Settings.Secure.BACKGROUND_MUSIC_RECOGNITION,
+        // BACKGROUND_MUSIC_RECOGNITION_SAVED is this-device latch state. Restoring it onto
+        // a new device can turn listening on where the user never chose it.
     };
 }

@@ -19,6 +19,7 @@ package com.android.systemui.keyguard.data.quickaffordance
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.provider.Settings
 import com.android.systemui.animation.Expandable
 import com.android.systemui.common.shared.model.ContentDescription
 import com.android.systemui.common.shared.model.Icon
@@ -137,7 +138,7 @@ constructor(
         secureSettings.getIntForUser(ASI_MASTER_SETTING, 0, userTracker.userId) != 0
 
     companion object {
-        private const val SETTING = "background_music_recognition"
+        private const val SETTING = Settings.Secure.BACKGROUND_MUSIC_RECOGNITION
 
         /** ASI's on-demand master. Read as a prerequisite; never written here. */
         private const val ASI_MASTER_SETTING = "now_playing_enabled"

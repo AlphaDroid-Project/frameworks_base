@@ -15827,6 +15827,25 @@ public final class Settings {
          */
         public static final String VOLUME_PANEL_ON_LEFT = "volume_panel_on_left";
 
+        /**
+         * Whether background music recognition is enabled. Software stand-in for Pixel DSP
+         * ambient recognition. Off until the user turns it on. Requires ASI's
+         * {@code now_playing_enabled} master and
+         * {@code config_supportsBackgroundMusicRecognition}.
+         * @hide
+         */
+        public static final String BACKGROUND_MUSIC_RECOGNITION =
+                "background_music_recognition";
+
+        /**
+         * Scratch latch for {@link #BACKGROUND_MUSIC_RECOGNITION} while ASI's master is off.
+         * 1 means restore the switch on when the master returns. This-device only; never
+         * backed up.
+         * @hide
+         */
+        public static final String BACKGROUND_MUSIC_RECOGNITION_SAVED =
+                "background_music_recognition_saved";
+
         /** Lineage Settings end */
 
         /**

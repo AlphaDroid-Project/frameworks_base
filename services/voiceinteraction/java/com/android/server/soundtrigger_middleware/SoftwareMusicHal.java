@@ -84,14 +84,14 @@ class SoftwareMusicHal implements ISoundTriggerHal {
      * on. Depends on {@link #ASI_MASTER_SETTING} but is never enabled by it -- on-demand on with
      * background off is a state the user is allowed to hold.
      */
-    private static final String GATE_SETTING = "background_music_recognition";
+    private static final String GATE_SETTING = Settings.Secure.BACKGROUND_MUSIC_RECOGNITION;
 
     /**
      * Holds {@link #GATE_SETTING} across a spell of the master being off, so that turning the
      * master back on restores what the user had chosen rather than a default. Only ever
      * meaningful while the master is off; cleared as soon as it is spent.
      */
-    private static final String SAVED_SETTING = "background_music_recognition_saved";
+    private static final String SAVED_SETTING = Settings.Secure.BACKGROUND_MUSIC_RECOGNITION_SAVED;
 
     private static final String POLL_INTERVAL_PROP = "sys.now_playing.poll_ms";
     private static final int DEFAULT_POLL_INTERVAL_MILLIS = 30_000;

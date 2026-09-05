@@ -675,6 +675,7 @@ public class SettingsBackupTest {
                  Settings.Secure.BACKUP_PROVISIONED,
                  Settings.Secure.BACKUP_SCHEDULING_ENABLED,
                  Settings.Secure.BACKUP_TRANSPORT,
+                 Settings.Secure.BACKGROUND_MUSIC_RECOGNITION_SAVED, // this-device latch
                  Settings.Secure.CALL_SCREENING_DEFAULT_COMPONENT,
                  Settings.Secure.CAMERA_LIFT_TRIGGER_ENABLED, // Candidate for backup?
                  Settings.Secure.CARRIER_APPS_HANDLED,
