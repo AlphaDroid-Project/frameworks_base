@@ -17,6 +17,7 @@
 package com.android.systemui.keyguard.data.quickaffordance
 
 import android.content.Context
+import android.content.Intent
 import android.content.pm.PackageManager
 import com.android.systemui.animation.Expandable
 import com.android.systemui.common.shared.model.ContentDescription
@@ -106,10 +107,17 @@ constructor(
 
     override suspend fun getPickerScreenState():
         KeyguardQuickAffordanceConfig.PickerScreenState =
-        if (supported) {
-            KeyguardQuickAffordanceConfig.PickerScreenState.Default()
-        } else {
-            KeyguardQuickAffordanceConfig.PickerScreenState.UnavailableOnDevice
+        when {
+            !supported -> KeyguardQuickAffordanceConfig.PickerScreenState.UnavailableOnDevice
+            !masterEnabled() ->
+                KeyguardQuickAffordanceConfig.PickerScreenState.Disabled(
+                    explanation =
+                        context.getString(R.string.now_playing_affordance_unavailable_explanation),
+                    actionText =
+                        context.getString(R.string.now_playing_affordance_unavailable_action),
+                    actionIntent = Intent(NOW_PLAYING_SETTINGS_ACTION),
+                )
+            else -> KeyguardQuickAffordanceConfig.PickerScreenState.Default()
         }
 
     override fun onTriggered(
@@ -134,5 +142,7 @@ constructor(
         /** ASI's on-demand master. Read as a prerequisite; never written here. */
         private const val ASI_MASTER_SETTING = "now_playing_enabled"
         private const val RECOGNIZER_PACKAGE = "com.google.android.as"
+        private const val NOW_PLAYING_SETTINGS_ACTION =
+            "com.google.intelligence.sense.NOW_PLAYING_SETTINGS"
     }
 }

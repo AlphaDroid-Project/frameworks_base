@@ -29,4 +29,7 @@
 
     <!-- Lockscreen shortcut that arms background music recognition -->
     <string name="now_playing_affordance">Now Playing</string>
+    <!-- Picker dialog when ASI's on-demand master is off: the shortcut would be inert. -->
+    <string name="now_playing_affordance_unavailable_explanation">Turn on Now Playing to use background music recognition</string>
+    <string name="now_playing_affordance_unavailable_action">Now Playing settings</string>
 </resources>
