@@ -116,7 +116,7 @@ constructor(
         secureSettings.getIntForUser(SETTING, 0, userTracker.userId) != 0
 
     companion object {
-        private const val SETTING = "now_playing_enabled"
+        private const val SETTING = "background_music_recognition"
         private const val RECOGNIZER_PACKAGE = "com.google.android.as"
     }
 }

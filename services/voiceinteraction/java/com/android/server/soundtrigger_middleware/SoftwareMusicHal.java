@@ -18,6 +18,7 @@ package com.android.server.soundtrigger_middleware;
 
 import android.annotation.NonNull;
 import android.annotation.Nullable;
+import android.content.ContentResolver;
 import android.content.Context;
 import android.database.ContentObserver;
 import android.media.soundtrigger.ModelParameterRange;
@@ -71,8 +72,19 @@ class SoftwareMusicHal implements ISoundTriggerHal {
     private static final String MUSIC_MODEL_VENDOR_UUID =
             "9f6ad62a-1f0b-11e7-87c5-40a8f03d3f15";
 
-    /** User consent, read straight from the setting; nothing listens while this is false. */
-    private static final String GATE_SETTING = "now_playing_enabled";
+    /**
+     * ASI's Now Playing master, which is on-demand recognition. Read as a prerequisite only --
+     * ASI owns this row and rewrites it to 1 whenever it starts, so it can never carry our
+     * user's choice. We never write it.
+     */
+    private static final String ASI_MASTER_SETTING = "now_playing_enabled";
+
+    /**
+     * Background music recognition: the user's own switch, ours to own, off until they turn it
+     * on. Depends on {@link #ASI_MASTER_SETTING} but is never enabled by it -- on-demand on with
+     * background off is a state the user is allowed to hold.
+     */
+    private static final String GATE_SETTING = "background_music_recognition";
 
     private static final String POLL_INTERVAL_PROP = "sys.now_playing.poll_ms";
     private static final int DEFAULT_POLL_INTERVAL_MILLIS = 30_000;
@@ -135,9 +147,16 @@ class SoftwareMusicHal implements ISoundTriggerHal {
     }
 
     private boolean gateArmed() {
-        return mContext.getResources().getBoolean(
-                        com.android.internal.R.bool.config_supportsBackgroundMusicRecognition)
-                && Settings.Secure.getIntForUser(mContext.getContentResolver(), GATE_SETTING, 0,
+        if (!mContext.getResources().getBoolean(
+                com.android.internal.R.bool.config_supportsBackgroundMusicRecognition)) {
+            return false;
+        }
+        final ContentResolver resolver = mContext.getContentResolver();
+        // Strictly dependent: the master being off leaves no recognizer to listen with, whatever
+        // our own row says.
+        return Settings.Secure.getIntForUser(resolver, ASI_MASTER_SETTING, 0,
+                        UserHandle.USER_CURRENT) != 0
+                && Settings.Secure.getIntForUser(resolver, GATE_SETTING, 0,
                         UserHandle.USER_CURRENT) != 0;
     }
 
@@ -353,9 +372,11 @@ class SoftwareMusicHal implements ISoundTriggerHal {
                 }
             }
         };
-        mContext.getContentResolver().registerContentObserver(
-                Settings.Secure.getUriFor(GATE_SETTING), false, mGateObserver,
-                UserHandle.USER_ALL);
+        final ContentResolver resolver = mContext.getContentResolver();
+        resolver.registerContentObserver(Settings.Secure.getUriFor(GATE_SETTING), false,
+                mGateObserver, UserHandle.USER_ALL);
+        resolver.registerContentObserver(Settings.Secure.getUriFor(ASI_MASTER_SETTING), false,
+                mGateObserver, UserHandle.USER_ALL);
     }
 
     @GuardedBy("mLock")

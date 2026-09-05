@@ -10,7 +10,8 @@
     <!-- Whether this device may offer background music recognition. The framework provides
          the software trigger (SoftwareMusicHal), so this is on everywhere; overlay it false
          to take the feature off a device entirely. Listening still needs the user to switch
-         it on - Settings.Secure.now_playing_enabled defaults off. -->
+         it on - Settings.Secure.background_music_recognition defaults off, and needs ASI's
+         now_playing_enabled master on as well. -->
     <bool name="config_supportsBackgroundMusicRecognition">true</bool>
 
 </resources>
