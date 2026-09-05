@@ -233,6 +233,8 @@ public class SoundTriggerMiddlewareService extends ISoundTriggerMiddlewareServic
      * Entry-point to this module: exposes the module as a {@link SystemService}.
      */
     public static final class Lifecycle extends SystemService {
+        private SoftwareMusicHalFactory mSoftwareMusicHalFactory;
+
         public Lifecycle(Context context) {
             super(context);
         }
@@ -240,8 +242,10 @@ public class SoundTriggerMiddlewareService extends ISoundTriggerMiddlewareServic
         @Override
         public void onStart() {
             final SoundTriggerInjection injection = new SoundTriggerInjection();
+            mSoftwareMusicHalFactory =
+                    new SoftwareMusicHalFactory(getContext(), new DefaultHalFactory());
             HalFactory[] factories = new HalFactory[]{
-                    new SoftwareMusicHalFactory(getContext(), new DefaultHalFactory()),
+                    mSoftwareMusicHalFactory,
                     new FakeHalFactory(injection)};
 
             publishBinderService(Context.SOUND_TRIGGER_MIDDLEWARE_SERVICE,
@@ -253,6 +257,13 @@ public class SoundTriggerMiddlewareService extends ISoundTriggerMiddlewareServic
                                                         new AudioSessionProviderImpl())),
                                         getContext())), getContext(),
                                         injection));
+        }
+
+        @Override
+        public void onBootPhase(int phase) {
+            if (phase == PHASE_THIRD_PARTY_APPS_CAN_START && mSoftwareMusicHalFactory != null) {
+                mSoftwareMusicHalFactory.onSystemReady();
+            }
         }
     }
 }

@@ -144,6 +144,17 @@ class SoftwareMusicHal implements ISoundTriggerHal {
         mDelegate = delegate;
     }
 
+    /**
+     * Watch the gate for this HAL's whole life, then park/restore against the master.
+     * Must not run from the constructor: SettingsProvider is not up then.
+     */
+    void onSystemReady() {
+        synchronized (mLock) {
+            ensureGateWatchedLocked();
+        }
+        syncToMaster();
+    }
+
     private static boolean isMusicModel(@Nullable SoundModel model) {
         return model != null && MUSIC_MODEL_VENDOR_UUID.equalsIgnoreCase(model.vendorUuid);
     }
@@ -210,13 +221,9 @@ class SoftwareMusicHal implements ISoundTriggerHal {
             }
             soundModel.data = null;
         }
-        // ASI only loads this with the master on, so this is also where a master that came back
-        // while nothing was watching gets noticed.
-        syncToMaster();
         synchronized (mLock) {
             final int handle = mNextHandle++;
             mModels.put(handle, new Model(callback));
-            ensureGateWatchedLocked();
             Slog.i(TAG, "Serving ambient music model in software, handle " + handle);
             return handle;
         }

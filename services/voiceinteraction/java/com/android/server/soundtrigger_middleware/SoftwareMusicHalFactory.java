@@ -17,7 +17,10 @@
 package com.android.server.soundtrigger_middleware;
 
 import android.annotation.NonNull;
+import android.annotation.Nullable;
 import android.content.Context;
+
+import com.android.internal.annotations.GuardedBy;
 
 /**
  * Wraps another factory's HAL in {@link SoftwareMusicHal}.
@@ -33,6 +36,14 @@ class SoftwareMusicHalFactory implements HalFactory {
     private final @NonNull Context mContext;
     private final @NonNull HalFactory mDelegate;
 
+    private final Object mLock = new Object();
+
+    @GuardedBy("mLock")
+    private @Nullable SoftwareMusicHal mHal;
+
+    @GuardedBy("mLock")
+    private boolean mSystemReady;
+
     SoftwareMusicHalFactory(@NonNull Context context, @NonNull HalFactory delegate) {
         mContext = context;
         mDelegate = delegate;
@@ -45,6 +56,31 @@ class SoftwareMusicHalFactory implements HalFactory {
                 com.android.internal.R.bool.config_supportsBackgroundMusicRecognition)) {
             return delegate;
         }
-        return new SoftwareMusicHal(mContext, delegate);
+        final SoftwareMusicHal hal = new SoftwareMusicHal(mContext, delegate);
+        final boolean ready;
+        // create() (module ctor / HAL death reset) can race the boot-phase callback.
+        synchronized (mLock) {
+            mHal = hal;
+            ready = mSystemReady;
+        }
+        if (ready) {
+            hal.onSystemReady();
+        }
+        return hal;
+    }
+
+    /**
+     * SettingsProvider is not up at {@code onStart()} / HAL construction. Observe and reconcile
+     * only once it is.
+     */
+    void onSystemReady() {
+        final SoftwareMusicHal hal;
+        synchronized (mLock) {
+            mSystemReady = true;
+            hal = mHal;
+        }
+        if (hal != null) {
+            hal.onSystemReady();
+        }
     }
 }
