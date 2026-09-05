@@ -86,6 +86,13 @@ class SoftwareMusicHal implements ISoundTriggerHal {
      */
     private static final String GATE_SETTING = "background_music_recognition";
 
+    /**
+     * Holds {@link #GATE_SETTING} across a spell of the master being off, so that turning the
+     * master back on restores what the user had chosen rather than a default. Only ever
+     * meaningful while the master is off; cleared as soon as it is spent.
+     */
+    private static final String SAVED_SETTING = "background_music_recognition_saved";
+
     private static final String POLL_INTERVAL_PROP = "sys.now_playing.poll_ms";
     private static final int DEFAULT_POLL_INTERVAL_MILLIS = 30_000;
     private static final int MIN_POLL_INTERVAL_MILLIS = 10_000;
@@ -146,6 +153,33 @@ class SoftwareMusicHal implements ISoundTriggerHal {
                 SystemProperties.getInt(POLL_INTERVAL_PROP, DEFAULT_POLL_INTERVAL_MILLIS));
     }
 
+    /**
+     * Follows the master: takes background recognition down with it and puts the user's choice
+     * back when it returns. Never called with {@code mLock} held -- these are binder writes.
+     */
+    private void syncToMaster() {
+        final ContentResolver resolver = mContext.getContentResolver();
+        final boolean master = Settings.Secure.getIntForUser(resolver, ASI_MASTER_SETTING, 0,
+                UserHandle.USER_CURRENT) != 0;
+        final boolean gate = Settings.Secure.getIntForUser(resolver, GATE_SETTING, 0,
+                UserHandle.USER_CURRENT) != 0;
+        if (!master) {
+            // Only on the way down, so a second pass cannot overwrite the saved choice with 0.
+            if (gate) {
+                Slog.i(TAG, "Master off, parking background music recognition");
+                Settings.Secure.putIntForUser(resolver, SAVED_SETTING, 1, UserHandle.USER_CURRENT);
+                Settings.Secure.putIntForUser(resolver, GATE_SETTING, 0, UserHandle.USER_CURRENT);
+            }
+            return;
+        }
+        if (Settings.Secure.getIntForUser(resolver, SAVED_SETTING, 0, UserHandle.USER_CURRENT)
+                != 0) {
+            Slog.i(TAG, "Master on, restoring background music recognition");
+            Settings.Secure.putIntForUser(resolver, GATE_SETTING, 1, UserHandle.USER_CURRENT);
+            Settings.Secure.putIntForUser(resolver, SAVED_SETTING, 0, UserHandle.USER_CURRENT);
+        }
+    }
+
     private boolean gateArmed() {
         if (!mContext.getResources().getBoolean(
                 com.android.internal.R.bool.config_supportsBackgroundMusicRecognition)) {
@@ -176,6 +210,9 @@ class SoftwareMusicHal implements ISoundTriggerHal {
             }
             soundModel.data = null;
         }
+        // ASI only loads this with the master on, so this is also where a master that came back
+        // while nothing was watching gets noticed.
+        syncToMaster();
         synchronized (mLock) {
             final int handle = mNextHandle++;
             mModels.put(handle, new Model(callback));
@@ -355,6 +392,7 @@ class SoftwareMusicHal implements ISoundTriggerHal {
         mGateObserver = new ContentObserver(null) {
             @Override
             public void onChange(boolean selfChange) {
+                syncToMaster();
                 synchronized (mLock) {
                     final boolean armed = gateArmed();
                     if (armed == mGateArmed) {

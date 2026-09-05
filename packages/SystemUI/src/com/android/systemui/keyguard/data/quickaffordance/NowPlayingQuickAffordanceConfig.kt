@@ -35,6 +35,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.onStart
 
 /**
@@ -77,13 +78,19 @@ constructor(
     }
 
     override val lockScreenState: Flow<KeyguardQuickAffordanceConfig.LockScreenState> =
-        secureSettings
-            .observerFlow(userTracker.userId, SETTING)
+        merge(
+                secureSettings.observerFlow(userTracker.userId, SETTING),
+                secureSettings.observerFlow(userTracker.userId, ASI_MASTER_SETTING),
+            )
             .onStart { emit(Unit) }
-            .map { isEnabled() }
+            // Both rows matter, so both belong in the key -- keying on the switch alone would
+            // swallow a master change that left it untouched.
+            .map { isEnabled() to masterEnabled() }
             .distinctUntilChanged()
-            .map { enabled ->
-                if (!supported) {
+            .map { (enabled, master) ->
+                // The master takes the shortcut with it: without it there is no recognizer, so
+                // offering a toggle here would only let the user store a state that cannot hold.
+                if (!supported || !master) {
                     KeyguardQuickAffordanceConfig.LockScreenState.Hidden
                 } else {
                     KeyguardQuickAffordanceConfig.LockScreenState.Visible(
@@ -108,6 +115,9 @@ constructor(
     override fun onTriggered(
         expandable: Expandable?
     ): KeyguardQuickAffordanceConfig.OnTriggeredResult {
+        if (!masterEnabled()) {
+            return KeyguardQuickAffordanceConfig.OnTriggeredResult.Handled(false)
+        }
         secureSettings.putIntForUser(SETTING, if (isEnabled()) 0 else 1, userTracker.userId)
         return KeyguardQuickAffordanceConfig.OnTriggeredResult.Handled(false)
     }
@@ -115,8 +125,14 @@ constructor(
     private fun isEnabled(): Boolean =
         secureSettings.getIntForUser(SETTING, 0, userTracker.userId) != 0
 
+    private fun masterEnabled(): Boolean =
+        secureSettings.getIntForUser(ASI_MASTER_SETTING, 0, userTracker.userId) != 0
+
     companion object {
         private const val SETTING = "background_music_recognition"
+
+        /** ASI's on-demand master. Read as a prerequisite; never written here. */
+        private const val ASI_MASTER_SETTING = "now_playing_enabled"
         private const val RECOGNIZER_PACKAGE = "com.google.android.as"
     }
 }
