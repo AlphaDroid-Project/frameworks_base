@@ -465,8 +465,7 @@ private fun CutoutPillLeft(
 
     Box(
         modifier = Modifier
-            .requiredWidth(LocalConfiguration.current.screenWidthDp.dp)
-            .padding(top = pillTopDp),
+            .requiredWidth(LocalConfiguration.current.screenWidthDp.dp),
         contentAlignment = Alignment.TopStart,
     ) {
         // Ring mode: show ring centered on cutout instead of pill
@@ -490,18 +489,20 @@ private fun CutoutPillLeft(
                             onClick(label = "Expand") { viewModel.togglePanel(); true }
                         },
                 ) {
-                    AnimatedCutoutRing(
+                    CutoutCollapsedRingOrContour(
                         event = event,
                         cutoutRectPx = cutoutRectPx,
                         accent = accent,
                         progress = progress,
-                        ringGap = ringGap, ringScaleX = 1f, ringScaleY = 1f,
-                        ringOffsetXDp = 0f, ringOffsetYDp = 0f,
-                        ringOpacity = ringOpacity, ringStrokeDp = ringStrokeDp,
+                        ringGap = ringGap,
+                        ringOpacity = ringOpacity,
+                        ringStrokeDp = ringStrokeDp,
+                        containerTopDp = pillTopDp,
+                        viewModel = viewModel,
                     )
                 }
         } else {
-            Box(modifier = Modifier.wrapContentSize()) {
+            Box(modifier = Modifier.padding(top = pillTopDp).wrapContentSize()) {
                 // matchParentSize, not a fixed width: the pill grows and shrinks with its content,
                 // and the frost has to track it without taking part in the measurement.
                 if (blurred) {
@@ -615,8 +616,7 @@ private fun CutoutPillRight(
 
     Box(
         modifier = Modifier
-            .requiredWidth(LocalConfiguration.current.screenWidthDp.dp)
-            .padding(top = pillTopDp),
+            .requiredWidth(LocalConfiguration.current.screenWidthDp.dp),
         contentAlignment = Alignment.TopEnd,
     ) {
         // Ring mode
@@ -640,18 +640,20 @@ private fun CutoutPillRight(
                             onClick(label = "Expand") { viewModel.togglePanel(); true }
                         },
                 ) {
-                    AnimatedCutoutRing(
+                    CutoutCollapsedRingOrContour(
                         event = event,
                         cutoutRectPx = cutoutRectPx,
                         accent = accent,
                         progress = progress,
-                        ringGap = ringGap, ringScaleX = 1f, ringScaleY = 1f,
-                        ringOffsetXDp = 0f, ringOffsetYDp = 0f,
-                        ringOpacity = ringOpacity, ringStrokeDp = ringStrokeDp,
+                        ringGap = ringGap,
+                        ringOpacity = ringOpacity,
+                        ringStrokeDp = ringStrokeDp,
+                        containerTopDp = pillTopDp,
+                        viewModel = viewModel,
                     )
                 }
         } else {
-            Box(modifier = Modifier.wrapContentSize()) {
+            Box(modifier = Modifier.padding(top = pillTopDp).wrapContentSize()) {
                 // matchParentSize, not a fixed width: the pill grows and shrinks with its content,
                 // and the frost has to track it without taking part in the measurement.
                 if (blurred) {
@@ -774,8 +776,7 @@ private fun CutoutPillCenter(
 
     Box(
         modifier = Modifier
-            .requiredWidth(LocalConfiguration.current.screenWidthDp.dp)
-            .padding(top = pillTopDp),
+            .requiredWidth(LocalConfiguration.current.screenWidthDp.dp),
         contentAlignment = Alignment.TopCenter,
     ) {
         AnimatedContent(
@@ -797,14 +798,16 @@ private fun CutoutPillCenter(
                             onClick(label = "Expand") { viewModel.togglePanel(); true }
                         },
                 ) {
-                    AnimatedCutoutRing(
+                    CutoutCollapsedRingOrContour(
                         event = event,
                         cutoutRectPx = cutoutRectPx,
                         accent = accent,
                         progress = progress,
-                        ringGap = ringGap, ringScaleX = 1f, ringScaleY = 1f,
-                        ringOffsetXDp = 0f, ringOffsetYDp = 0f,
-                        ringOpacity = ringOpacity, ringStrokeDp = ringStrokeDp,
+                        ringGap = ringGap,
+                        ringOpacity = ringOpacity,
+                        ringStrokeDp = ringStrokeDp,
+                        containerTopDp = pillTopDp,
+                        viewModel = viewModel,
                     )
                 }
         } else {
@@ -817,7 +820,7 @@ private fun CutoutPillCenter(
             )
             val lanePad = if (animatedRightLaneWidth > 6.dp) 4.dp else 0.dp
 
-            Box(modifier = Modifier.wrapContentSize()) {
+            Box(modifier = Modifier.padding(top = pillTopDp).wrapContentSize()) {
                 // matchParentSize, not a fixed width: the pill grows and shrinks with its content,
                 // and the frost has to track it without taking part in the measurement.
                 if (blurred) {

@@ -31,7 +31,10 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import android.graphics.Path
+import android.graphics.Rect
 import com.android.systemui.axdynamicbar.model.CutoutPlacementHint
+import com.android.systemui.axdynamicbar.shared.CutoutKind
 
 data class AxDynamicBarChipState(
     val event: IslandEvent,
@@ -122,8 +125,16 @@ constructor(
             )
 
     /** Physical cutout bounding rect in screen pixels — null when cutout mode is off. */
-    val cutoutRectPx: StateFlow<android.graphics.Rect?> =
+    val cutoutRectPx: StateFlow<Rect?> =
         interactor.cutoutRectPx
+            .stateIn(applicationScope, SharingStarted.Eagerly, null)
+
+    val cutoutKind: StateFlow<CutoutKind> =
+        interactor.cutoutKind
+            .stateIn(applicationScope, SharingStarted.Eagerly, CutoutKind.HOLE)
+
+    val cutoutContourPath: StateFlow<Path?> =
+        interactor.cutoutContourPath
             .stateIn(applicationScope, SharingStarted.Eagerly, null)
 
     /**

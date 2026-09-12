@@ -15,7 +15,10 @@ import com.android.systemui.axdynamicbar.model.IslandState
 import com.android.systemui.axdynamicbar.model.mirroredStatusBarNotificationKeys
 import com.android.systemui.axdynamicbar.model.IslandUiState
 import com.android.systemui.axdynamicbar.model.RecordingState
+import com.android.systemui.axdynamicbar.shared.CutoutKind
 import com.android.systemui.axdynamicbar.shared.IslandActions
+import com.android.systemui.axdynamicbar.shared.classifyCutout
+import com.android.systemui.axdynamicbar.shared.stripDisplayEdge
 import com.android.systemui.dagger.SysUISingleton
 import com.android.systemui.dagger.qualifiers.Application
 import com.android.systemui.haptics.slider.compose.ui.SliderHapticsViewModel
@@ -122,6 +125,13 @@ constructor(
     /** Tight physical cutout hole bounds in screen pixels (path outline or circle fallback). */
     private val _cutoutRectPx = MutableStateFlow<Rect?>(null)
     val cutoutRectPx: StateFlow<Rect?> = _cutoutRectPx.asStateFlow()
+
+    private val _cutoutKind = MutableStateFlow(CutoutKind.HOLE)
+    val cutoutKind: StateFlow<CutoutKind> = _cutoutKind.asStateFlow()
+
+    /** Edge-stripped cutout outline in display pixels; null for punch holes. */
+    private val _cutoutContourPath = MutableStateFlow<Path?>(null)
+    val cutoutContourPath: StateFlow<Path?> = _cutoutContourPath.asStateFlow()
 
     @Volatile private var panelBlocking = false
     private val _isPanelExpanded = MutableStateFlow(false)
@@ -309,7 +319,7 @@ constructor(
                 if (enabled) {
                     refreshCutoutGeometry()
                 } else {
-                    _cutoutRectPx.value = null
+                    clearCutoutGeometry()
                 }
             }
         }
@@ -962,14 +972,40 @@ constructor(
     private fun refreshCutoutGeometry() {
         _cutoutPlacementHint.value = deriveCutoutPlacementHint()
         val wm = context.getSystemService(WindowManager::class.java) ?: run {
-            _cutoutRectPx.value = null
+            clearCutoutGeometry()
             return
         }
         val displayCutout = wm.currentWindowMetrics.windowInsets.displayCutout ?: run {
-            _cutoutRectPx.value = null
+            clearCutoutGeometry()
             return
         }
-        _cutoutRectPx.value = physicalCutoutHoleBounds(displayCutout)
+        val rect = physicalCutoutHoleBounds(displayCutout)
+        _cutoutRectPx.value = rect
+        if (rect == null) {
+            _cutoutKind.value = CutoutKind.HOLE
+            _cutoutContourPath.value = null
+            return
+        }
+        val dm = context.resources.displayMetrics
+        val kind = classifyCutout(rect, dm.widthPixels, dm.heightPixels)
+        _cutoutKind.value = kind
+        if (kind == CutoutKind.CONTOUR) {
+            val native = displayCutout.cutoutPath
+            _cutoutContourPath.value =
+                if (native != null && !native.isEmpty) {
+                    stripDisplayEdge(Path(native), dm.widthPixels, dm.heightPixels)
+                } else {
+                    null
+                }
+        } else {
+            _cutoutContourPath.value = null
+        }
+    }
+
+    private fun clearCutoutGeometry() {
+        _cutoutRectPx.value = null
+        _cutoutKind.value = CutoutKind.HOLE
+        _cutoutContourPath.value = null
     }
 
     fun getCutoutRect(): Rect? {
