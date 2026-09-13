@@ -45,8 +45,15 @@ import com.android.systemui.axdynamicbar.shared.contourPivot
 import com.android.systemui.axdynamicbar.shared.contourTipDistance
 import com.android.systemui.axdynamicbar.shared.transformContourPath
 import com.android.systemui.axdynamicbar.ui.AxDynamicBarChipViewModel
+import kotlin.math.abs
 
 private const val MEDIA_WINDOW_FRACTION = 0.08f
+
+// The gap slider is a radius ratio, which suits a punch-hole and not an edge cutout: the same
+// 0.155 buys ~3px around a 40px hole and 13.5px around grus's 174px-wide notch. Read it as a
+// distance for contours, with the slider's default landing on CONTOUR_GAP_DP.
+private const val CONTOUR_GAP_DP = 3f
+private const val DEFAULT_RING_GAP = 1.155f
 
 /**
  * Picks the punch-hole circle renderer or the edge-cutout contour renderer.
@@ -85,6 +92,7 @@ internal fun CutoutCollapsedRingOrContour(
             physicalCutoutRectPx = physical,
             accent = accent,
             progress = progress,
+            ringGap = ringGap,
             ringScaleX = contourScaleX,
             ringScaleY = contourScaleY,
             ringOffsetXDp = contourOffsetXDp,
@@ -121,6 +129,7 @@ internal fun AnimatedCutoutContour(
     physicalCutoutRectPx: Rect,
     accent: Color,
     progress: Float?,
+    ringGap: Float,
     ringScaleX: Float,
     ringScaleY: Float,
     ringOffsetXDp: Float,
@@ -140,11 +149,18 @@ internal fun AnimatedCutoutContour(
     val pivot = remember(physicalCutoutRectPx, screenW, screenH) {
         contourPivot(physicalCutoutRectPx, screenW, screenH)
     }
-    val transformed = remember(
-        contourPath, pivot, ringScaleX, ringScaleY, offsetXPx, offsetYPx,
-    ) {
+    val gapPx = with(density) { CONTOUR_GAP_DP.dp.toPx() } *
+        ((ringGap - 1f) / (DEFAULT_RING_GAP - 1f))
+    val gapScale = remember(physicalCutoutRectPx, gapPx) {
+        val baseRadius =
+            maxOf(physicalCutoutRectPx.width(), physicalCutoutRectPx.height()) / 2f
+        if (baseRadius <= 0f) 1f else 1f + gapPx / baseRadius
+    }
+    // Offsets are applied at draw time, not here: bounds are measured off this path and the
+    // canvas translate is bounds-relative, so an offset baked in would cancel itself out.
+    val transformed = remember(contourPath, pivot, ringScaleX, ringScaleY, gapScale) {
         transformContourPath(
-            contourPath, pivot, ringScaleX, ringScaleY, offsetXPx, offsetYPx,
+            contourPath, pivot, ringScaleX * gapScale, ringScaleY * gapScale, 0f, 0f,
         )
     }
     val bounds = remember(transformed) {
@@ -164,8 +180,8 @@ internal fun AnimatedCutoutContour(
     }
 
     val pad = strokePx / 2f + 2f
-    val canvasW = (bounds.width() + pad * 2f).coerceAtLeast(1f)
-    val canvasH = (bounds.height() + pad).coerceAtLeast(1f)
+    val canvasW = (bounds.width() + pad * 2f + abs(offsetXPx) * 2f).coerceAtLeast(1f)
+    val canvasH = (bounds.height() + pad + abs(offsetYPx)).coerceAtLeast(1f)
     val canvasWDp = with(density) { canvasW.toDp() }
     val canvasHDp = with(density) { canvasH.toDp() }
 
@@ -214,7 +230,10 @@ internal fun AnimatedCutoutContour(
     Canvas(modifier = modifier.size(canvasWDp, canvasHDp)) {
         val native = drawContext.canvas.nativeCanvas
         native.save()
-        native.translate(pad - bounds.left, -bounds.top)
+        native.translate(
+            pad + abs(offsetXPx) - bounds.left + offsetXPx,
+            -bounds.top + offsetYPx,
+        )
 
         val effAccent = accent.copy(alpha = accent.alpha * opacityFactor)
         val ringColor = effAccent.copy(alpha = effAccent.alpha * pulseAlpha)
