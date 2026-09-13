@@ -13,6 +13,7 @@ import android.graphics.PointF
 import android.graphics.Rect
 import android.graphics.RectF
 import android.graphics.RectF
+import kotlin.math.abs
 import kotlin.math.acos
 import kotlin.math.ceil
 import kotlin.math.cos
@@ -358,7 +359,8 @@ fun contourPivot(
 }
 
 /**
- * Widens an open contour by [gapPx] along its own outward normal — a parallel curve, not a scale.
+ * Shifts an open contour by [gapPx] along its own outward normal — a parallel curve, not a scale.
+ * Negative values pull it inward, matching what the gap slider does to a punch-hole ring below 1.0.
  *
  * Scaling about the edge midpoint spreads the gap radially, so it thins wherever the outline runs
  * along a radius and steps at every tangent break: on grus's notch the border goes 8.25px down the
@@ -374,7 +376,7 @@ fun offsetContourOutward(
     screenH: Int,
     edgeSlopPx: Int = DEFAULT_EDGE_SLOP_PX,
 ): Path {
-    if (gapPx <= 0.01f) return path
+    if (abs(gapPx) <= 0.01f) return path
     val edge = cutoutDisplayEdge(bounds, screenW, screenH, edgeSlopPx)
     val measure = PathMeasure(path, false)
     val length = measure.length
@@ -460,8 +462,10 @@ fun offsetContourOutward(
             ) {
                 continue
             }
+            // Rounding applies to the outside of a turn only. Pulled inward the same corner
+            // closes on itself, and the fold check above already trims what crosses.
             val turn = acos((prevNx * ox + prevNy * oy).coerceIn(-1f, 1f))
-            if (turn > CORNER_STEP_RAD) {
+            if (gapPx > 0f && turn > CORNER_STEP_RAD) {
                 val steps = ceil(turn / CORNER_STEP_RAD).toInt()
                 val way = if (prevNx * oy - prevNy * ox >= 0f) 1f else -1f
                 for (k in 1 until steps) {
