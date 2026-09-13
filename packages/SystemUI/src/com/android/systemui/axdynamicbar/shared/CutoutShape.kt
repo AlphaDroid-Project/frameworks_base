@@ -438,30 +438,51 @@ fun offsetContourOutward(
     val sign = if (outward >= 0f) 1f else -1f
 
     val out = Path()
-    var prevX = 0f
-    var prevY = 0f
+    var started = false
+    var prevNx = 0f
+    var prevNy = 0f
+    var lastSrcX = 0f
+    var lastSrcY = 0f
+    var lastOutX = 0f
+    var lastOutY = 0f
     for (i in ptX.indices) {
         val ox = sign * nX[i]
         val oy = sign * nY[i]
-        if (i == 0) {
-            out.moveTo(ptX[i] + ox * gapPx, ptY[i] + oy * gapPx)
-        } else {
-            val turn = acos((prevX * ox + prevY * oy).coerceIn(-1f, 1f))
+        val outX = ptX[i] + ox * gapPx
+        val outY = ptY[i] + oy * gapPx
+        if (started) {
+            // Where the gap exceeds the local radius on a concave stretch — a notch mouth that
+            // flares into the display edge more tightly than the gap is wide — the parallel curve
+            // folds back through itself. Those samples travel against the source tangent; drop
+            // them so the outline closes over the loop instead of drawing it.
+            if ((ptX[i] - lastSrcX) * (outX - lastOutX) +
+                (ptY[i] - lastSrcY) * (outY - lastOutY) < 0f
+            ) {
+                continue
+            }
+            val turn = acos((prevNx * ox + prevNy * oy).coerceIn(-1f, 1f))
             if (turn > CORNER_STEP_RAD) {
                 val steps = ceil(turn / CORNER_STEP_RAD).toInt()
-                val way = if (prevX * oy - prevY * ox >= 0f) 1f else -1f
+                val way = if (prevNx * oy - prevNy * ox >= 0f) 1f else -1f
                 for (k in 1 until steps) {
                     val a = way * turn * k / steps
                     out.lineTo(
-                        ptX[i] + (prevX * cos(a) - prevY * sin(a)) * gapPx,
-                        ptY[i] + (prevX * sin(a) + prevY * cos(a)) * gapPx,
+                        ptX[i] + (prevNx * cos(a) - prevNy * sin(a)) * gapPx,
+                        ptY[i] + (prevNx * sin(a) + prevNy * cos(a)) * gapPx,
                     )
                 }
             }
-            out.lineTo(ptX[i] + ox * gapPx, ptY[i] + oy * gapPx)
+            out.lineTo(outX, outY)
+        } else {
+            out.moveTo(outX, outY)
+            started = true
         }
-        prevX = ox
-        prevY = oy
+        prevNx = ox
+        prevNy = oy
+        lastSrcX = ptX[i]
+        lastSrcY = ptY[i]
+        lastOutX = outX
+        lastOutY = outY
     }
     return out.takeUnless { it.isEmpty } ?: path
 }
