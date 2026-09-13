@@ -43,15 +43,17 @@ import com.android.systemui.axdynamicbar.shared.CutoutKind
 import com.android.systemui.axdynamicbar.shared.chargingContourRange
 import com.android.systemui.axdynamicbar.shared.contourPivot
 import com.android.systemui.axdynamicbar.shared.contourTipDistance
+import com.android.systemui.axdynamicbar.shared.offsetContourOutward
 import com.android.systemui.axdynamicbar.shared.transformContourPath
 import com.android.systemui.axdynamicbar.ui.AxDynamicBarChipViewModel
 import kotlin.math.abs
 
 private const val MEDIA_WINDOW_FRACTION = 0.08f
 
-// The gap slider is a radius ratio, which suits a punch-hole and not an edge cutout: the same
-// 0.155 buys ~3px around a 40px hole and 13.5px around grus's 174px-wide notch. Read it as a
-// distance for contours, with the slider's default landing on CONTOUR_GAP_DP.
+// The gap slider is a radius ratio, which suits a punch-hole — scaling a circle is the same as
+// offsetting it — and not an edge cutout, where the same 0.155 buys ~3px around a 40px hole and
+// 13.5px around grus's 174px-wide notch. Contours read it as a distance instead, with the
+// slider's default landing on CONTOUR_GAP_DP.
 private const val CONTOUR_GAP_DP = 3f
 private const val DEFAULT_RING_GAP = 1.155f
 
@@ -151,17 +153,14 @@ internal fun AnimatedCutoutContour(
     }
     val gapPx = with(density) { CONTOUR_GAP_DP.dp.toPx() } *
         ((ringGap - 1f) / (DEFAULT_RING_GAP - 1f))
-    val gapScale = remember(physicalCutoutRectPx, gapPx) {
-        val baseRadius =
-            maxOf(physicalCutoutRectPx.width(), physicalCutoutRectPx.height()) / 2f
-        if (baseRadius <= 0f) 1f else 1f + gapPx / baseRadius
-    }
     // Offsets are applied at draw time, not here: bounds are measured off this path and the
     // canvas translate is bounds-relative, so an offset baked in would cancel itself out.
-    val transformed = remember(contourPath, pivot, ringScaleX, ringScaleY, gapScale) {
-        transformContourPath(
-            contourPath, pivot, ringScaleX * gapScale, ringScaleY * gapScale, 0f, 0f,
-        )
+    val transformed = remember(
+        contourPath, pivot, ringScaleX, ringScaleY, gapPx,
+        physicalCutoutRectPx, screenW, screenH,
+    ) {
+        val scaled = transformContourPath(contourPath, pivot, ringScaleX, ringScaleY, 0f, 0f)
+        offsetContourOutward(scaled, gapPx, physicalCutoutRectPx, screenW, screenH)
     }
     val bounds = remember(transformed) {
         RectF().also { transformed.computeBounds(it, true) }

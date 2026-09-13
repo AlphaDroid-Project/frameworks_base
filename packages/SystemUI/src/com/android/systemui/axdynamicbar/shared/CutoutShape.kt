@@ -12,7 +12,11 @@ import android.graphics.PathIterator
 import android.graphics.PointF
 import android.graphics.Rect
 import android.graphics.RectF
+import kotlin.math.acos
+import kotlin.math.ceil
+import kotlin.math.cos
 import kotlin.math.hypot
+import kotlin.math.sin
 
 /**
  * Punch-hole vs edge-contour cutout classification for Dynamic Bar "collapse to ring".
@@ -28,6 +32,7 @@ private const val DEFAULT_EDGE_SLOP_PX = 2
 private const val DEFAULT_MAX_HOLE_ASPECT = 1.4f
 private const val STRIP_STEP_PX = 1f
 private const val MIN_CONTOUR_LENGTH_PX = 4f
+private const val CORNER_STEP_RAD = 0.15f
 
 fun classifyCutout(
     bounds: Rect,
@@ -305,6 +310,19 @@ private fun stripDisplayEdgeBySampling(
     return out.takeUnless { it.isEmpty }
 }
 
+private fun cutoutDisplayEdge(
+    bounds: Rect,
+    screenW: Int,
+    screenH: Int,
+    slop: Int,
+): DisplayEdge? = when {
+    bounds.top <= slop -> DisplayEdge.TOP
+    bounds.bottom >= screenH - slop -> DisplayEdge.BOTTOM
+    bounds.left <= slop -> DisplayEdge.LEFT
+    bounds.right >= screenW - slop -> DisplayEdge.RIGHT
+    else -> null
+}
+
 /** Scale pivot: the midpoint of the display edge the cutout sits on, else the bounds center. */
 fun contourPivot(
     bounds: Rect,
@@ -314,13 +332,105 @@ fun contourPivot(
 ): PointF {
     val cx = bounds.exactCenterX()
     val cy = bounds.exactCenterY()
-    return when {
-        bounds.top <= edgeSlopPx -> PointF(cx, 0f)
-        bounds.bottom >= screenH - edgeSlopPx -> PointF(cx, screenH.toFloat())
-        bounds.left <= edgeSlopPx -> PointF(0f, cy)
-        bounds.right >= screenW - edgeSlopPx -> PointF(screenW.toFloat(), cy)
-        else -> PointF(cx, cy)
+    return when (cutoutDisplayEdge(bounds, screenW, screenH, edgeSlopPx)) {
+        DisplayEdge.TOP -> PointF(cx, 0f)
+        DisplayEdge.BOTTOM -> PointF(cx, screenH.toFloat())
+        DisplayEdge.LEFT -> PointF(0f, cy)
+        DisplayEdge.RIGHT -> PointF(screenW.toFloat(), cy)
+        null -> PointF(cx, cy)
     }
+}
+
+/**
+ * Widens an open contour by [gapPx] along its own outward normal — a parallel curve, not a scale.
+ *
+ * Scaling about the edge midpoint spreads the gap radially, so it thins wherever the outline runs
+ * along a radius and steps at every tangent break: on grus's notch the border goes 8.25px down the
+ * wall and 6.58px the moment the shoulder turns 45 deg. Offsetting each sample along its own normal
+ * holds one width the whole way round. Corners are rounded rather than bevelled, matching the
+ * round join the contour is stroked with.
+ */
+fun offsetContourOutward(
+    path: Path,
+    gapPx: Float,
+    bounds: Rect,
+    screenW: Int,
+    screenH: Int,
+    edgeSlopPx: Int = DEFAULT_EDGE_SLOP_PX,
+): Path {
+    val edge = cutoutDisplayEdge(bounds, screenW, screenH, edgeSlopPx) ?: return path
+    if (gapPx <= 0.01f) return path
+    val measure = PathMeasure(path, false)
+    val length = measure.length
+    if (length < MIN_CONTOUR_LENGTH_PX) return path
+
+    val pos = FloatArray(2)
+    val tan = FloatArray(2)
+    val ptX = ArrayList<Float>()
+    val ptY = ArrayList<Float>()
+    val nX = ArrayList<Float>()
+    val nY = ArrayList<Float>()
+    var d = 0f
+    while (d <= length) {
+        measure.getPosTan(d.coerceAtMost(length), pos, tan)
+        val tl = hypot(tan[0], tan[1])
+        if (tl > 1e-6f) {
+            ptX += pos[0]
+            ptY += pos[1]
+            nX += -tan[1] / tl
+            nY += tan[0] / tl
+        }
+        d += STRIP_STEP_PX
+    }
+    if (ptX.size < 2) return path
+
+    // The sample furthest from the display edge settles which side is "out": a cutout can only
+    // grow away from the edge it hangs off.
+    var far = 0
+    for (i in ptX.indices) {
+        val better = when (edge) {
+            DisplayEdge.TOP -> ptY[i] > ptY[far]
+            DisplayEdge.BOTTOM -> ptY[i] < ptY[far]
+            DisplayEdge.LEFT -> ptX[i] > ptX[far]
+            DisplayEdge.RIGHT -> ptX[i] < ptX[far]
+        }
+        if (better) far = i
+    }
+    val outward = when (edge) {
+        DisplayEdge.TOP -> nY[far]
+        DisplayEdge.BOTTOM -> -nY[far]
+        DisplayEdge.LEFT -> nX[far]
+        DisplayEdge.RIGHT -> -nX[far]
+    }
+    val sign = if (outward >= 0f) 1f else -1f
+
+    val out = Path()
+    var prevX = 0f
+    var prevY = 0f
+    for (i in ptX.indices) {
+        val ox = sign * nX[i]
+        val oy = sign * nY[i]
+        if (i == 0) {
+            out.moveTo(ptX[i] + ox * gapPx, ptY[i] + oy * gapPx)
+        } else {
+            val turn = acos((prevX * ox + prevY * oy).coerceIn(-1f, 1f))
+            if (turn > CORNER_STEP_RAD) {
+                val steps = ceil(turn / CORNER_STEP_RAD).toInt()
+                val way = if (prevX * oy - prevY * ox >= 0f) 1f else -1f
+                for (k in 1 until steps) {
+                    val a = way * turn * k / steps
+                    out.lineTo(
+                        ptX[i] + (prevX * cos(a) - prevY * sin(a)) * gapPx,
+                        ptY[i] + (prevX * sin(a) + prevY * cos(a)) * gapPx,
+                    )
+                }
+            }
+            out.lineTo(ptX[i] + ox * gapPx, ptY[i] + oy * gapPx)
+        }
+        prevX = ox
+        prevY = oy
+    }
+    return out.takeUnless { it.isEmpty } ?: path
 }
 
 fun transformContourPath(
