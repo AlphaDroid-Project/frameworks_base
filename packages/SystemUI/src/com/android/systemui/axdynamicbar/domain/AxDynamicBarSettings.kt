@@ -42,7 +42,8 @@ class AxDynamicBarSettings @Inject constructor(
         const val KEY_RING_OPACITY = "cutout_ring_opacity"
         const val KEY_RING_STROKE_DP10 = "cutout_ring_stroke_dp10"
 
-        private const val DEF_RING_GAP_X1000 = 1155 // 1.155f
+        // Public: the contour renderer anchors its own gap on this, so the two cannot drift.
+        const val DEF_RING_GAP_X1000 = 1155 // 1.155f
         private const val DEF_RING_SCALE_X1000 = 1000 // 1.0f
         private const val DEF_RING_OFFSET_DP10 = 0 // 0.0dp
         private const val DEF_RING_OPACITY = 90 // 90%
@@ -64,25 +65,25 @@ class AxDynamicBarSettings @Inject constructor(
     private val _collapseToRing = MutableStateFlow(false)
     val collapseToRing: StateFlow<Boolean> = _collapseToRing.asStateFlow()
 
-    private val _ringGap = MutableStateFlow(1.155f)
+    private val _ringGap = MutableStateFlow(DEF_RING_GAP_X1000 / 1000f)
     val ringGap: StateFlow<Float> = _ringGap.asStateFlow()
 
-    private val _ringScaleX = MutableStateFlow(1f)
+    private val _ringScaleX = MutableStateFlow(DEF_RING_SCALE_X1000 / 1000f)
     val ringScaleX: StateFlow<Float> = _ringScaleX.asStateFlow()
 
-    private val _ringScaleY = MutableStateFlow(1f)
+    private val _ringScaleY = MutableStateFlow(DEF_RING_SCALE_X1000 / 1000f)
     val ringScaleY: StateFlow<Float> = _ringScaleY.asStateFlow()
 
-    private val _ringOffsetXDp = MutableStateFlow(0f)
+    private val _ringOffsetXDp = MutableStateFlow(DEF_RING_OFFSET_DP10 / 10f)
     val ringOffsetXDp: StateFlow<Float> = _ringOffsetXDp.asStateFlow()
 
-    private val _ringOffsetYDp = MutableStateFlow(0f)
+    private val _ringOffsetYDp = MutableStateFlow(DEF_RING_OFFSET_DP10 / 10f)
     val ringOffsetYDp: StateFlow<Float> = _ringOffsetYDp.asStateFlow()
 
-    private val _ringOpacity = MutableStateFlow(90)
+    private val _ringOpacity = MutableStateFlow(DEF_RING_OPACITY)
     val ringOpacity: StateFlow<Int> = _ringOpacity.asStateFlow()
 
-    private val _ringStrokeDp = MutableStateFlow(3f)
+    private val _ringStrokeDp = MutableStateFlow(DEF_RING_STROKE_DP10 / 10f)
     val ringStrokeDp: StateFlow<Float> = _ringStrokeDp.asStateFlow()
 
     private val _isHeadsUpEnabled = MutableStateFlow(true)

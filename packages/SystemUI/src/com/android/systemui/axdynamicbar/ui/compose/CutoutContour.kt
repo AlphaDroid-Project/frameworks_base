@@ -37,6 +37,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.android.systemui.alpha.theme.AlphaColors
+import com.android.systemui.axdynamicbar.domain.AxDynamicBarSettings
 import com.android.systemui.axdynamicbar.model.IslandEvent
 import com.android.systemui.axdynamicbar.shared.AlphaTertiary
 import com.android.systemui.axdynamicbar.shared.CutoutKind
@@ -55,7 +56,6 @@ private const val MEDIA_WINDOW_FRACTION = 0.08f
 // 13.5px around grus's 174px-wide notch. Contours read it as a distance instead, with the
 // slider's default landing on CONTOUR_GAP_DP.
 private const val CONTOUR_GAP_DP = 3f
-private const val DEFAULT_RING_GAP = 1.155f
 
 /**
  * Picks the punch-hole circle renderer or the edge-cutout contour renderer.
@@ -152,7 +152,7 @@ internal fun AnimatedCutoutContour(
         contourPivot(physicalCutoutRectPx, screenW, screenH)
     }
     val gapPx = with(density) { CONTOUR_GAP_DP.dp.toPx() } *
-        ((ringGap - 1f) / (DEFAULT_RING_GAP - 1f))
+        ((ringGap - 1f) / (AxDynamicBarSettings.DEF_RING_GAP_X1000 / 1000f - 1f))
     // Offsets are applied at draw time, not here: bounds are measured off this path and the
     // canvas translate is bounds-relative, so an offset baked in would cancel itself out.
     val transformed = remember(
