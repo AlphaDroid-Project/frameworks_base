@@ -12,7 +12,6 @@ import android.graphics.PathIterator
 import android.graphics.PointF
 import android.graphics.Rect
 import android.graphics.RectF
-import android.graphics.RectF
 import kotlin.math.abs
 import kotlin.math.acos
 import kotlin.math.ceil
