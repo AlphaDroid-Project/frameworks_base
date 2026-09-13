@@ -12,6 +12,7 @@ import android.graphics.PathIterator
 import android.graphics.PointF
 import android.graphics.Rect
 import android.graphics.RectF
+import android.graphics.RectF
 import kotlin.math.acos
 import kotlin.math.ceil
 import kotlin.math.cos
@@ -124,7 +125,7 @@ fun stripDisplayEdge(
 
     // Non-standard paths may not expose a straight edge cap. Preserve the previous sampled
     // fallback rather than making collapse-to-ring disappear on those devices.
-    return stripDisplayEdgeBySampling(path, screenW, screenH, edgeSlopPx)
+    return stripDisplayEdgeBySampling(path, pathBounds(path), screenW, screenH, edgeSlopPx)
 }
 
 private fun pathContours(path: Path): List<List<ContourSegment>> {
@@ -260,12 +261,26 @@ private fun isClosureConnector(
 private fun segmentLength(segment: ContourSegment): Float =
     hypot(segment.endX - segment.startX, segment.endY - segment.startY)
 
+private fun pathBounds(path: Path): Rect {
+    val rectF = RectF()
+    path.computeBounds(rectF, /* exact */ true)
+    val rect = Rect()
+    rectF.roundOut(rect)
+    return rect
+}
+
 private fun stripDisplayEdgeBySampling(
     path: Path,
+    bounds: Rect,
     screenW: Int,
     screenH: Int,
     edgeSlopPx: Int,
 ): Path? {
+    // Only the edge this cutout actually sits on closes it. Rejecting samples near *any* edge
+    // clips whichever arm happens to run nearest an unrelated border, which on a symmetric
+    // outline shows up as one arm shorter than the other. A cutout touching no edge is already
+    // a complete outline.
+    val edge = cutoutDisplayEdge(bounds, screenW, screenH, edgeSlopPx) ?: return path
     val measure = PathMeasure(path, false)
     val length = measure.length
     if (length < MIN_CONTOUR_LENGTH_PX) return null
@@ -278,11 +293,12 @@ private fun stripDisplayEdgeBySampling(
     var d = 0f
     while (d <= length) {
         measure.getPosTan(d.coerceAtMost(length), pos, null)
-        val onEdge =
-            pos[0] <= edgeSlopPx ||
-                pos[0] >= screenW - edgeSlopPx ||
-                pos[1] <= edgeSlopPx ||
-                pos[1] >= screenH - edgeSlopPx
+        val onEdge = when (edge) {
+            DisplayEdge.TOP -> pos[1] <= edgeSlopPx
+            DisplayEdge.BOTTOM -> pos[1] >= screenH - edgeSlopPx
+            DisplayEdge.LEFT -> pos[0] <= edgeSlopPx
+            DisplayEdge.RIGHT -> pos[0] >= screenW - edgeSlopPx
+        }
         if (!onEdge) {
             if (runStart < 0f) runStart = d
         } else if (runStart >= 0f) {
@@ -358,8 +374,8 @@ fun offsetContourOutward(
     screenH: Int,
     edgeSlopPx: Int = DEFAULT_EDGE_SLOP_PX,
 ): Path {
-    val edge = cutoutDisplayEdge(bounds, screenW, screenH, edgeSlopPx) ?: return path
     if (gapPx <= 0.01f) return path
+    val edge = cutoutDisplayEdge(bounds, screenW, screenH, edgeSlopPx)
     val measure = PathMeasure(path, false)
     val length = measure.length
     if (length < MIN_CONTOUR_LENGTH_PX) return path
@@ -384,23 +400,40 @@ fun offsetContourOutward(
     }
     if (ptX.size < 2) return path
 
-    // The sample furthest from the display edge settles which side is "out": a cutout can only
-    // grow away from the edge it hangs off.
+    // Which side is "out". An edge cutout can only grow away from the edge it hangs off, so its
+    // furthest sample settles the sign. One touching no edge — an interior hole or pill — has no
+    // such reference, so use the sample furthest from the centroid, where the outline is locally
+    // convex and the outward normal is unambiguous.
     var far = 0
-    for (i in ptX.indices) {
-        val better = when (edge) {
-            DisplayEdge.TOP -> ptY[i] > ptY[far]
-            DisplayEdge.BOTTOM -> ptY[i] < ptY[far]
-            DisplayEdge.LEFT -> ptX[i] > ptX[far]
-            DisplayEdge.RIGHT -> ptX[i] < ptX[far]
+    val outward: Float
+    if (edge != null) {
+        for (i in ptX.indices) {
+            val better = when (edge) {
+                DisplayEdge.TOP -> ptY[i] > ptY[far]
+                DisplayEdge.BOTTOM -> ptY[i] < ptY[far]
+                DisplayEdge.LEFT -> ptX[i] > ptX[far]
+                DisplayEdge.RIGHT -> ptX[i] < ptX[far]
+            }
+            if (better) far = i
         }
-        if (better) far = i
-    }
-    val outward = when (edge) {
-        DisplayEdge.TOP -> nY[far]
-        DisplayEdge.BOTTOM -> -nY[far]
-        DisplayEdge.LEFT -> nX[far]
-        DisplayEdge.RIGHT -> -nX[far]
+        outward = when (edge) {
+            DisplayEdge.TOP -> nY[far]
+            DisplayEdge.BOTTOM -> -nY[far]
+            DisplayEdge.LEFT -> nX[far]
+            DisplayEdge.RIGHT -> -nX[far]
+        }
+    } else {
+        val cx = ptX.sum() / ptX.size
+        val cy = ptY.sum() / ptY.size
+        var bestD = -1f
+        for (i in ptX.indices) {
+            val dd = hypot(ptX[i] - cx, ptY[i] - cy)
+            if (dd > bestD) {
+                bestD = dd
+                far = i
+            }
+        }
+        outward = (ptX[far] - cx) * nX[far] + (ptY[far] - cy) * nY[far]
     }
     val sign = if (outward >= 0f) 1f else -1f
 
