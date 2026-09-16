@@ -969,6 +969,7 @@ public class DisplayModeDirector {
         private final Handler mHandler;
         private float mDefaultPeakRefreshRate;
         private float mDefaultRefreshRate;
+        private float mDefaultMinRefreshRate;
         private boolean mIsLowPower = false;
 
         private final DisplayManager.DisplayListener mDisplayListener =
@@ -1021,6 +1022,8 @@ public class DisplayModeDirector {
                     (refreshRateData == null) ? (float) mContext.getResources().getInteger(
                             R.integer.config_defaultRefreshRate)
                             : (float) refreshRateData.defaultRefreshRate;
+            mDefaultMinRefreshRate = (float) mContext.getResources().getInteger(
+                    R.integer.config_defaultMinRefreshRate);
         }
 
         public void observe() {
@@ -1090,6 +1093,11 @@ public class DisplayModeDirector {
         @VisibleForTesting
         float getDefaultPeakRefreshRate() {
             return mDefaultPeakRefreshRate;
+        }
+
+        @VisibleForTesting
+        float getDefaultMinRefreshRate() {
+            return mDefaultMinRefreshRate;
         }
 
         private void setDefaultPeakRefreshRate(DisplayDeviceConfig displayDeviceConfig,
@@ -1176,7 +1184,8 @@ public class DisplayModeDirector {
             float highestRefreshRate = getMaxRefreshRateLocked(displayId);
 
             float minRefreshRate = Settings.System.getFloatForUser(cr,
-                    Settings.System.MIN_REFRESH_RATE, 0f, UserHandle.USER_CURRENT);
+                    Settings.System.MIN_REFRESH_RATE, mDefaultMinRefreshRate,
+                    UserHandle.USER_CURRENT);
             if (Float.isInfinite(minRefreshRate)) {
                 // Infinity means that we want the highest possible refresh rate
                 minRefreshRate = highestRefreshRate;
@@ -1279,6 +1288,7 @@ public class DisplayModeDirector {
             pw.println("  SettingsObserver");
             pw.println("    mDefaultRefreshRate: " + mDefaultRefreshRate);
             pw.println("    mDefaultPeakRefreshRate: " + mDefaultPeakRefreshRate);
+            pw.println("    mDefaultMinRefreshRate: " + mDefaultMinRefreshRate);
         }
     }
 

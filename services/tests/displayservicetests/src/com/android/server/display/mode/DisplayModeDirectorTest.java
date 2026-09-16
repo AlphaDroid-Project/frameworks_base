@@ -302,6 +302,8 @@ public class DisplayModeDirectorTest {
                 .thenReturn(10000);
         when(resources.getInteger(R.integer.config_defaultPeakRefreshRate))
                 .thenReturn(0);
+        when(resources.getInteger(R.integer.config_defaultMinRefreshRate))
+                .thenReturn(0);
         when(resources.getInteger(R.integer.config_externalDisplayPeakRefreshRate))
                 .thenReturn(0);
         when(resources.getInteger(R.integer.config_externalDisplayPeakWidth))
@@ -3270,6 +3272,8 @@ public class DisplayModeDirectorTest {
     public void testNotifyDefaultDisplayDeviceUpdated() {
         when(mResources.getInteger(com.android.internal.R.integer.config_defaultPeakRefreshRate))
             .thenReturn(75);
+        when(mResources.getInteger(R.integer.config_defaultMinRefreshRate))
+            .thenReturn(0);
         when(mResources.getInteger(R.integer.config_defaultRefreshRate))
             .thenReturn(45);
         when(mResources.getInteger(R.integer.config_fixedRefreshRateInHighZone))

@@ -5883,6 +5883,12 @@
          non-zero. -->
     <integer name="config_defaultPeakRefreshRate">0</integer>
 
+    <!-- The default minimum refresh rate for a given device. Used as the fallback for
+         Settings.System.min_refresh_rate when that setting is unset. DisplayModeDirector will
+         not vote for a render rate below this value. 0 means the lowest refresh rate advertised
+         by the display is allowed. -->
+    <integer name="config_defaultMinRefreshRate">0</integer>
+
     <!-- External display peak refresh rate for the given device. Change this value if you want to
          prevent the framework from using higher refresh rates, even if display modes with higher
          refresh rates are available from hardware composer. Only has an effect if this value and
