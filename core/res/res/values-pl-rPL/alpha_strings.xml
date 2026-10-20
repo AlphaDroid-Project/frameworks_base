@@ -17,9 +17,6 @@
     <!-- SystemUI Restart -->
     <string name="systemui_restart_title">Wymagany restart interfejsu systemowego</string>
     <string name="systemui_restart_message">For all changes to take effect, a SystemUI restart is required. Restart SystemUI now?</string>
-    <string name="systemui_restart_yes">Yes</string>
-    <string name="systemui_restart_not_now">Nie teraz</string>
-    <string name="systemui_restart_process">Ponowne uruchamianie interfejsu systemowego, aby zastosować zmiany...</string>
     <!-- Launcher Restart -->
     <string name="launcher_restart_title">Launcher restart required</string>
     <string name="launcher_restart_message">For all changes to take effect, a Launcher restart is required. Restart Launcher now?</string>
