@@ -17,9 +17,6 @@
     <!-- SystemUI Restart -->
     <string name="systemui_restart_title">Se requiere el reinicio de la interfaz de usuario del sistema</string>
     <string name="systemui_restart_message">Para que todos los cambios surtan efecto, es necesario reiniciar SystemUI. ¿Reiniciar SystemUI ahora?</string>
-    <string name="systemui_restart_yes">Si</string>
-    <string name="systemui_restart_not_now">Ahora no</string>
-    <string name="systemui_restart_process">Reiniciando interfaz de usuario para aplicar los cambios...</string>
     <!-- Launcher Restart -->
     <string name="launcher_restart_title">Es necesario reiniciar el lanzador</string>
     <string name="launcher_restart_message">Para que todos los cambios surtan efecto, es necesario reiniciar el lanzador. ¿Reiniciar el lanzador ahora?</string>
